@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 function Dashboard({ estabelecimento }) {
@@ -12,12 +12,7 @@ function Dashboard({ estabelecimento }) {
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-        useEffect(function() {
-            carregarDados();
-}, []);
-
-    async function carregarDados() {
+    const carregarDados = useCallback(async function() {
         try {
             const a = await api.get('/agendamentos/hoje', { headers });
             const s = await api.get('/servicos/' + estabelecimento.estabelecimento_id);
@@ -28,7 +23,11 @@ function Dashboard({ estabelecimento }) {
         } catch (err) {
             console.error(err);
         }
-    }
+    }, [estabelecimento.estabelecimento_id, token]);
+
+    useEffect(function() {
+        carregarDados();
+    }, [carregarDados]);
 
     async function criarServico(e) {
         e.preventDefault();
