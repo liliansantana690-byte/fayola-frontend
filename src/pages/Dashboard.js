@@ -12,9 +12,10 @@ function Dashboard({ estabelecimento }) {
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
 
-    useEffect(function() {
-        carregarDados();
-    }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+        useEffect(function() {
+            carregarDados();
+}, []);
 
     async function carregarDados() {
         try {
