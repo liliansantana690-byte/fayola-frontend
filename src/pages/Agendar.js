@@ -131,7 +131,7 @@ function Agendar() {
                             <div style={styles.inputGroup}>
                                 <label style={styles.label}>Data e Horário</label>
                                 <input
-                                    style={styles.input}
+                                    style={styles.inputField}
                                     type="datetime-local"
                                     value={form.data_hora}
                                     onChange={function(e) { setForm({...form, data_hora: e.target.value}); }}
@@ -149,11 +149,11 @@ function Agendar() {
                             <h3 style={styles.etapaTitulo}>Seus Dados</h3>
                             <div style={styles.inputGroup}>
                                 <label style={styles.label}>Nome completo</label>
-                                <input style={styles.input} placeholder="Seu nome" value={form.cliente_nome} onChange={function(e) { setForm({...form, cliente_nome: e.target.value}); }} />
+                                <input style={styles.inputField} placeholder="Seu nome" value={form.cliente_nome} onChange={function(e) { setForm({...form, cliente_nome: e.target.value}); }} />
                             </div>
                             <div style={styles.inputGroup}>
                                 <label style={styles.label}>WhatsApp</label>
-                                <input style={styles.input} placeholder="71999999999" value={form.cliente_whatsapp} onChange={function(e) { setForm({...form, cliente_whatsapp: e.target.value}); }} />
+                                <input style={styles.inputField} placeholder="71999999999" value={form.cliente_whatsapp} onChange={function(e) { setForm({...form, cliente_whatsapp: e.target.value}); }} />
                             </div>
                             {erro && <p style={{ color: '#e05252', fontSize: '13px', marginBottom: '12px' }}>{erro}</p>}
                             <div style={styles.btnRow}>
@@ -188,4 +188,13 @@ const styles = {
     itemDetalhe: { color: '#666666', fontSize: '13px', margin: 0 },
     inputGroup: { marginBottom: '16px' },
     label: { display: 'block', color: '#888888', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '6px' },
-    input: { width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#ffffff', fontSize: '14px', boxSizing: 'border-box', outline:
+    inputField: { width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#ffffff', fontSize: '14px', boxSizing: 'border-box', outline: 'none' },
+    botao: { flex: 1, padding: '14px', background: '#c9a96e', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer' },
+    botaoSecundario: { padding: '14px 20px', background: 'transparent', color: '#666666', border: '1px solid #2a2a2a', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' },
+    btnRow: { display: 'flex', gap: '12px', marginTop: '8px' },
+    sucessoIcon: { width: '64px', height: '64px', background: '#c9a96e', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', color: '#0a0a0a', margin: '0 auto 20px' },
+    sucessoTitulo: { color: '#ffffff', fontSize: '22px', textAlign: 'center', marginBottom: '8px' },
+    sucessoTexto: { color: '#666666', fontSize: '14px', textAlign: 'center', marginBottom: '28px' }
+};
+
+export default Agendar;
