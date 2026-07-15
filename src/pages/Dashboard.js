@@ -8,9 +8,11 @@ function Dashboard({ estabelecimento }) {
     const [aba, setAba] = useState('hoje');
     const [novoServico, setNovoServico] = useState({ nome: '', duracao_minutos: 60, preco: '' });
     const [novoProfissional, setNovoProfissional] = useState({ nome: '', especialidade: '' });
+    const [linkCopiado, setLinkCopiado] = useState(false);
 
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
+    const linkAgendamento = `${window.location.origin}/agendar?id=${estabelecimento.estabelecimento_id}`;
 
     const carregarDados = useCallback(async function() {
         try {
@@ -36,6 +38,12 @@ function Dashboard({ estabelecimento }) {
         carregarDados();
     }
 
+    async function excluirServico(id) {
+        if (!window.confirm('Excluir este serviço?')) return;
+        await api.delete('/servicos/' + id, { headers });
+        carregarDados();
+    }
+
     async function criarProfissional(e) {
         e.preventDefault();
         await api.post('/profissionais', novoProfissional, { headers });
@@ -43,9 +51,21 @@ function Dashboard({ estabelecimento }) {
         carregarDados();
     }
 
+    async function excluirProfissional(id) {
+        if (!window.confirm('Excluir este profissional?')) return;
+        await api.delete('/profissionais/' + id, { headers });
+        carregarDados();
+    }
+
     async function cancelar(id) {
         await api.patch('/agendamentos/' + id + '/cancelar', {}, { headers });
         carregarDados();
+    }
+
+    function copiarLink() {
+        navigator.clipboard.writeText(linkAgendamento);
+        setLinkCopiado(true);
+        setTimeout(function() { setLinkCopiado(false); }, 2000);
     }
 
     return (
@@ -59,14 +79,11 @@ function Dashboard({ estabelecimento }) {
                     {[
                         { id: 'hoje', icon: '📅', label: 'Agenda' },
                         { id: 'servicos', icon: '✂️', label: 'Serviços' },
-                        { id: 'profissionais', icon: '👤', label: 'Equipe' }
+                        { id: 'profissionais', icon: '👤', label: 'Equipe' },
+                        { id: 'link', icon: '🔗', label: 'Meu Link' }
                     ].map(function(item) {
                         return (
-                            <button
-                                key={item.id}
-                                onClick={function() { setAba(item.id); }}
-                                style={aba === item.id ? styles.navItemAtivo : styles.navItem}
-                            >
+                            <button key={item.id} onClick={function() { setAba(item.id); }} style={aba === item.id ? styles.navItemAtivo : styles.navItem}>
                                 <span style={styles.navIcon}>{item.icon}</span>
                                 <span>{item.label}</span>
                             </button>
@@ -86,27 +103,22 @@ function Dashboard({ estabelecimento }) {
                             <h2 style={styles.pageTitle}>Agenda do Dia</h2>
                             <p style={styles.pageSubtitle}>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
                         </div>
-
                         <div style={styles.statsRow}>
                             <div style={styles.statCard}>
                                 <p style={styles.statNum}>{agendamentos.length}</p>
                                 <p style={styles.statLabel}>Agendamentos</p>
                             </div>
                             <div style={styles.statCard}>
-                                <p style={styles.statNum}>
-                                    R$ {agendamentos.reduce(function(acc, a) { return acc + parseFloat(a.preco || 0); }, 0).toFixed(2)}
-                                </p>
+                                <p style={styles.statNum}>R$ {agendamentos.reduce(function(acc, a) { return acc + parseFloat(a.preco || 0); }, 0).toFixed(2)}</p>
                                 <p style={styles.statLabel}>Receita do dia</p>
                             </div>
                         </div>
-
                         {agendamentos.length === 0 && (
                             <div style={styles.vazio}>
                                 <p style={styles.vazioIcon}>📅</p>
                                 <p style={styles.vazioTexto}>Nenhum agendamento para hoje</p>
                             </div>
                         )}
-
                         {agendamentos.map(function(a) {
                             return (
                                 <div key={a.id} style={styles.agendamentoCard}>
@@ -118,9 +130,7 @@ function Dashboard({ estabelecimento }) {
                                         <p style={styles.agendamentoDetalhe}>✂️ {a.servico} · 👤 {a.profissional}</p>
                                         <p style={styles.agendamentoDetalhe}>📱 {a.cliente_whatsapp} · R$ {parseFloat(a.preco || 0).toFixed(2)}</p>
                                     </div>
-                                    <button onClick={function() { cancelar(a.id); }} style={styles.btnCancelar}>
-                                        Cancelar
-                                    </button>
+                                    <button onClick={function() { cancelar(a.id); }} style={styles.btnCancelar}>Cancelar</button>
                                 </div>
                             );
                         })}
@@ -133,7 +143,6 @@ function Dashboard({ estabelecimento }) {
                             <h2 style={styles.pageTitle}>Serviços</h2>
                             <p style={styles.pageSubtitle}>Gerencie os serviços do seu estabelecimento</p>
                         </div>
-
                         <div style={styles.formCard}>
                             <h3 style={styles.formTitle}>Novo Serviço</h3>
                             <form onSubmit={criarServico}>
@@ -145,7 +154,6 @@ function Dashboard({ estabelecimento }) {
                                 <button style={styles.botao} type="submit">+ Adicionar Serviço</button>
                             </form>
                         </div>
-
                         <div style={styles.listaGrid}>
                             {servicos.map(function(s) {
                                 return (
@@ -154,6 +162,7 @@ function Dashboard({ estabelecimento }) {
                                         <p style={styles.servicoNome}>{s.nome}</p>
                                         <p style={styles.servicoDetalhe}>{s.duracao_minutos} min</p>
                                         <p style={styles.servicoPreco}>R$ {parseFloat(s.preco).toFixed(2)}</p>
+                                        <button onClick={function() { excluirServico(s.id); }} style={styles.btnExcluir}>Excluir</button>
                                     </div>
                                 );
                             })}
@@ -167,7 +176,6 @@ function Dashboard({ estabelecimento }) {
                             <h2 style={styles.pageTitle}>Equipe</h2>
                             <p style={styles.pageSubtitle}>Gerencie os profissionais do seu estabelecimento</p>
                         </div>
-
                         <div style={styles.formCard}>
                             <h3 style={styles.formTitle}>Novo Profissional</h3>
                             <form onSubmit={criarProfissional}>
@@ -176,7 +184,6 @@ function Dashboard({ estabelecimento }) {
                                 <button style={styles.botao} type="submit">+ Adicionar Profissional</button>
                             </form>
                         </div>
-
                         <div style={styles.listaGrid}>
                             {profissionais.map(function(p) {
                                 return (
@@ -184,9 +191,29 @@ function Dashboard({ estabelecimento }) {
                                         <div style={styles.servicoIcone}>👤</div>
                                         <p style={styles.servicoNome}>{p.nome}</p>
                                         <p style={styles.servicoDetalhe}>{p.especialidade}</p>
+                                        <button onClick={function() { excluirProfissional(p.id); }} style={styles.btnExcluir}>Excluir</button>
                                     </div>
                                 );
                             })}
+                        </div>
+                    </div>
+                )}
+
+                {aba === 'link' && (
+                    <div>
+                        <div style={styles.pageHeader}>
+                            <h2 style={styles.pageTitle}>Meu Link de Agendamento</h2>
+                            <p style={styles.pageSubtitle}>Compartilhe este link com seus clientes</p>
+                        </div>
+                        <div style={styles.formCard}>
+                            <p style={styles.formTitle}>Link Público</p>
+                            <div style={styles.linkBox}>
+                                <p style={styles.linkTexto}>{linkAgendamento}</p>
+                            </div>
+                            <button style={styles.botao} onClick={copiarLink}>
+                                {linkCopiado ? '✓ Link Copiado!' : '📋 Copiar Link'}
+                            </button>
+                            <p style={styles.linkDica}>Compartilhe no WhatsApp, Instagram ou onde preferir. Seus clientes poderão agendar diretamente por este link.</p>
                         </div>
                     </div>
                 )}
@@ -235,7 +262,11 @@ const styles = {
     servicoIcone: { fontSize: '32px', marginBottom: '12px' },
     servicoNome: { color: '#ffffff', fontSize: '15px', fontWeight: '600', margin: '0 0 6px' },
     servicoDetalhe: { color: '#666666', fontSize: '13px', margin: '2px 0' },
-    servicoPreco: { color: '#c9a96e', fontSize: '16px', fontWeight: '700', margin: '8px 0 0' }
+    servicoPreco: { color: '#c9a96e', fontSize: '16px', fontWeight: '700', margin: '8px 0 0' },
+    btnExcluir: { marginTop: '12px', padding: '6px 14px', background: 'transparent', color: '#e05252', border: '1px solid #e05252', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' },
+    linkBox: { background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '8px', padding: '16px', marginBottom: '16px' },
+    linkTexto: { color: '#c9a96e', fontSize: '13px', margin: 0, wordBreak: 'break-all' },
+    linkDica: { color: '#444444', fontSize: '12px', marginTop: '16px', lineHeight: '1.6' }
 };
 
 export default Dashboard;
