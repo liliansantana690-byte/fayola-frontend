@@ -5,6 +5,7 @@ function Agendar() {
     const estabelecimentoId = new URLSearchParams(window.location.search).get('id');
     const [servicos, setServicos] = useState([]);
     const [profissionais, setProfissionais] = useState([]);
+    const [estabelecimento, setEstabelecimento] = useState(null);
     const [etapa, setEtapa] = useState(1);
     const [form, setForm] = useState({
         servico_id: '',
@@ -15,10 +16,10 @@ function Agendar() {
     });
     const [sucesso, setSucesso] = useState(false);
     const [erro, setErro] = useState('');
-    const [estabelecimento, setEstabelecimento] = useState(null);
 
     useEffect(function() {
         if (!estabelecimentoId) return;
+        api.get('/auth/estabelecimento/' + estabelecimentoId).then(function(r) { setEstabelecimento(r.data); });
         api.get('/servicos/' + estabelecimentoId).then(function(r) { setServicos(r.data); });
         api.get('/profissionais/' + estabelecimentoId).then(function(r) { setProfissionais(r.data); });
     }, [estabelecimentoId]);
@@ -44,7 +45,7 @@ function Agendar() {
     if (!estabelecimentoId) {
         return (
             <div style={styles.container}>
-                <p style={styles.erro}>Link inválido. ID do estabelecimento não encontrado.</p>
+                <p style={{ color: '#e05252', textAlign: 'center' }}>Link inválido.</p>
             </div>
         );
     }
@@ -56,7 +57,11 @@ function Agendar() {
                     <div style={styles.sucessoIcon}>✓</div>
                     <h2 style={styles.sucessoTitulo}>Agendamento Confirmado!</h2>
                     <p style={styles.sucessoTexto}>Você receberá uma confirmação via WhatsApp em breve.</p>
-                    <button style={styles.botao} onClick={function() { setSucesso(false); setForm({ servico_id: '', profissional_id: '', data_hora: '', cliente_nome: '', cliente_whatsapp: '' }); setEtapa(1); }}>
+                    <button style={styles.botao} onClick={function() {
+                        setSucesso(false);
+                        setForm({ servico_id: '', profissional_id: '', data_hora: '', cliente_nome: '', cliente_whatsapp: '' });
+                        setEtapa(1);
+                    }}>
                         Novo Agendamento
                     </button>
                 </div>
@@ -69,16 +74,15 @@ function Agendar() {
             <div style={styles.card}>
                 <div style={styles.logoArea}>
                     <div style={styles.logoIcon}>✦</div>
-                    <h1 style={styles.logo}>FAYOLA</h1>
-                    <p style={styles.tagline}>Agendar Serviço</p>
+                    <h1 style={styles.logo}>{estabelecimento ? estabelecimento.nome.toUpperCase() : 'CARREGANDO...'}</h1>
+                    <p style={styles.tagline}>{estabelecimento ? (estabelecimento.tipo === 'salao' ? 'Salão de Beleza' : 'Barbearia') : ''}</p>
+                    <p style={styles.powered}>powered by <span style={styles.poweredFayola}>Fayola</span></p>
                 </div>
 
                 <div style={styles.etapas}>
                     {[1, 2, 3].map(function(n) {
                         return (
-                            <div key={n} style={etapa >= n ? styles.etapaAtiva : styles.etapa}>
-                                {n}
-                            </div>
+                            <div key={n} style={etapa >= n ? styles.etapaAtiva : styles.etapa}>{n}</div>
                         );
                     })}
                 </div>
@@ -151,7 +155,7 @@ function Agendar() {
                                 <label style={styles.label}>WhatsApp</label>
                                 <input style={styles.input} placeholder="71999999999" value={form.cliente_whatsapp} onChange={function(e) { setForm({...form, cliente_whatsapp: e.target.value}); }} />
                             </div>
-                            {erro && <p style={styles.erro}>{erro}</p>}
+                            {erro && <p style={{ color: '#e05252', fontSize: '13px', marginBottom: '12px' }}>{erro}</p>}
                             <div style={styles.btnRow}>
                                 <button type="button" style={styles.botaoSecundario} onClick={function() { setEtapa(2); }}>← Voltar</button>
                                 <button type="submit" style={styles.botao}>Confirmar Agendamento</button>
@@ -169,8 +173,10 @@ const styles = {
     card: { background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '16px', padding: '40px', width: '100%', maxWidth: '480px' },
     logoArea: { textAlign: 'center', marginBottom: '28px' },
     logoIcon: { fontSize: '20px', color: '#c9a96e', marginBottom: '4px' },
-    logo: { color: '#ffffff', fontSize: '22px', fontWeight: '700', letterSpacing: '4px', margin: '0 0 4px' },
-    tagline: { color: '#666666', fontSize: '12px', letterSpacing: '2px', textTransform: 'uppercase', margin: 0 },
+    logo: { color: '#ffffff', fontSize: '20px', fontWeight: '700', letterSpacing: '3px', margin: '0 0 4px' },
+    tagline: { color: '#888888', fontSize: '12px', letterSpacing: '2px', textTransform: 'uppercase', margin: '0 0 8px' },
+    powered: { color: '#444444', fontSize: '11px', margin: 0 },
+    poweredFayola: { color: '#c9a96e', fontWeight: '700' },
     etapas: { display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '28px' },
     etapa: { width: '32px', height: '32px', borderRadius: '50%', background: '#2a2a2a', color: '#444444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '700' },
     etapaAtiva: { width: '32px', height: '32px', borderRadius: '50%', background: '#c9a96e', color: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '700' },
@@ -182,14 +188,4 @@ const styles = {
     itemDetalhe: { color: '#666666', fontSize: '13px', margin: 0 },
     inputGroup: { marginBottom: '16px' },
     label: { display: 'block', color: '#888888', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '6px' },
-    input: { width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#ffffff', fontSize: '14px', boxSizing: 'border-box', outline: 'none' },
-    botao: { width: '100%', padding: '14px', background: '#c9a96e', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer' },
-    botaoSecundario: { padding: '14px 20px', background: 'transparent', color: '#666666', border: '1px solid #2a2a2a', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' },
-    btnRow: { display: 'flex', gap: '12px', marginTop: '8px' },
-    sucessoIcon: { width: '64px', height: '64px', background: '#c9a96e', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', color: '#0a0a0a', margin: '0 auto 20px' },
-    sucessoTitulo: { color: '#ffffff', fontSize: '22px', textAlign: 'center', marginBottom: '8px' },
-    sucessoTexto: { color: '#666666', fontSize: '14px', textAlign: 'center', marginBottom: '28px' },
-    erro: { color: '#e05252', fontSize: '13px', marginBottom: '12px' }
-};
-
-export default Agendar;
+    input: { width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#ffffff', fontSize: '14px', boxSizing: 'border-box', outline:
