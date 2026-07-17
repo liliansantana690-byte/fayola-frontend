@@ -11,12 +11,12 @@ function App() {
         return <Agendar />;
     }
 
-    if (window.location.pathname === '/login') {
-        return <Login onLogin={setEstabelecimento} />;
-    }
-
     if (estabelecimento) {
         return <Dashboard estabelecimento={estabelecimento} />;
+    }
+
+    if (window.location.pathname === '/login') {
+        return <Login onLogin={setEstabelecimento} />;
     }
 
     return <Landing />;
