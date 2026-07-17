@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 function Landing() {
-    const [menuAberto, setMenuAberto] = useState(false);
 
     return (
         <div style={styles.container}>
@@ -23,7 +22,7 @@ function Landing() {
             <section style={styles.hero}>
                 <div style={styles.heroBadge}>✦ Sistema de Agendamento Premium</div>
                 <h1 style={styles.heroTitulo}>
-                    Seu salão com<br />
+                    Seu negócio de beleza com<br />
                     <span style={styles.heroDestaque}>agendamento online</span><br />
                     e notificação no WhatsApp
                 </h1>
@@ -45,7 +44,7 @@ function Landing() {
                 </div>
                 <div style={styles.passosGrid}>
                     {[
-                        { num: '01', titulo: 'Você cadastra seu salão', desc: 'Adicione seus serviços, profissionais e horários em menos de 5 minutos.' },
+                        { num: '01', titulo: 'Você cadastra seu negócio', desc: 'Adicione seus serviços, profissionais e horários em menos de 5 minutos.' },
                         { num: '02', titulo: 'Compartilhe o link', desc: 'Você recebe um link exclusivo. Compartilhe no Instagram, WhatsApp ou onde quiser.' },
                         { num: '03', titulo: 'Cliente agenda online', desc: 'Seu cliente escolhe o serviço, profissional e horário direto pelo celular.' },
                         { num: '04', titulo: 'WhatsApp automático', desc: 'Cliente recebe confirmação e lembrete automático 24h antes pelo WhatsApp.' },
@@ -87,8 +86,32 @@ function Landing() {
                 </div>
             </section>
 
+            {/* PARA QUEM E */}
+            <section style={styles.secao}>
+                <div style={styles.secaoHeader}>
+                    <p style={styles.secaoTag}>PARA QUEM É</p>
+                    <h2 style={styles.secaoTitulo}>Feito para negócios<br />de beleza e estética</h2>
+                </div>
+                <div style={styles.passosGrid}>
+                    {[
+                        { icon: '💇', titulo: 'Salões de Beleza', desc: 'Corte, coloração, escova, hidratação e muito mais.' },
+                        { icon: '💈', titulo: 'Barbearias', desc: 'Corte masculino, barba, sobrancelha e tratamentos.' },
+                        { icon: '✨', titulo: 'Clínicas de Estética', desc: 'Depilação, limpeza de pele, massagem e procedimentos estéticos.' },
+                        { icon: '💅', titulo: 'Esmalterias', desc: 'Manicure, pedicure, nail art e esmaltação em gel.' },
+                    ].map(function(p) {
+                        return (
+                            <div key={p.titulo} style={styles.passoCard}>
+                                <div style={{ fontSize: '36px', marginBottom: '12px' }}>{p.icon}</div>
+                                <h3 style={styles.passoTitulo}>{p.titulo}</h3>
+                                <p style={styles.passoDesc}>{p.desc}</p>
+                            </div>
+                        );
+                    })}
+                </div>
+            </section>
+
             {/* PLANOS */}
-            <section style={styles.secao} id="planos">
+            <section style={styles.secaoEscura} id="planos">
                 <div style={styles.secaoHeader}>
                     <p style={styles.secaoTag}>PLANOS</p>
                     <h2 style={styles.secaoTitulo}>Um plano simples.<br />Sem surpresas.</h2>
@@ -99,7 +122,7 @@ function Landing() {
                     <div style={styles.planoPreco}>
                         <span style={styles.planoMoeda}>R$</span>
                         <span style={styles.planoValor}>60</span>
-                        <span style={styles.planoPeríodo}>/mês</span>
+                        <span style={styles.planoPeriodo}>/mês</span>
                     </div>
                     <ul style={styles.planoLista}>
                         {[
@@ -123,7 +146,7 @@ function Landing() {
 
             {/* CTA FINAL */}
             <section style={styles.ctaSecao}>
-                <h2 style={styles.ctaTitulo}>Pronto para modernizar<br />seu salão?</h2>
+                <h2 style={styles.ctaTitulo}>Pronto para modernizar<br />seu negócio?</h2>
                 <p style={styles.ctaSubtitulo}>Comece hoje. Seus clientes vão amar agendar pelo celular.</p>
                 <a href="https://wa.me/5571985119593?text=Quero+conhecer+o+Fayola" style={styles.botaoPrimario} target="_blank" rel="noreferrer">
                     Falar com a gente no WhatsApp
@@ -133,7 +156,7 @@ function Landing() {
             {/* FOOTER */}
             <footer style={styles.footer}>
                 <span style={styles.footerLogo}>✦ FAYOLA</span>
-                <p style={styles.footerTexto}>Sistema de agendamento para salões e barbearias · Salvador, BA</p>
+                <p style={styles.footerTexto}>Sistema de agendamento para salões, barbearias e estéticas · Salvador, BA</p>
                 <p style={styles.footerTexto}>© 2026 Fayola. Todos os direitos reservados.</p>
             </footer>
         </div>
@@ -185,7 +208,7 @@ const styles = {
     planoPreco: { margin: '0 0 32px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '4px' },
     planoMoeda: { color: '#c9a96e', fontSize: '20px', fontWeight: '700', paddingBottom: '8px' },
     planoValor: { color: '#c9a96e', fontSize: '64px', fontWeight: '800', lineHeight: 1 },
-    planoPeríodo: { color: '#666666', fontSize: '16px', paddingBottom: '8px' },
+    planoPeriodo: { color: '#666666', fontSize: '16px', paddingBottom: '8px' },
     planoLista: { listStyle: 'none', padding: 0, margin: '0 0 32px', textAlign: 'left' },
     planoItem: { color: '#888888', fontSize: '14px', padding: '8px 0', borderBottom: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', gap: '10px' },
     planoCheck: { color: '#c9a96e', fontWeight: '700', fontSize: '14px' },
