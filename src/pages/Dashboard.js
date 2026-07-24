@@ -3,6 +3,7 @@ import api from '../services/api';
 
 function Dashboard({ estabelecimento }) {
     const [agendamentos, setAgendamentos] = useState([]);
+    const [todosAgendamentos, setTodosAgendamentos] = useState([]);
     const [servicos, setServicos] = useState([]);
     const [profissionais, setProfissionais] = useState([]);
     const [aba, setAba] = useState('hoje');
@@ -17,9 +18,11 @@ function Dashboard({ estabelecimento }) {
     const carregarDados = useCallback(async function() {
         try {
             const a = await api.get('/agendamentos/hoje', { headers });
+            const todos = await api.get('/agendamentos/todos', { headers });
             const s = await api.get('/servicos/' + estabelecimento.estabelecimento_id);
             const p = await api.get('/profissionais/' + estabelecimento.estabelecimento_id);
             setAgendamentos(a.data);
+            setTodosAgendamentos(todos.data);
             setServicos(s.data);
             setProfissionais(p.data);
         } catch (err) {
@@ -68,6 +71,14 @@ function Dashboard({ estabelecimento }) {
         setTimeout(function() { setLinkCopiado(false); }, 2000);
     }
 
+    function formatarData(data_hora) {
+        return new Date(data_hora).toLocaleDateString('pt-BR');
+    }
+
+    function formatarHora(data_hora) {
+        return new Date(data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
     return (
         <div style={styles.container}>
             <div style={styles.sidebar}>
@@ -78,6 +89,7 @@ function Dashboard({ estabelecimento }) {
                 <nav style={styles.nav}>
                     {[
                         { id: 'hoje', icon: '📅', label: 'Agenda' },
+                        { id: 'agendamentos', icon: '📋', label: 'Agendamentos' },
                         { id: 'servicos', icon: '✂️', label: 'Serviços' },
                         { id: 'profissionais', icon: '👤', label: 'Equipe' },
                         { id: 'link', icon: '🔗', label: 'Meu Link' }
@@ -106,11 +118,15 @@ function Dashboard({ estabelecimento }) {
                         <div style={styles.statsRow}>
                             <div style={styles.statCard}>
                                 <p style={styles.statNum}>{agendamentos.length}</p>
-                                <p style={styles.statLabel}>Agendamentos</p>
+                                <p style={styles.statLabel}>Hoje</p>
                             </div>
                             <div style={styles.statCard}>
                                 <p style={styles.statNum}>R$ {agendamentos.reduce(function(acc, a) { return acc + parseFloat(a.preco || 0); }, 0).toFixed(2)}</p>
                                 <p style={styles.statLabel}>Receita do dia</p>
+                            </div>
+                            <div style={styles.statCard}>
+                                <p style={styles.statNum}>{todosAgendamentos.length}</p>
+                                <p style={styles.statLabel}>Total geral</p>
                             </div>
                         </div>
                         {agendamentos.length === 0 && (
@@ -122,15 +138,46 @@ function Dashboard({ estabelecimento }) {
                         {agendamentos.map(function(a) {
                             return (
                                 <div key={a.id} style={styles.agendamentoCard}>
-                                    <div style={styles.horaBadge}>
-                                        {new Date(a.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                    </div>
+                                    <div style={styles.horaBadge}>{formatarHora(a.data_hora)}</div>
                                     <div style={styles.agendamentoInfo}>
                                         <p style={styles.clienteNome}>{a.cliente_nome}</p>
                                         <p style={styles.agendamentoDetalhe}>✂️ {a.servico} · 👤 {a.profissional}</p>
                                         <p style={styles.agendamentoDetalhe}>📱 {a.cliente_whatsapp} · R$ {parseFloat(a.preco || 0).toFixed(2)}</p>
                                     </div>
                                     <button onClick={function() { cancelar(a.id); }} style={styles.btnCancelar}>Cancelar</button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {aba === 'agendamentos' && (
+                    <div>
+                        <div style={styles.pageHeader}>
+                            <h2 style={styles.pageTitle}>Todos os Agendamentos</h2>
+                            <p style={styles.pageSubtitle}>Histórico completo de agendamentos</p>
+                        </div>
+                        {todosAgendamentos.length === 0 && (
+                            <div style={styles.vazio}>
+                                <p style={styles.vazioIcon}>📋</p>
+                                <p style={styles.vazioTexto}>Nenhum agendamento encontrado</p>
+                            </div>
+                        )}
+                        {todosAgendamentos.map(function(a) {
+                            return (
+                                <div key={a.id} style={styles.agendamentoCard}>
+                                    <div style={a.status === 'cancelado' ? styles.horaBadgeCancelado : styles.horaBadge}>
+                                        {formatarHora(a.data_hora)}
+                                    </div>
+                                    <div style={styles.agendamentoInfo}>
+                                        <p style={styles.clienteNome}>{a.cliente_nome}</p>
+                                        <p style={styles.agendamentoDetalhe}>✂️ {a.servico} · 👤 {a.profissional}</p>
+                                        <p style={styles.agendamentoDetalhe}>📅 {formatarData(a.data_hora)} · 📱 {a.cliente_whatsapp}</p>
+                                        <p style={styles.agendamentoDetalhe}>💰 R$ {parseFloat(a.preco || 0).toFixed(2)} · Status: {a.status}</p>
+                                    </div>
+                                    {a.status === 'confirmado' && (
+                                        <button onClick={function() { cancelar(a.id); }} style={styles.btnCancelar}>Cancelar</button>
+                                    )}
                                 </div>
                             );
                         })}
@@ -213,7 +260,7 @@ function Dashboard({ estabelecimento }) {
                             <button style={styles.botao} onClick={copiarLink}>
                                 {linkCopiado ? '✓ Link Copiado!' : '📋 Copiar Link'}
                             </button>
-                            <p style={styles.linkDica}>Compartilhe no WhatsApp, Instagram ou onde preferir. Seus clientes poderão agendar diretamente por este link.</p>
+                            <p style={styles.linkDica}>Compartilhe no WhatsApp, Instagram ou onde preferir. Seus clientes vão agendar direto por este link.</p>
                         </div>
                     </div>
                 )}
@@ -248,6 +295,7 @@ const styles = {
     vazioTexto: { color: '#444444', fontSize: '16px' },
     agendamentoCard: { display: 'flex', alignItems: 'center', gap: '20px', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '12px', padding: '20px 24px', marginBottom: '12px' },
     horaBadge: { background: '#c9a96e', color: '#0a0a0a', fontWeight: '700', fontSize: '14px', padding: '8px 12px', borderRadius: '8px', minWidth: '60px', textAlign: 'center' },
+    horaBadgeCancelado: { background: '#3a1a1a', color: '#e05252', fontWeight: '700', fontSize: '14px', padding: '8px 12px', borderRadius: '8px', minWidth: '60px', textAlign: 'center' },
     agendamentoInfo: { flex: 1 },
     clienteNome: { color: '#ffffff', fontSize: '16px', fontWeight: '600', margin: '0 0 6px' },
     agendamentoDetalhe: { color: '#666666', fontSize: '13px', margin: '2px 0' },
