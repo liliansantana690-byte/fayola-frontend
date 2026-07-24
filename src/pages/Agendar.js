@@ -7,6 +7,7 @@ function Agendar() {
     const [profissionais, setProfissionais] = useState([]);
     const [estabelecimento, setEstabelecimento] = useState(null);
     const [etapa, setEtapa] = useState(1);
+    const [loading, setLoading] = useState(false);
     const [form, setForm] = useState({
         servico_id: '',
         profissional_id: '',
@@ -26,7 +27,9 @@ function Agendar() {
 
     async function handleAgendar(e) {
         e.preventDefault();
+        if (loading) return;
         setErro('');
+        setLoading(true);
         try {
             await api.post('/agendamentos', {
                 estabelecimento_id: parseInt(estabelecimentoId),
@@ -40,6 +43,7 @@ function Agendar() {
         } catch (err) {
             setErro('Erro ao agendar. Tente novamente.');
         }
+        setLoading(false);
     }
 
     if (!estabelecimentoId) {
@@ -158,7 +162,9 @@ function Agendar() {
                             {erro && <p style={{ color: '#e05252', fontSize: '13px', marginBottom: '12px' }}>{erro}</p>}
                             <div style={styles.btnRow}>
                                 <button type="button" style={styles.botaoSecundario} onClick={function() { setEtapa(2); }}>← Voltar</button>
-                                <button type="submit" style={styles.botao}>Confirmar Agendamento</button>
+                                <button type="submit" style={loading ? styles.botaoLoading : styles.botao} disabled={loading}>
+                                    {loading ? 'Agendando...' : 'Confirmar Agendamento'}
+                                </button>
                             </div>
                         </div>
                     )}
@@ -190,6 +196,7 @@ const styles = {
     label: { display: 'block', color: '#888888', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '6px' },
     inputField: { width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#ffffff', fontSize: '14px', boxSizing: 'border-box', outline: 'none' },
     botao: { flex: 1, padding: '14px', background: '#c9a96e', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer' },
+    botaoLoading: { flex: 1, padding: '14px', background: '#8a7045', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'not-allowed' },
     botaoSecundario: { padding: '14px 20px', background: 'transparent', color: '#666666', border: '1px solid #2a2a2a', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' },
     btnRow: { display: 'flex', gap: '12px', marginTop: '8px' },
     sucessoIcon: { width: '64px', height: '64px', background: '#c9a96e', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', color: '#0a0a0a', margin: '0 auto 20px' },
