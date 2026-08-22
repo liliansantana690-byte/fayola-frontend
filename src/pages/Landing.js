@@ -30,7 +30,7 @@ function Landing() {
                     Seus clientes agendam pelo celular e recebem confirmação automática no WhatsApp. Você gerencia tudo pelo painel, sem complicação.
                 </p>
                 <div style={styles.heroBotoes}>
-                    <a href="#planos" style={styles.botaoPrimario}>Começar agora — R$ 60/mês</a>
+                    <a href="#planos" style={styles.botaoPrimario}>Começar agora — R$ 99.99/mês</a>
                     <a href="#funcionalidades" style={styles.botaoSecundario}>Ver como funciona</a>
                 </div>
                 <p style={styles.heroObs}>✓ Sem taxa de adesão · ✓ Cancele quando quiser · ✓ Suporte via WhatsApp</p>
@@ -121,7 +121,7 @@ function Landing() {
                     <h3 style={styles.planoNome}>Plano Profissional</h3>
                     <div style={styles.planoPreco}>
                         <span style={styles.planoMoeda}>R$</span>
-                        <span style={styles.planoValor}>60</span>
+                        <span style={styles.planoValor}>99.99</span>
                         <span style={styles.planoPeriodo}>/mês</span>
                     </div>
                     <ul style={styles.planoLista}>
