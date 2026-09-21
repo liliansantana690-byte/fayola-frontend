@@ -6,10 +6,13 @@ function Dashboard({ estabelecimento }) {
     const [todosAgendamentos, setTodosAgendamentos] = useState([]);
     const [servicos, setServicos] = useState([]);
     const [profissionais, setProfissionais] = useState([]);
+    const [comissoes, setComissoes] = useState([]);
     const [aba, setAba] = useState('hoje');
-    const [novoServico, setNovoServico] = useState({ nome: '', duracao_minutos: 60, preco: '' });
-    const [novoProfissional, setNovoProfissional] = useState({ nome: '', especialidade: '' });
+    const [novoServico, setNovoServico] = useState({ nome: '', duracao_minutos: 60, preco: '', comissao_percentual: '' });
+    const [novoProfissional, setNovoProfissional] = useState({ nome: '', especialidade: '', whatsapp: '' });
     const [linkCopiado, setLinkCopiado] = useState(false);
+    const [linkProfissionalCopiadoId, setLinkProfissionalCopiadoId] = useState(null);
+    const [conviteRecemCriado, setConviteRecemCriado] = useState(null);
 
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
@@ -20,11 +23,13 @@ function Dashboard({ estabelecimento }) {
             const a = await api.get('/agendamentos/hoje', { headers });
             const todos = await api.get('/agendamentos/todos', { headers });
             const s = await api.get('/servicos/' + estabelecimento.estabelecimento_id);
-            const p = await api.get('/profissionais/' + estabelecimento.estabelecimento_id);
+            const p = await api.get('/profissionais', { headers });
+            const c = await api.get('/profissionais/comissoes', { headers });
             setAgendamentos(a.data);
             setTodosAgendamentos(todos.data);
             setServicos(s.data);
             setProfissionais(p.data);
+            setComissoes(c.data);
         } catch (err) {
             console.error(err);
         }
@@ -37,7 +42,7 @@ function Dashboard({ estabelecimento }) {
     async function criarServico(e) {
         e.preventDefault();
         await api.post('/servicos', novoServico, { headers });
-        setNovoServico({ nome: '', duracao_minutos: 60, preco: '' });
+        setNovoServico({ nome: '', duracao_minutos: 60, preco: '', comissao_percentual: '' });
         carregarDados();
     }
 
@@ -49,8 +54,9 @@ function Dashboard({ estabelecimento }) {
 
     async function criarProfissional(e) {
         e.preventDefault();
-        await api.post('/profissionais', novoProfissional, { headers });
-        setNovoProfissional({ nome: '', especialidade: '' });
+        const resp = await api.post('/profissionais', novoProfissional, { headers });
+        setNovoProfissional({ nome: '', especialidade: '', whatsapp: '' });
+        setConviteRecemCriado({ nome: resp.data.nome, link: resp.data.link_convite });
         carregarDados();
     }
 
@@ -69,6 +75,17 @@ function Dashboard({ estabelecimento }) {
         navigator.clipboard.writeText(linkAgendamento);
         setLinkCopiado(true);
         setTimeout(function() { setLinkCopiado(false); }, 2000);
+    }
+
+    function copiarLinkProfissional(p, link) {
+        navigator.clipboard.writeText(link);
+        setLinkProfissionalCopiadoId(p.id);
+        setTimeout(function() { setLinkProfissionalCopiadoId(null); }, 2000);
+    }
+
+    function copiarLinkConvite() {
+        if (!conviteRecemCriado) return;
+        navigator.clipboard.writeText(conviteRecemCriado.link);
     }
 
     function formatarData(data_hora) {
@@ -92,6 +109,7 @@ function Dashboard({ estabelecimento }) {
                         { id: 'agendamentos', icon: '📋', label: 'Agendamentos' },
                         { id: 'servicos', icon: '✂️', label: 'Serviços' },
                         { id: 'profissionais', icon: '👤', label: 'Equipe' },
+                        { id: 'comissoes', icon: '💰', label: 'Comissões' },
                         { id: 'link', icon: '🔗', label: 'Meu Link' }
                     ].map(function(item) {
                         return (
@@ -198,6 +216,7 @@ function Dashboard({ estabelecimento }) {
                                     <input style={{...styles.input, flex: 1}} placeholder="Duração (min)" type="number" value={novoServico.duracao_minutos} onChange={function(e) { setNovoServico({...novoServico, duracao_minutos: e.target.value}); }} />
                                     <input style={{...styles.input, flex: 1, marginLeft: '12px'}} placeholder="Preço (R$)" type="number" value={novoServico.preco} onChange={function(e) { setNovoServico({...novoServico, preco: e.target.value}); }} />
                                 </div>
+                                <input style={styles.input} placeholder="Comissão do profissional (%)" type="number" step="0.01" value={novoServico.comissao_percentual} onChange={function(e) { setNovoServico({...novoServico, comissao_percentual: e.target.value}); }} />
                                 <button style={styles.botao} type="submit">+ Adicionar Serviço</button>
                             </form>
                         </div>
@@ -209,6 +228,7 @@ function Dashboard({ estabelecimento }) {
                                         <p style={styles.servicoNome}>{s.nome}</p>
                                         <p style={styles.servicoDetalhe}>{s.duracao_minutos} min</p>
                                         <p style={styles.servicoPreco}>R$ {parseFloat(s.preco).toFixed(2)}</p>
+                                        <p style={styles.servicoDetalhe}>Comissão: {parseFloat(s.comissao_percentual || 0).toFixed(0)}%</p>
                                         <button onClick={function() { excluirServico(s.id); }} style={styles.btnExcluir}>Excluir</button>
                                     </div>
                                 );
@@ -228,9 +248,22 @@ function Dashboard({ estabelecimento }) {
                             <form onSubmit={criarProfissional}>
                                 <input style={styles.input} placeholder="Nome completo" value={novoProfissional.nome} onChange={function(e) { setNovoProfissional({...novoProfissional, nome: e.target.value}); }} />
                                 <input style={styles.input} placeholder="Especialidade" value={novoProfissional.especialidade} onChange={function(e) { setNovoProfissional({...novoProfissional, especialidade: e.target.value}); }} />
+                                <input style={styles.input} placeholder="WhatsApp (ex: 71999999999)" value={novoProfissional.whatsapp} onChange={function(e) { setNovoProfissional({...novoProfissional, whatsapp: e.target.value}); }} />
                                 <button style={styles.botao} type="submit">+ Adicionar Profissional</button>
                             </form>
                         </div>
+
+                        {conviteRecemCriado && (
+                            <div style={styles.conviteCard}>
+                                <p style={styles.conviteTitulo}>Convite gerado para {conviteRecemCriado.nome}</p>
+                                <p style={styles.conviteTexto}>Envie este link para ele criar a própria senha e acessar o painel dele:</p>
+                                <div style={styles.linkBox}>
+                                    <p style={styles.linkTexto}>{conviteRecemCriado.link}</p>
+                                </div>
+                                <button style={styles.botao} onClick={copiarLinkConvite}>📋 Copiar link do convite</button>
+                            </div>
+                        )}
+
                         <div style={styles.listaGrid}>
                             {profissionais.map(function(p) {
                                 return (
@@ -238,11 +271,62 @@ function Dashboard({ estabelecimento }) {
                                         <div style={styles.servicoIcone}>👤</div>
                                         <p style={styles.servicoNome}>{p.nome}</p>
                                         <p style={styles.servicoDetalhe}>{p.especialidade}</p>
+                                        <p style={p.conta_ativada ? styles.statusAtivo : styles.statusPendente}>
+                                            {p.conta_ativada ? '● Conta ativa' : '○ Convite pendente'}
+                                        </p>
+                                        {!p.conta_ativada && p.link_convite && (
+                                            <button
+                                                onClick={function() { copiarLinkProfissional(p, p.link_convite); }}
+                                                style={styles.btnLinkProfissional}
+                                            >
+                                                {linkProfissionalCopiadoId === p.id ? '✓ Copiado' : '🔗 Copiar convite'}
+                                            </button>
+                                        )}
+                                        {p.conta_ativada && (
+                                            <button
+                                                onClick={function() { copiarLinkProfissional(p, `${window.location.origin}/agendar?id=${estabelecimento.estabelecimento_id}&profissional=${p.id}`); }}
+                                                style={styles.btnLinkProfissional}
+                                            >
+                                                {linkProfissionalCopiadoId === p.id ? '✓ Copiado' : '🔗 Link de agendamento'}
+                                            </button>
+                                        )}
                                         <button onClick={function() { excluirProfissional(p.id); }} style={styles.btnExcluir}>Excluir</button>
                                     </div>
                                 );
                             })}
                         </div>
+                    </div>
+                )}
+
+                {aba === 'comissoes' && (
+                    <div>
+                        <div style={styles.pageHeader}>
+                            <h2 style={styles.pageTitle}>Comissões</h2>
+                            <p style={styles.pageSubtitle}>Total acumulado por profissional (atendimentos concluídos)</p>
+                        </div>
+                        <div style={styles.statsRow}>
+                            <div style={styles.statCard}>
+                                <p style={styles.statNum}>R$ {comissoes.reduce(function(acc, c) { return acc + parseFloat(c.comissao_total || 0); }, 0).toFixed(2)}</p>
+                                <p style={styles.statLabel}>Total em comissões</p>
+                            </div>
+                        </div>
+                        {comissoes.length === 0 && (
+                            <div style={styles.vazio}>
+                                <p style={styles.vazioTexto}>Nenhuma comissão registrada ainda</p>
+                            </div>
+                        )}
+                        {comissoes.map(function(c) {
+                            return (
+                                <div key={c.id} style={styles.agendamentoCard}>
+                                    <div style={styles.agendamentoInfo}>
+                                        <p style={styles.clienteNome}>{c.nome}</p>
+                                        <p style={styles.agendamentoDetalhe}>{c.especialidade}</p>
+                                        <p style={styles.agendamentoDetalhe}>{c.atendimentos_concluidos} atendimento(s) concluído(s)</p>
+                                    </div>
+                                    <p style={styles.comissaoValorGrande}>R$ {parseFloat(c.comissao_total).toFixed(2)}</p>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
 
@@ -314,7 +398,14 @@ const styles = {
     btnExcluir: { marginTop: '12px', padding: '6px 14px', background: 'transparent', color: '#e05252', border: '1px solid #e05252', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' },
     linkBox: { background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '8px', padding: '16px', marginBottom: '16px' },
     linkTexto: { color: '#c9a96e', fontSize: '13px', margin: 0, wordBreak: 'break-all' },
-    linkDica: { color: '#444444', fontSize: '12px', marginTop: '16px', lineHeight: '1.6' }
+    linkDica: { color: '#444444', fontSize: '12px', marginTop: '16px', lineHeight: '1.6' },
+    statusAtivo: { color: '#5fbf6e', fontSize: '11px', margin: '4px 0 8px' },
+    statusPendente: { color: '#c9a96e', fontSize: '11px', margin: '4px 0 8px' },
+    btnLinkProfissional: { marginTop: '4px', padding: '6px 14px', background: 'transparent', color: '#c9a96e', border: '1px solid #c9a96e', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', width: '100%' },
+    conviteCard: { background: '#1f1a0f', border: '1px solid #3a3020', borderRadius: '12px', padding: '24px', marginBottom: '28px' },
+    conviteTitulo: { color: '#c9a96e', fontSize: '14px', fontWeight: '700', margin: '0 0 8px' },
+    conviteTexto: { color: '#888888', fontSize: '13px', margin: '0 0 12px' },
+    comissaoValorGrande: { color: '#c9a96e', fontSize: '20px', fontWeight: '700' }
 };
 
 export default Dashboard;

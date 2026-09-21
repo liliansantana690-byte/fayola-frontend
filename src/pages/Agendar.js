@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 
 function Agendar() {
-    const estabelecimentoId = new URLSearchParams(window.location.search).get('id');
+    const params = new URLSearchParams(window.location.search);
+    const estabelecimentoId = params.get('id');
+    const profissionalIdUrl = params.get('profissional'); // trava o profissional quando vem de um link individual
+
     const [servicos, setServicos] = useState([]);
     const [profissionais, setProfissionais] = useState([]);
     const [estabelecimento, setEstabelecimento] = useState(null);
@@ -17,9 +20,9 @@ function Agendar() {
     });
     const [sucesso, setSucesso] = useState(false);
     const [erro, setErro] = useState('');
-    const [pagamento, setPagamento] = useState(null); // { qr_code, qr_code_base64, expira_em }
+    const [pagamento, setPagamento] = useState(null);
     const [agendamentoId, setAgendamentoId] = useState(null);
-    const [statusPagamento, setStatusPagamento] = useState('aguardando'); // aguardando | expirado
+    const [statusPagamento, setStatusPagamento] = useState('aguardando');
     const [segundosRestantes, setSegundosRestantes] = useState(0);
     const [copiado, setCopiado] = useState(false);
     const pollingRef = useRef(null);
@@ -31,6 +34,13 @@ function Agendar() {
         api.get('/servicos/' + estabelecimentoId).then(function(r) { setServicos(r.data); });
         api.get('/profissionais/' + estabelecimentoId).then(function(r) { setProfissionais(r.data); });
     }, [estabelecimentoId]);
+
+    // Quando o link já vem com um profissional definido, trava a escolha automaticamente
+    useEffect(function() {
+        if (profissionalIdUrl && profissionais.length > 0) {
+            setForm(function(f) { return { ...f, profissional_id: profissionalIdUrl }; });
+        }
+    }, [profissionalIdUrl, profissionais]);
 
     useEffect(function() {
         return function() {
@@ -127,6 +137,7 @@ function Agendar() {
     }
 
     const servicoSelecionado = servicos.find(function(s) { return s.id == form.servico_id; });
+    const profissionalTravado = profissionalIdUrl ? profissionais.find(function(p) { return p.id == profissionalIdUrl; }) : null;
 
     if (!estabelecimentoId) {
         return (
@@ -147,7 +158,7 @@ function Agendar() {
                         setSucesso(false);
                         setPagamento(null);
                         setAgendamentoId(null);
-                        setForm({ servico_id: '', profissional_id: '', data_hora: '', cliente_nome: '', cliente_whatsapp: '' });
+                        setForm({ servico_id: '', profissional_id: profissionalIdUrl || '', data_hora: '', cliente_nome: '', cliente_whatsapp: '' });
                         setEtapa(1);
                     }}>
                         Novo Agendamento
@@ -203,20 +214,32 @@ function Agendar() {
                         {etapa === 2 && (
                             <div>
                                 <h3 style={styles.etapaTitulo}>Escolha o Profissional</h3>
-                                <div style={styles.listaSelecao}>
-                                    {profissionais.map(function(p) {
-                                        return (
-                                            <div
-                                                key={p.id}
-                                                style={form.profissional_id == p.id ? styles.itemSelecionado : styles.itemSelecao}
-                                                onClick={function() { setForm({...form, profissional_id: p.id}); }}
-                                            >
-                                                <p style={styles.itemNome}>{p.nome}</p>
-                                                <p style={styles.itemDetalhe}>{p.especialidade}</p>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+
+                                {profissionalIdUrl ? (
+                                    <div style={styles.listaSelecao}>
+                                        <div style={styles.itemSelecionado}>
+                                            <p style={styles.itemNome}>{profissionalTravado ? profissionalTravado.nome : 'Carregando...'}</p>
+                                            <p style={styles.itemDetalhe}>{profissionalTravado ? profissionalTravado.especialidade : ''}</p>
+                                        </div>
+                                        <p style={styles.linkTravadoAviso}>Este link é exclusivo deste profissional.</p>
+                                    </div>
+                                ) : (
+                                    <div style={styles.listaSelecao}>
+                                        {profissionais.map(function(p) {
+                                            return (
+                                                <div
+                                                    key={p.id}
+                                                    style={form.profissional_id == p.id ? styles.itemSelecionado : styles.itemSelecao}
+                                                    onClick={function() { setForm({...form, profissional_id: p.id}); }}
+                                                >
+                                                    <p style={styles.itemNome}>{p.nome}</p>
+                                                    <p style={styles.itemDetalhe}>{p.especialidade}</p>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>Data e Horário</label>
                                     <input
@@ -313,6 +336,7 @@ const styles = {
     itemSelecionado: { background: '#1f1a0f', border: '1px solid #c9a96e', borderRadius: '10px', padding: '16px', marginBottom: '8px', cursor: 'pointer' },
     itemNome: { color: '#ffffff', fontSize: '15px', fontWeight: '600', margin: '0 0 4px' },
     itemDetalhe: { color: '#666666', fontSize: '13px', margin: 0 },
+    linkTravadoAviso: { color: '#666666', fontSize: '12px', margin: '4px 0 0' },
     inputGroup: { marginBottom: '16px' },
     label: { display: 'block', color: '#888888', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '6px' },
     inputField: { width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#ffffff', fontSize: '14px', boxSizing: 'border-box', outline: 'none' },
