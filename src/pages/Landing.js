@@ -834,14 +834,14 @@ function Landing() {
             </div>
 
             <h3>
-              Seus horários,
+              Agendamento
               <br />
-              em um só lugar.
+              Online.
             </h3>
 
             <p>
-              Visualize seus atendimentos do dia
-              e saiba exatamente o que vem pela frente.
+              Link exclusivo para seus clientes agendarem
+              a qualquer hora, pelo celular.
             </p>
 
           </motion.article>
@@ -875,14 +875,14 @@ function Landing() {
             </div>
 
             <h3>
-              Clientes agendam
+              Notificação
               <br />
-              sem precisar chamar.
+              WhatsApp.
             </h3>
 
             <p>
-              Seu cliente escolhe o serviço,
-              horário e confirma o agendamento.
+              Confirmação automática e lembrete antes do horário
+              pra reduzir faltas.
             </p>
 
           </motion.article>
@@ -916,14 +916,137 @@ function Landing() {
             </div>
 
             <h3>
-              Você trabalha.
+              Agenda
               <br />
-              O Fayola organiza.
+              do Dia.
             </h3>
 
             <p>
-              Menos mensagens perdidas,
-              menos confusão e mais tempo para atender.
+              Visualize todos os agendamentos do dia
+              em tempo real no painel.
+            </p>
+
+          </motion.article>
+
+          {/* CARD 04 */}
+
+          <motion.article
+            className="feature-card feature-card-dark"
+            initial={{
+              opacity: 0,
+              y: 30,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+            transition={{
+              delay: 0.3,
+            }}
+          >
+
+            <div className="feature-number">
+              04
+            </div>
+
+            <div className="feature-icon">
+              ✦
+            </div>
+
+            <h3>
+              Gestão de
+              <br />
+              Serviços.
+            </h3>
+
+            <p>
+              Cadastre serviços com duração, preço e comissão.
+              Edite quando quiser.
+            </p>
+
+          </motion.article>
+
+          {/* CARD 05 */}
+
+          <motion.article
+            className="feature-card feature-card-orange"
+            initial={{
+              opacity: 0,
+              y: 30,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+            transition={{
+              delay: 0.4,
+            }}
+          >
+
+            <div className="feature-number">
+              05
+            </div>
+
+            <div className="feature-icon">
+              +
+            </div>
+
+            <h3>
+              Gestão de
+              <br />
+              Equipe.
+            </h3>
+
+            <p>
+              Adicione profissionais com login próprio
+              pra cada um.
+            </p>
+
+          </motion.article>
+
+          {/* CARD 06 */}
+
+          <motion.article
+            className="feature-card feature-card-violet"
+            initial={{
+              opacity: 0,
+              y: 30,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+            transition={{
+              delay: 0.5,
+            }}
+          >
+
+            <div className="feature-number">
+              06
+            </div>
+
+            <div className="feature-icon">
+              ✓
+            </div>
+
+            <h3>
+              Sinal via
+              <br />
+              PIX.
+            </h3>
+
+            <p>
+              Reduza faltas cobrando um sinal automático
+              na hora do agendamento.
             </p>
 
           </motion.article>
@@ -1043,7 +1166,7 @@ function Landing() {
                 R$
               </small>
 
-              69.99
+              79.99
 
               <span>
                 /mês
