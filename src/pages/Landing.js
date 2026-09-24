@@ -1,225 +1,1139 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import './Landing.css';
 
-function Landing() {
+const WHATSAPP =
+  'https://wa.me/5571985119593?text=Quero%20conhecer%20o%20Fayola';
 
-    return (
-        <div style={styles.container}>
+const WHATSAPP_ASSINAR =
+  'https://wa.me/5571985119593?text=Quero%20assinar%20o%20Fayola';
 
-            {/* NAVBAR */}
-            <nav style={styles.nav}>
-                <div style={styles.navLogo}>
-                    <span style={styles.navLogoIcon}>✦</span>
-                    <span style={styles.navLogoTexto}>FAYOLA</span>
-                </div>
-                <div style={styles.navLinks}>
-                    <a href="#funcionalidades" style={styles.navLink}>Funcionalidades</a>
-                    <a href="#planos" style={styles.navLink}>Planos</a>
-                    <a href="/login" style={styles.navBotao}>Entrar</a>
-                </div>
-            </nav>
+/* =========================================================
+   NÚMERO ANIMADO
+========================================================= */
 
-            {/* HERO */}
-            <section style={styles.hero}>
-                <div style={styles.heroBadge}>✦ Sistema de Agendamento Premium</div>
-                <h1 style={styles.heroTitulo}>
-                    Seu negócio de beleza com<br />
-                    <span style={styles.heroDestaque}>agendamento online</span><br />
-                    e notificação no WhatsApp
-                </h1>
-                <p style={styles.heroSubtitulo}>
-                    Seus clientes agendam pelo celular e recebem confirmação automática no WhatsApp. Você gerencia tudo pelo painel, sem complicação.
-                </p>
-                <div style={styles.heroBotoes}>
-                    <a href="#planos" style={styles.botaoPrimario}>Começar agora — R$ 99.99/mês</a>
-                    <a href="#funcionalidades" style={styles.botaoSecundario}>Ver como funciona</a>
-                </div>
-                <p style={styles.heroObs}>✓ Sem taxa de adesão · ✓ Cancele quando quiser · ✓ Suporte via WhatsApp</p>
-            </section>
+function AnimatedNumber({ value, suffix = '' }) {
+  const [display, setDisplay] = useState(0);
 
-            {/* COMO FUNCIONA */}
-            <section style={styles.secao} id="funcionalidades">
-                <div style={styles.secaoHeader}>
-                    <p style={styles.secaoTag}>COMO FUNCIONA</p>
-                    <h2 style={styles.secaoTitulo}>Simples para você.<br />Simples para seu cliente.</h2>
-                </div>
-                <div style={styles.passosGrid}>
-                    {[
-                        { num: '01', titulo: 'Você cadastra seu negócio', desc: 'Adicione seus serviços, profissionais e horários em menos de 5 minutos.' },
-                        { num: '02', titulo: 'Compartilhe o link', desc: 'Você recebe um link exclusivo. Compartilhe no Instagram, WhatsApp ou onde quiser.' },
-                        { num: '03', titulo: 'Cliente agenda online', desc: 'Seu cliente escolhe o serviço, profissional e horário direto pelo celular.' },
-                        { num: '04', titulo: 'WhatsApp automático', desc: 'Cliente recebe confirmação e lembrete automático 24h antes pelo WhatsApp.' },
-                    ].map(function(p) {
-                        return (
-                            <div key={p.num} style={styles.passoCard}>
-                                <div style={styles.passoNum}>{p.num}</div>
-                                <h3 style={styles.passoTitulo}>{p.titulo}</h3>
-                                <p style={styles.passoDesc}>{p.desc}</p>
-                            </div>
-                        );
-                    })}
-                </div>
-            </section>
+  useEffect(() => {
+    let startTime = null;
+    let animationFrame;
 
-            {/* FUNCIONALIDADES */}
-            <section style={styles.secaoEscura}>
-                <div style={styles.secaoHeader}>
-                    <p style={styles.secaoTag}>FUNCIONALIDADES</p>
-                    <h2 style={styles.secaoTitulo}>Tudo que você precisa<br />em um só lugar</h2>
-                </div>
-                <div style={styles.featuresGrid}>
-                    {[
-                        { icon: '📱', titulo: 'Agendamento Online', desc: 'Link exclusivo para seus clientes agendarem a qualquer hora, pelo celular.' },
-                        { icon: '💬', titulo: 'Notificação WhatsApp', desc: 'Confirmação automática e lembrete 24h antes para reduzir faltas.' },
-                        { icon: '📅', titulo: 'Agenda do Dia', desc: 'Visualize todos os agendamentos do dia em tempo real no painel.' },
-                        { icon: '✂️', titulo: 'Gestão de Serviços', desc: 'Cadastre serviços com duração e preço. Edite quando quiser.' },
-                        { icon: '👤', titulo: 'Gestão de Equipe', desc: 'Adicione seus profissionais e vincule aos serviços.' },
-                        { icon: '💰', titulo: 'Receita do Dia', desc: 'Acompanhe o faturamento do dia direto no painel.' },
-                    ].map(function(f) {
-                        return (
-                            <div key={f.titulo} style={styles.featureCard}>
-                                <div style={styles.featureIcon}>{f.icon}</div>
-                                <h3 style={styles.featureTitulo}>{f.titulo}</h3>
-                                <p style={styles.featureDesc}>{f.desc}</p>
-                            </div>
-                        );
-                    })}
-                </div>
-            </section>
+    const duration = 1400;
 
-            {/* PARA QUEM E */}
-            <section style={styles.secao}>
-                <div style={styles.secaoHeader}>
-                    <p style={styles.secaoTag}>PARA QUEM É</p>
-                    <h2 style={styles.secaoTitulo}>Feito para negócios<br />de beleza e estética</h2>
-                </div>
-                <div style={styles.passosGrid}>
-                    {[
-                        { icon: '💇', titulo: 'Salões de Beleza', desc: 'Corte, coloração, escova, hidratação e muito mais.' },
-                        { icon: '💈', titulo: 'Barbearias', desc: 'Corte masculino, barba, sobrancelha e tratamentos.' },
-                        { icon: '✨', titulo: 'Clínicas de Estética', desc: 'Depilação, limpeza de pele, massagem e procedimentos estéticos.' },
-                        { icon: '💅', titulo: 'Esmalterias', desc: 'Manicure, pedicure, nail art e esmaltação em gel.' },
-                    ].map(function(p) {
-                        return (
-                            <div key={p.titulo} style={styles.passoCard}>
-                                <div style={{ fontSize: '36px', marginBottom: '12px' }}>{p.icon}</div>
-                                <h3 style={styles.passoTitulo}>{p.titulo}</h3>
-                                <p style={styles.passoDesc}>{p.desc}</p>
-                            </div>
-                        );
-                    })}
-                </div>
-            </section>
+    const animate = (timestamp) => {
+      if (!startTime) {
+        startTime = timestamp;
+      }
 
-            {/* PLANOS */}
-            <section style={styles.secaoEscura} id="planos">
-                <div style={styles.secaoHeader}>
-                    <p style={styles.secaoTag}>PLANOS</p>
-                    <h2 style={styles.secaoTitulo}>Um plano simples.<br />Sem surpresas.</h2>
-                </div>
-                <div style={styles.planoCard}>
-                    <div style={styles.planoBadge}>MAIS POPULAR</div>
-                    <h3 style={styles.planoNome}>Plano Profissional</h3>
-                    <div style={styles.planoPreco}>
-                        <span style={styles.planoMoeda}>R$</span>
-                        <span style={styles.planoValor}>99.99</span>
-                        <span style={styles.planoPeriodo}>/mês</span>
-                    </div>
-                    <ul style={styles.planoLista}>
-                        {[
-                            'Agendamento online ilimitado',
-                            'Notificações WhatsApp automáticas',
-                            'Profissionais ilimitados',
-                            'Serviços ilimitados',
-                            'Agenda do dia em tempo real',
-                            'Relatório de receita',
-                            'Suporte via WhatsApp',
-                            'Sem taxa de adesão',
-                        ].map(function(item) {
-                            return <li key={item} style={styles.planoItem}><span style={styles.planoCheck}>✓</span> {item}</li>;
-                        })}
-                    </ul>
-                    <a href="https://wa.me/5571985119593?text=Quero+assinar+o+Fayola" style={styles.botaoPrimario} target="_blank" rel="noreferrer">
-                        Assinar agora
-                    </a>
-                </div>
-            </section>
+      const progress = Math.min(
+        (timestamp - startTime) / duration,
+        1
+      );
 
-            {/* CTA FINAL */}
-            <section style={styles.ctaSecao}>
-                <h2 style={styles.ctaTitulo}>Pronto para modernizar<br />seu negócio?</h2>
-                <p style={styles.ctaSubtitulo}>Comece hoje. Seus clientes vão amar agendar pelo celular.</p>
-                <a href="https://wa.me/5571985119593?text=Quero+conhecer+o+Fayola" style={styles.botaoPrimario} target="_blank" rel="noreferrer">
-                    Falar com a gente no WhatsApp
-                </a>
-            </section>
+      const eased = 1 - Math.pow(1 - progress, 3);
 
-            {/* FOOTER */}
-            <footer style={styles.footer}>
-                <span style={styles.footerLogo}>✦ FAYOLA</span>
-                <p style={styles.footerTexto}>Sistema de agendamento para salões, barbearias e estéticas · Salvador, BA</p>
-                <p style={styles.footerTexto}>© 2026 Fayola. Todos os direitos reservados.</p>
-            </footer>
-        </div>
-    );
+      setDisplay(Math.round(value * eased));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [value]);
+
+  return (
+    <span>
+      {display}
+      {suffix}
+    </span>
+  );
 }
 
-const styles = {
-    container: { background: '#0a0a0a', color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', minHeight: '100vh' },
+/* =========================================================
+   TOKENS DE SERVIÇOS
+   Inspirados no efeito de "physical disturbance"
+   da referência.
+========================================================= */
 
-    nav: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 48px', borderBottom: '1px solid #1a1a1a', position: 'sticky', top: 0, background: '#0a0a0a', zIndex: 100 },
-    navLogo: { display: 'flex', alignItems: 'center', gap: '8px' },
-    navLogoIcon: { color: '#c9a96e', fontSize: '16px' },
-    navLogoTexto: { color: '#ffffff', fontSize: '18px', fontWeight: '700', letterSpacing: '4px' },
-    navLinks: { display: 'flex', alignItems: 'center', gap: '32px' },
-    navLink: { color: '#888888', fontSize: '14px', textDecoration: 'none' },
-    navBotao: { background: '#c9a96e', color: '#0a0a0a', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: '700', textDecoration: 'none', letterSpacing: '1px' },
+function ServiceTokens() {
+  const tokens = [
+    {
+      label: 'Cabelo',
+      icon: '✦',
+      className: 'token-orange',
+      factorX: -1,
+      factorY: -1,
+      rotate: -8,
+      duration: 5,
+    },
+    {
+      label: 'Barba',
+      icon: '✂',
+      className: 'token-violet',
+      factorX: 1,
+      factorY: -0.7,
+      rotate: 7,
+      duration: 6,
+    },
+    {
+      label: 'Estética',
+      icon: '✧',
+      className: 'token-mint',
+      factorX: -0.5,
+      factorY: 1,
+      rotate: 5,
+      duration: 5.5,
+    },
+  ];
 
-    hero: { textAlign: 'center', padding: '100px 48px 80px', maxWidth: '800px', margin: '0 auto' },
-    heroBadge: { display: 'inline-block', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#c9a96e', fontSize: '12px', letterSpacing: '2px', padding: '8px 16px', borderRadius: '20px', marginBottom: '32px' },
-    heroTitulo: { fontSize: '52px', fontWeight: '800', lineHeight: '1.2', margin: '0 0 24px', color: '#ffffff' },
-    heroDestaque: { color: '#c9a96e' },
-    heroSubtitulo: { fontSize: '18px', color: '#888888', lineHeight: '1.6', margin: '0 0 40px', maxWidth: '560px', marginLeft: 'auto', marginRight: 'auto' },
-    heroBotoes: { display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '24px', flexWrap: 'wrap' },
-    botaoPrimario: { background: '#c9a96e', color: '#0a0a0a', padding: '16px 32px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', textDecoration: 'none', letterSpacing: '0.5px', display: 'inline-block' },
-    botaoSecundario: { background: 'transparent', color: '#ffffff', padding: '16px 32px', borderRadius: '10px', fontSize: '15px', border: '1px solid #2a2a2a', textDecoration: 'none', display: 'inline-block' },
-    heroObs: { color: '#444444', fontSize: '13px', margin: 0 },
+  return (
+    <div className="token-cluster">
+      {tokens.map((token, index) => (
+        <motion.div
+          key={token.label}
+          className={`service-token ${token.className}`}
+          animate={{
+            x: [
+              token.factorX * -15,
+              0,
+              token.factorX * 15,
+              0,
+            ],
+            y: [
+              token.factorY * -10,
+              0,
+              token.factorY * 10,
+              0,
+            ],
+            rotate: [
+              token.rotate - 3,
+              token.rotate,
+              token.rotate + 3,
+              token.rotate,
+            ],
+          }}
+          whileHover={{
+            scale: 1.1,
+            y: -12,
+            zIndex: 20,
+          }}
+          transition={{
+            x: {
+              duration: token.duration,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            },
+            y: {
+              duration: token.duration,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            },
+            rotate: {
+              duration: token.duration,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            },
+            scale: {
+              type: 'spring',
+              stiffness: 300,
+              damping: 16,
+            },
+          }}
+          style={{
+            zIndex: index + 1,
+          }}
+        >
+          <span className="token-icon">
+            {token.icon}
+          </span>
 
-    secao: { padding: '80px 48px', maxWidth: '1100px', margin: '0 auto' },
-    secaoEscura: { padding: '80px 48px', background: '#0f0f0f', borderTop: '1px solid #1a1a1a', borderBottom: '1px solid #1a1a1a' },
-    secaoHeader: { textAlign: 'center', marginBottom: '56px' },
-    secaoTag: { color: '#c9a96e', fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', margin: '0 0 12px' },
-    secaoTitulo: { color: '#ffffff', fontSize: '36px', fontWeight: '700', margin: 0, lineHeight: '1.3' },
+          <span>{token.label}</span>
+        </motion.div>
+      ))}
 
-    passosGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' },
-    passoCard: { background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '12px', padding: '28px' },
-    passoNum: { color: '#c9a96e', fontSize: '32px', fontWeight: '800', marginBottom: '12px' },
-    passoTitulo: { color: '#ffffff', fontSize: '16px', fontWeight: '600', margin: '0 0 8px' },
-    passoDesc: { color: '#666666', fontSize: '14px', lineHeight: '1.6', margin: 0 },
+      <motion.div
+        className="token-center"
+        animate={{
+          y: [0, -5, 0],
+          rotate: [0, 2, 0, -2, 0],
+        }}
+        transition={{
+          duration: 5,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      >
+        F
+      </motion.div>
+    </div>
+  );
+}
 
-    featuresGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', maxWidth: '1100px', margin: '0 auto' },
-    featureCard: { background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '12px', padding: '28px' },
-    featureIcon: { fontSize: '32px', marginBottom: '16px' },
-    featureTitulo: { color: '#ffffff', fontSize: '16px', fontWeight: '600', margin: '0 0 8px' },
-    featureDesc: { color: '#666666', fontSize: '14px', lineHeight: '1.6', margin: 0 },
+/* =========================================================
+   NOTIFICAÇÃO FLUTUANTE
+========================================================= */
 
-    planoCard: { background: '#1a1a1a', border: '1px solid #c9a96e', borderRadius: '16px', padding: '40px', maxWidth: '420px', margin: '0 auto', textAlign: 'center', position: 'relative' },
-    planoBadge: { position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: '#c9a96e', color: '#0a0a0a', fontSize: '11px', fontWeight: '700', letterSpacing: '2px', padding: '6px 16px', borderRadius: '20px' },
-    planoNome: { color: '#ffffff', fontSize: '20px', fontWeight: '700', margin: '0 0 24px' },
-    planoPreco: { margin: '0 0 32px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '4px' },
-    planoMoeda: { color: '#c9a96e', fontSize: '20px', fontWeight: '700', paddingBottom: '8px' },
-    planoValor: { color: '#c9a96e', fontSize: '64px', fontWeight: '800', lineHeight: 1 },
-    planoPeriodo: { color: '#666666', fontSize: '16px', paddingBottom: '8px' },
-    planoLista: { listStyle: 'none', padding: 0, margin: '0 0 32px', textAlign: 'left' },
-    planoItem: { color: '#888888', fontSize: '14px', padding: '8px 0', borderBottom: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', gap: '10px' },
-    planoCheck: { color: '#c9a96e', fontWeight: '700', fontSize: '14px' },
+function FloatingNotification({
+  children,
+  className = '',
+  delay = 0,
+}) {
+  return (
+    <motion.div
+      className={`floating-notification ${className}`}
+      initial={{
+        opacity: 0,
+        y: 20,
+      }}
+      animate={{
+        opacity: 1,
+        y: [0, -8, 0],
+      }}
+      transition={{
+        opacity: {
+          duration: 0.7,
+          delay,
+        },
+        y: {
+          duration: 4,
+          repeat: Infinity,
+          ease: 'easeInOut',
+          delay,
+        },
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
-    ctaSecao: { textAlign: 'center', padding: '100px 48px', background: '#0f0f0f', borderTop: '1px solid #1a1a1a' },
-    ctaTitulo: { color: '#ffffff', fontSize: '40px', fontWeight: '800', margin: '0 0 16px', lineHeight: '1.2' },
-    ctaSubtitulo: { color: '#666666', fontSize: '18px', margin: '0 0 40px' },
+/* =========================================================
+   LANDING
+========================================================= */
 
-    footer: { textAlign: 'center', padding: '40px 48px', borderTop: '1px solid #1a1a1a' },
-    footerLogo: { color: '#c9a96e', fontSize: '16px', fontWeight: '700', letterSpacing: '3px', display: 'block', marginBottom: '12px' },
-    footerTexto: { color: '#444444', fontSize: '13px', margin: '4px 0' }
-};
+function Landing() {
+  return (
+    <main className="fayola-page">
+
+      {/* =====================================================
+          AURAS DE FUNDO
+      ====================================================== */}
+
+      <div className="background-aura aura-one" />
+      <div className="background-aura aura-two" />
+      <div className="background-aura aura-three" />
+
+      {/* =====================================================
+          NAVBAR
+      ====================================================== */}
+
+      <header className="fayola-nav">
+
+        <a href="/" className="fayola-logo">
+          <span className="logo-mark">F</span>
+          <span>FAYOLA</span>
+        </a>
+
+        <nav className="desktop-nav">
+          <a href="#recursos">
+            Recursos
+          </a>
+
+          <a href="#como-funciona">
+            Como funciona
+          </a>
+
+          <a href="#precos">
+            Preços
+          </a>
+        </nav>
+
+        <div className="nav-actions">
+
+          <a
+            href="/login"
+            className="nav-login"
+          >
+            Entrar
+          </a>
+
+          <a
+            href={WHATSAPP_ASSINAR}
+            target="_blank"
+            rel="noreferrer"
+            className="nav-button"
+          >
+            Começar agora
+          </a>
+
+        </div>
+
+      </header>
+
+      {/* =====================================================
+          HERO
+      ====================================================== */}
+
+      <section className="hero-section">
+
+        {/* TEXTO */}
+
+        <div className="hero-copy">
+
+          <motion.div
+            className="eyebrow"
+            initial={{
+              opacity: 0,
+              y: 15,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.7,
+            }}
+          >
+            <span className="eyebrow-dot" />
+
+            O jeito simples de organizar seu negócio
+          </motion.div>
+
+          <motion.h1
+            initial={{
+              opacity: 0,
+              y: 35,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.8,
+              delay: 0.1,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            Menos confusão.
+            <br />
+
+            <span>Mais tempo</span>
+            <br />
+
+            para cuidar.
+          </motion.h1>
+
+          <motion.p
+            className="hero-description"
+            initial={{
+              opacity: 0,
+              y: 25,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.7,
+              delay: 0.25,
+            }}
+          >
+            O Fayola organiza seus agendamentos,
+            clientes e horários em um só lugar —
+            para você focar no que realmente importa:
+            seu trabalho.
+          </motion.p>
+
+          <motion.div
+            className="hero-actions"
+            initial={{
+              opacity: 0,
+              y: 20,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.7,
+              delay: 0.4,
+            }}
+          >
+
+            <a
+              href={WHATSAPP_ASSINAR}
+              target="_blank"
+              rel="noreferrer"
+              className="primary-button"
+            >
+              Quero conhecer o Fayola
+              <span>↗</span>
+            </a>
+
+            <a
+              href="#como-funciona"
+              className="secondary-button"
+            >
+              Ver como funciona
+              <span>↓</span>
+            </a>
+
+          </motion.div>
+
+          <motion.div
+            className="hero-trust"
+            initial={{
+              opacity: 0,
+            }}
+            animate={{
+              opacity: 1,
+            }}
+            transition={{
+              duration: 0.8,
+              delay: 0.65,
+            }}
+          >
+
+            <div className="avatars">
+              <span>J</span>
+              <span>M</span>
+              <span>A</span>
+              <span>+</span>
+            </div>
+
+            <div>
+              <strong>
+                Feito para profissionais
+              </strong>
+
+              <small>
+                que valorizam seu tempo
+              </small>
+            </div>
+
+          </motion.div>
+
+        </div>
+
+        {/* =================================================
+            VISUAL DO HERO
+        ================================================== */}
+
+        <motion.div
+          className="hero-visual"
+          initial={{
+            opacity: 0,
+            scale: 0.92,
+            y: 25,
+          }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 1,
+            delay: 0.2,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+        >
+
+          <div className="hero-orbit orbit-one" />
+
+          <div className="hero-orbit orbit-two" />
+
+          <div className="hero-orbit orbit-three" />
+
+          {/* TOKENS */}
+
+          <ServiceTokens />
+
+          {/* =================================================
+              CELULAR
+          ================================================== */}
+
+          <motion.div
+            className="phone"
+            animate={{
+              y: [0, -10, 0],
+              rotate: [
+                0,
+                1,
+                0,
+                -1,
+                0,
+              ],
+            }}
+            transition={{
+              duration: 7,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          >
+
+            <div className="phone-notch" />
+
+            <div className="phone-screen">
+
+              {/* HEADER */}
+
+              <div className="phone-header">
+
+                <div>
+                  <span>Olá, Camila</span>
+
+                  <strong>
+                    Seu dia
+                  </strong>
+                </div>
+
+                <div className="profile-circle">
+                  C
+                </div>
+
+              </div>
+
+              {/* DATA */}
+
+              <div className="date-row">
+
+                <button type="button">
+                  ‹
+                </button>
+
+                <strong>
+                  Quarta, 24
+                </strong>
+
+                <button type="button">
+                  ›
+                </button>
+
+              </div>
+
+              {/* CALENDÁRIO */}
+
+              <div className="calendar-strip">
+
+                <div>
+                  <small>SEG</small>
+                  <span>22</span>
+                </div>
+
+                <div>
+                  <small>TER</small>
+                  <span>23</span>
+                </div>
+
+                <div className="active-day">
+                  <small>QUA</small>
+                  <span>24</span>
+                </div>
+
+                <div>
+                  <small>QUI</small>
+                  <span>25</span>
+                </div>
+
+                <div>
+                  <small>SEX</small>
+                  <span>26</span>
+                </div>
+
+              </div>
+
+              {/* AGENDA */}
+
+              <div className="agenda">
+
+                <div className="agenda-item">
+
+                  <span className="agenda-time">
+                    09:00
+                  </span>
+
+                  <div className="appointment appointment-orange">
+                    <strong>
+                      Mariana Costa
+                    </strong>
+
+                    <small>
+                      Corte + Escova
+                    </small>
+                  </div>
+
+                </div>
+
+                <div className="agenda-item">
+
+                  <span className="agenda-time">
+                    10:30
+                  </span>
+
+                  <div className="appointment appointment-violet">
+                    <strong>
+                      Juliana Alves
+                    </strong>
+
+                    <small>
+                      Coloração
+                    </small>
+                  </div>
+
+                </div>
+
+                <div className="agenda-item">
+
+                  <span className="agenda-time">
+                    13:00
+                  </span>
+
+                  <div className="appointment appointment-mint">
+                    <strong>
+                      Paula Santos
+                    </strong>
+
+                    <small>
+                      Manicure
+                    </small>
+                  </div>
+
+                </div>
+
+                <div className="agenda-item">
+
+                  <span className="agenda-time">
+                    15:30
+                  </span>
+
+                  <div className="appointment appointment-rose">
+                    <strong>
+                      Beatriz Lima
+                    </strong>
+
+                    <small>
+                      Design de sobrancelha
+                    </small>
+                  </div>
+
+                </div>
+
+              </div>
+
+              <button
+                type="button"
+                className="phone-add"
+              >
+                +
+              </button>
+
+            </div>
+
+          </motion.div>
+
+          {/* =================================================
+              NOTIFICAÇÕES
+          ================================================== */}
+
+          <FloatingNotification
+            className="notification-top"
+            delay={0.7}
+          >
+
+            <div className="notification-icon notification-green">
+              ✓
+            </div>
+
+            <div>
+              <strong>
+                Novo agendamento
+              </strong>
+
+              <span>
+                Mariana confirmou
+              </span>
+            </div>
+
+          </FloatingNotification>
+
+          <FloatingNotification
+            className="notification-bottom"
+            delay={1.1}
+          >
+
+            <div className="notification-icon notification-orange">
+              ↗
+            </div>
+
+            <div>
+              <strong>
+                Agenda organizada
+              </strong>
+
+              <span>
+                4 horários hoje
+              </span>
+            </div>
+
+          </FloatingNotification>
+
+        </motion.div>
+
+      </section>
+
+      {/* =====================================================
+          ESTATÍSTICAS
+      ====================================================== */}
+
+      <section className="stats-section">
+
+        <div className="stats-intro">
+
+          <span>
+            FAYOLA
+          </span>
+
+          <p>
+            Tudo que você precisa para deixar
+            sua agenda trabalhar por você.
+          </p>
+
+        </div>
+
+        <div className="stat">
+
+          <strong>
+            <AnimatedNumber
+              value={100}
+              suffix="%"
+            />
+          </strong>
+
+          <span>
+            agenda centralizada
+          </span>
+
+        </div>
+
+        <div className="stat">
+
+          <strong>
+            <AnimatedNumber
+              value={24}
+              suffix="h"
+            />
+          </strong>
+
+          <span>
+            acesso aos seus horários
+          </span>
+
+        </div>
+
+        <div className="stat">
+
+          <strong>
+            <AnimatedNumber
+              value={0}
+              suffix=""
+            />
+          </strong>
+
+          <span>
+            papel para controlar sua agenda
+          </span>
+
+        </div>
+
+      </section>
+
+      {/* =====================================================
+          COMO FUNCIONA
+      ====================================================== */}
+
+      <section
+        className="features-section"
+        id="como-funciona"
+      >
+
+        <div className="section-heading">
+
+          <motion.span
+            className="section-label"
+            initial={{
+              opacity: 0,
+              y: 15,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+          >
+            COMO FUNCIONA
+          </motion.span>
+
+          <motion.h2
+            initial={{
+              opacity: 0,
+              y: 25,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+            transition={{
+              delay: 0.1,
+            }}
+          >
+            Seu negócio organizado
+            <br />
+            <em>
+              sem complicação.
+            </em>
+          </motion.h2>
+
+        </div>
+
+        <div className="feature-grid">
+
+          {/* CARD 01 */}
+
+          <motion.article
+            className="feature-card feature-card-dark"
+            initial={{
+              opacity: 0,
+              y: 30,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+          >
+
+            <div className="feature-number">
+              01
+            </div>
+
+            <div className="feature-icon">
+              ✦
+            </div>
+
+            <h3>
+              Seus horários,
+              <br />
+              em um só lugar.
+            </h3>
+
+            <p>
+              Visualize seus atendimentos do dia
+              e saiba exatamente o que vem pela frente.
+            </p>
+
+          </motion.article>
+
+          {/* CARD 02 */}
+
+          <motion.article
+            className="feature-card feature-card-orange"
+            initial={{
+              opacity: 0,
+              y: 30,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+            transition={{
+              delay: 0.1,
+            }}
+          >
+
+            <div className="feature-number">
+              02
+            </div>
+
+            <div className="feature-icon">
+              +
+            </div>
+
+            <h3>
+              Clientes agendam
+              <br />
+              sem precisar chamar.
+            </h3>
+
+            <p>
+              Seu cliente escolhe o serviço,
+              horário e confirma o agendamento.
+            </p>
+
+          </motion.article>
+
+          {/* CARD 03 */}
+
+          <motion.article
+            className="feature-card feature-card-violet"
+            initial={{
+              opacity: 0,
+              y: 30,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+            transition={{
+              delay: 0.2,
+            }}
+          >
+
+            <div className="feature-number">
+              03
+            </div>
+
+            <div className="feature-icon">
+              ✓
+            </div>
+
+            <h3>
+              Você trabalha.
+              <br />
+              O Fayola organiza.
+            </h3>
+
+            <p>
+              Menos mensagens perdidas,
+              menos confusão e mais tempo para atender.
+            </p>
+
+          </motion.article>
+
+        </div>
+
+      </section>
+
+      {/* =====================================================
+          CTA
+      ====================================================== */}
+
+      <section
+        className="cta-section"
+        id="recursos"
+      >
+
+        <div className="cta-aura" />
+
+        <motion.div
+          className="cta-content"
+          initial={{
+            opacity: 0,
+            y: 30,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: true,
+          }}
+        >
+
+          <span className="section-label">
+            PRONTO PARA COMEÇAR?
+          </span>
+
+          <h2>
+            Sua agenda merece
+            <br />
+            <span>
+              menos bagunça.
+            </span>
+          </h2>
+
+          <p>
+            Deixe o Fayola cuidar da organização
+            enquanto você cuida dos seus clientes.
+          </p>
+
+          <a
+            href={WHATSAPP}
+            target="_blank"
+            rel="noreferrer"
+            className="cta-button"
+          >
+            Falar com a gente no WhatsApp
+            <span>↗</span>
+          </a>
+
+        </motion.div>
+
+      </section>
+
+      {/* =====================================================
+          PREÇOS
+      ====================================================== */}
+
+      <section
+        className="pricing-section"
+        id="precos"
+      >
+
+        <div className="section-heading">
+
+          <span className="section-label">
+            SIMPLES ASSIM
+          </span>
+
+          <h2>
+            Comece pelo próximo
+            <br />
+            <em>
+              agendamento.
+            </em>
+          </h2>
+
+        </div>
+
+        <div className="pricing-card">
+
+          <div>
+
+            <span className="pricing-label">
+              PLANO FAYOLA
+            </span>
+
+            <h3>
+              Tudo para organizar
+              <br />
+              sua rotina.
+            </h3>
+
+            <p>
+              Uma solução simples para profissionais
+              que querem ter controle da própria agenda.
+            </p>
+
+          </div>
+
+          <div className="pricing-right">
+
+            <div className="price">
+
+              <small>
+                R$
+              </small>
+
+              69.99
+
+              <span>
+                /mês
+              </span>
+
+            </div>
+
+            <a
+              href={WHATSAPP_ASSINAR}
+              target="_blank"
+              rel="noreferrer"
+              className="pricing-button"
+            >
+              Assinar agora
+              <span>↗</span>
+            </a>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* =====================================================
+          FOOTER
+      ====================================================== */}
+
+      <footer className="fayola-footer">
+
+        <div className="footer-brand">
+
+          <div className="fayola-logo">
+
+            <span className="logo-mark">
+              F
+            </span>
+
+            <span>
+              FAYOLA
+            </span>
+
+          </div>
+
+          <p>
+            Sistema de agendamento para salões,
+            barbearias e estéticas.
+          </p>
+
+        </div>
+
+        <div className="footer-links">
+
+          <a href="#recursos">
+            Recursos
+          </a>
+
+          <a href="#como-funciona">
+            Como funciona
+          </a>
+
+          <a href="#precos">
+            Preços
+          </a>
+
+          <a
+            href={WHATSAPP}
+            target="_blank"
+            rel="noreferrer"
+          >
+            WhatsApp
+          </a>
+
+        </div>
+
+        <div className="footer-bottom">
+
+          <span>
+            © 2026 Fayola. Todos os direitos reservados.
+          </span>
+
+          <span>
+            Feito para quem cuida.
+          </span>
+
+        </div>
+
+      </footer>
+
+    </main>
+  );
+}
 
 export default Landing;
