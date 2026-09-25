@@ -7,6 +7,8 @@ function Dashboard({ estabelecimento }) {
     const [servicos, setServicos] = useState([]);
     const [profissionais, setProfissionais] = useState([]);
     const [comissoes, setComissoes] = useState([]);
+    const [mpConectado, setMpConectado] = useState(false);
+    const [conectandoMp, setConectandoMp] = useState(false);
     const [aba, setAba] = useState('hoje');
     const [novoServico, setNovoServico] = useState({ nome: '', duracao_minutos: 60, preco: '', comissao_percentual: '' });
     const [novoProfissional, setNovoProfissional] = useState({ nome: '', especialidade: '', whatsapp: '' });
@@ -25,11 +27,13 @@ function Dashboard({ estabelecimento }) {
             const s = await api.get('/servicos/' + estabelecimento.estabelecimento_id);
             const p = await api.get('/profissionais', { headers });
             const c = await api.get('/profissionais/comissoes', { headers });
+            const mp = await api.get('/mercadopago/status', { headers });
             setAgendamentos(a.data);
             setTodosAgendamentos(todos.data);
             setServicos(s.data);
             setProfissionais(p.data);
             setComissoes(c.data);
+            setMpConectado(mp.data.conectado);
         } catch (err) {
             console.error(err);
         }
@@ -71,6 +75,17 @@ function Dashboard({ estabelecimento }) {
         carregarDados();
     }
 
+    async function conectarMercadoPago() {
+        setConectandoMp(true);
+        try {
+            const resp = await api.get('/mercadopago/conectar', { headers });
+            window.location.href = resp.data.url;
+        } catch (err) {
+            alert('Erro ao gerar conexão com o Mercado Pago. Tente novamente.');
+            setConectandoMp(false);
+        }
+    }
+
     function copiarLink() {
         navigator.clipboard.writeText(linkAgendamento);
         setLinkCopiado(true);
@@ -110,12 +125,16 @@ function Dashboard({ estabelecimento }) {
                         { id: 'servicos', icon: '✂️', label: 'Serviços' },
                         { id: 'profissionais', icon: '👤', label: 'Equipe' },
                         { id: 'comissoes', icon: '💰', label: 'Comissões' },
+                        { id: 'pagamentos', icon: '💳', label: 'Pagamentos' },
                         { id: 'link', icon: '🔗', label: 'Meu Link' }
                     ].map(function(item) {
                         return (
                             <button key={item.id} onClick={function() { setAba(item.id); }} style={aba === item.id ? styles.navItemAtivo : styles.navItem}>
                                 <span style={styles.navIcon}>{item.icon}</span>
                                 <span>{item.label}</span>
+                                {item.id === 'pagamentos' && !mpConectado && (
+                                    <span style={styles.avisoBolinha}>!</span>
+                                )}
                             </button>
                         );
                     })}
@@ -133,6 +152,12 @@ function Dashboard({ estabelecimento }) {
                             <h2 style={styles.pageTitle}>Agenda do Dia</h2>
                             <p style={styles.pageSubtitle}>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
                         </div>
+                        {!mpConectado && (
+                            <div style={styles.avisoMpCard}>
+                                <p style={styles.avisoMpTexto}>⚠️ Você ainda não conectou o Mercado Pago. Seus clientes não conseguem agendar (nem pagar o sinal) até você conectar.</p>
+                                <button style={styles.botao} onClick={function() { setAba('pagamentos'); }}>Conectar agora</button>
+                            </div>
+                        )}
                         <div style={styles.statsRow}>
                             <div style={styles.statCard}>
                                 <p style={styles.statNum}>{agendamentos.length}</p>
@@ -330,6 +355,39 @@ function Dashboard({ estabelecimento }) {
                     </div>
                 )}
 
+                {aba === 'pagamentos' && (
+                    <div>
+                        <div style={styles.pageHeader}>
+                            <h2 style={styles.pageTitle}>Pagamentos</h2>
+                            <p style={styles.pageSubtitle}>Conecte sua conta Mercado Pago para receber os sinais dos seus clientes</p>
+                        </div>
+
+                        {mpConectado ? (
+                            <div style={styles.mpConectadoCard}>
+                                <p style={styles.mpConectadoIcone}>✓</p>
+                                <p style={styles.mpConectadoTitulo}>Mercado Pago conectado</p>
+                                <p style={styles.mpConectadoTexto}>Os sinais pagos pelos seus clientes caem direto na sua conta Mercado Pago.</p>
+                                <button style={styles.botaoSecundario} onClick={conectarMercadoPago} disabled={conectandoMp}>
+                                    {conectandoMp ? 'Abrindo...' : 'Reconectar / trocar de conta'}
+                                </button>
+                            </div>
+                        ) : (
+                            <div style={styles.mpDesconectadoCard}>
+                                <p style={styles.mpDesconectadoIcone}>💳</p>
+                                <p style={styles.mpConectadoTitulo}>Conecte sua conta Mercado Pago</p>
+                                <p style={styles.mpConectadoTexto}>
+                                    Sem essa conexão, seus clientes não conseguem agendar (o sistema não gera o PIX do sinal).
+                                    Você será direcionado ao Mercado Pago pra autorizar o Fayola — o dinheiro do sinal cai
+                                    direto na SUA conta, o Fayola nunca recebe esse valor.
+                                </p>
+                                <button style={styles.botao} onClick={conectarMercadoPago} disabled={conectandoMp}>
+                                    {conectandoMp ? 'Abrindo...' : '🔗 Conectar Mercado Pago'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {aba === 'link' && (
                     <div>
                         <div style={styles.pageHeader}>
@@ -360,9 +418,10 @@ const styles = {
     logoIcon: { fontSize: '20px', color: '#c9a96e', marginBottom: '4px' },
     logo: { color: '#ffffff', fontSize: '18px', fontWeight: '700', letterSpacing: '4px', margin: 0 },
     nav: { padding: '24px 12px', flex: 1 },
-    navItem: { width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'transparent', border: 'none', color: '#666666', fontSize: '14px', borderRadius: '8px', cursor: 'pointer', marginBottom: '4px', textAlign: 'left' },
-    navItemAtivo: { width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#c9a96e', fontSize: '14px', borderRadius: '8px', cursor: 'pointer', marginBottom: '4px', textAlign: 'left' },
+    navItem: { width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'transparent', border: 'none', color: '#666666', fontSize: '14px', borderRadius: '8px', cursor: 'pointer', marginBottom: '4px', textAlign: 'left', position: 'relative' },
+    navItemAtivo: { width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#c9a96e', fontSize: '14px', borderRadius: '8px', cursor: 'pointer', marginBottom: '4px', textAlign: 'left', position: 'relative' },
     navIcon: { fontSize: '16px' },
+    avisoBolinha: { position: 'absolute', right: '12px', background: '#e05252', color: '#fff', width: '16px', height: '16px', borderRadius: '50%', fontSize: '10px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center' },
     estabelecimentoInfo: { padding: '24px', borderTop: '1px solid #222222' },
     estabelecimentoNome: { color: '#ffffff', fontSize: '13px', fontWeight: '600', margin: '0 0 4px' },
     estabelecimentoSub: { color: '#444444', fontSize: '11px', margin: 0, textTransform: 'uppercase', letterSpacing: '1px' },
@@ -370,6 +429,8 @@ const styles = {
     pageHeader: { marginBottom: '32px' },
     pageTitle: { color: '#ffffff', fontSize: '24px', fontWeight: '700', margin: '0 0 8px' },
     pageSubtitle: { color: '#666666', fontSize: '14px', margin: 0 },
+    avisoMpCard: { background: '#2a1a0f', border: '1px solid #5a3a20', borderRadius: '12px', padding: '20px 24px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' },
+    avisoMpTexto: { color: '#e0b080', fontSize: '13px', margin: 0, flex: 1 },
     statsRow: { display: 'flex', gap: '16px', marginBottom: '32px' },
     statCard: { background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '12px', padding: '20px 24px', flex: 1 },
     statNum: { color: '#c9a96e', fontSize: '24px', fontWeight: '700', margin: '0 0 4px' },
@@ -389,6 +450,7 @@ const styles = {
     input: { width: '100%', padding: '12px 16px', marginBottom: '12px', borderRadius: '8px', border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#ffffff', fontSize: '14px', boxSizing: 'border-box', outline: 'none' },
     inputRow: { display: 'flex' },
     botao: { padding: '12px 24px', background: '#c9a96e', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer', marginTop: '4px' },
+    botaoSecundario: { padding: '12px 24px', background: 'transparent', color: '#c9a96e', border: '1px solid #c9a96e', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer', marginTop: '4px' },
     listaGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' },
     servicoCard: { background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '12px', padding: '24px', textAlign: 'center' },
     servicoIcone: { fontSize: '32px', marginBottom: '12px' },
@@ -405,7 +467,13 @@ const styles = {
     conviteCard: { background: '#1f1a0f', border: '1px solid #3a3020', borderRadius: '12px', padding: '24px', marginBottom: '28px' },
     conviteTitulo: { color: '#c9a96e', fontSize: '14px', fontWeight: '700', margin: '0 0 8px' },
     conviteTexto: { color: '#888888', fontSize: '13px', margin: '0 0 12px' },
-    comissaoValorGrande: { color: '#c9a96e', fontSize: '20px', fontWeight: '700' }
+    comissaoValorGrande: { color: '#c9a96e', fontSize: '20px', fontWeight: '700' },
+    mpConectadoCard: { background: '#0f2418', border: '1px solid #1e4a30', borderRadius: '12px', padding: '40px', textAlign: 'center', maxWidth: '480px' },
+    mpConectadoIcone: { fontSize: '40px', color: '#5fbf6e', margin: '0 0 12px' },
+    mpConectadoTitulo: { color: '#ffffff', fontSize: '18px', fontWeight: '700', margin: '0 0 8px' },
+    mpConectadoTexto: { color: '#888888', fontSize: '13px', lineHeight: '1.6', margin: '0 0 20px' },
+    mpDesconectadoCard: { background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '12px', padding: '40px', textAlign: 'center', maxWidth: '480px' },
+    mpDesconectadoIcone: { fontSize: '40px', margin: '0 0 12px' }
 };
 
 export default Dashboard;
