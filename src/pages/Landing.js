@@ -1166,7 +1166,7 @@ function Landing() {
                 R$
               </small>
 
-              79.99
+              199.99
 
               <span>
                 /mês
