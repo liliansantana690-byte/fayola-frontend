@@ -3329,217 +3329,387 @@ export default function Landing() {
           ===================================================== */}
 
       <section
-        className="section"
-        id="preco"
+  className="section"
+  id="preco"
+>
+
+  <div className="container">
+
+    <Reveal>
+
+      <div className="section-label">
+        Simples e direto
+      </div>
+
+      <h2 className="section-title">
+        Um sistema para o seu
+        <br />
+        <em>estúdio crescer.</em>
+      </h2>
+
+    </Reveal>
+
+    <Reveal delay={.1}>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 18,
+          alignItems: "stretch",
+        }}
       >
 
-        <div className="container">
+        {/* =====================================================
+            FAYOLA SOLO
+            ===================================================== */}
 
-          <Reveal>
+        <div className="price-card">
 
-            <div className="section-label">
-              Simples e direto
-            </div>
+          <div className="price-grid">
 
-            <h2 className="section-title">
-              Um sistema para o seu
-              <br />
-              <em>estúdio crescer.</em>
-            </h2>
+            <div>
 
-          </Reveal>
-
-          <Reveal delay={.1}>
-
-            <div className="price-card">
-
-              <div className="price-grid">
-
-                <div>
-
-                  <div className="price-label">
-                    FAYOLA PRO
-                  </div>
-
-                  <h3>
-                    Tudo organizado.
-                  </h3>
-
-                  <p className="price-description">
-                    Para tatuadores e estúdios que querem
-                    profissionalizar o atendimento sem
-                    transformar o próprio trabalho em
-                    burocracia.
-                  </p>
-
-                  <div className="price-value">
-                    <small>R$</small>
-                    <strong>199,99</strong>
-                    <span>/mês</span>
-                  </div>
-
-                  <MagneticButton
-                    href={WHATSAPP_ASSINAR}
-                    className="primary-button price-button"
-                  >
-                    Quero começar
-                    <span>→</span>
-                  </MagneticButton>
-
-                </div>
-
-                <div className="price-features">
-
-                  {[
-                    "Link público para seus clientes",
-                    "Pedidos de tatuagem",
-                    "Referências e informações do projeto",
-                    "Tamanho e serviços",
-                    "Agenda",
-                    "Clientes",
-                    "Sinal via PIX",
-                    "Notificações e lembretes",
-                    "Profissionais e comissões",
-                    "Acesso individual para profissionais",
-                  ].map((item) => (
-                    <div
-                      className="price-feature"
-                      key={item}
-                    >
-                      <span>✓</span>
-                      {item}
-                    </div>
-                  ))}
-
-                </div>
-
+              <div className="price-label">
+                FAYOLA SOLO
               </div>
 
-            </div>
+              <h3>
+                Para você.
+              </h3>
 
-          </Reveal>
+              <p className="price-description">
+                Para tatuador independente que quer
+                organizar o atendimento e parar de
+                perder tempo com mensagens e horários.
+              </p>
 
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          CTA FINAL
-          ===================================================== */}
-
-      <section className="final-cta">
-
-        <div className="cta-aura" />
-
-        <div className="container cta-content">
-
-          <Reveal>
-
-            <div
-              className="section-label"
-              style={{
-                justifyContent: "center",
-              }}
-            >
-              Seu próximo projeto começa aqui
-            </div>
-
-            <h2>
-              Você tatua.
-              <br />
-              O Fayola <em>atende.</em>
-            </h2>
-
-            <p>
-              Pare de perder tempo procurando conversas,
-              referências e horários. Deixe o atendimento
-              organizado enquanto você faz o que sabe
-              fazer melhor.
-            </p>
-
-            <div className="cta-buttons">
+              <div className="price-value">
+                <small>R$</small>
+                <strong>79,90</strong>
+                <span>/mês</span>
+              </div>
 
               <MagneticButton
                 href={WHATSAPP_ASSINAR}
-                className="primary-button"
+                className="primary-button price-button"
               >
-                Quero usar o Fayola
+                Quero começar
                 <span>→</span>
               </MagneticButton>
 
-              <a
-                href={WHATSAPP}
-                target="_blank"
-                rel="noreferrer"
-                className="secondary-button"
-              >
-                Falar com a Fayola
-              </a>
+            </div>
+
+            <div className="price-features">
+
+              {[
+                "Link público para seus clientes",
+                "Pedidos de tatuagem",
+                "Referências e informações do projeto",
+                "Tamanho e serviços",
+                "Agenda",
+                "Clientes",
+                "Sinal via PIX",
+                "Notificações e lembretes",
+              ].map((item) => (
+                <div
+                  className="price-feature"
+                  key={item}
+                >
+                  <span>✓</span>
+                  {item}
+                </div>
+              ))}
 
             </div>
 
-          </Reveal>
-
-        </div>
-
-      </section>
-
-      {/* =====================================================
-          FOOTER
-          ===================================================== */}
-
-      <footer className="footer">
-
-        <div className="container footer-inner">
-
-          <div className="logo">
-            <span className="logo-mark">
-              ✦
-            </span>
-
-            FAYOLA
-          </div>
-
-          <div className="footer-copy">
-            Sistema de atendimento e agendamento
-            para tatuadores e estúdios.
-          </div>
-
-          <div className="footer-links">
-
-            <a
-              href={WHATSAPP}
-              target="_blank"
-              rel="noreferrer"
-            >
-              WhatsApp
-            </a>
-
-            <a href="#preco">
-              Planos
-            </a>
-
           </div>
 
         </div>
+
+
+        {/* =====================================================
+            FAYOLA STUDIO
+            ===================================================== */}
 
         <div
-          className="container"
+          className="price-card"
           style={{
-            marginTop: 25,
-            paddingTop: 20,
-            borderTop:
-              "1px solid rgba(255,255,255,.04)",
-            color: "#383633",
-            fontSize: 8,
-            fontFamily: "DM Mono, monospace",
+            borderColor: "rgba(255,106,61,.30)",
           }}
         >
-          © 2026 Fayola. Todos os direitos reservados.
+
+          <div className="price-grid">
+
+            <div>
+
+              <div className="price-label">
+                FAYOLA STUDIO
+              </div>
+
+              <h3>
+                Para sua equipe.
+              </h3>
+
+              <p className="price-description">
+                Para estúdios com equipe que precisam
+                organizar profissionais, agenda,
+                clientes e comissões.
+              </p>
+
+              <div className="price-value">
+                <small>R$</small>
+                <strong>149,90</strong>
+                <span>/mês</span>
+              </div>
+
+              <MagneticButton
+                href={WHATSAPP_ASSINAR}
+                className="primary-button price-button"
+              >
+                Quero começar
+                <span>→</span>
+              </MagneticButton>
+
+            </div>
+
+            <div className="price-features">
+
+              {[
+                "Tudo do Fayola Solo",
+                "Profissionais e comissões",
+                "Acesso individual para profissionais",
+                "Agenda por profissional",
+                "Gestão da equipe",
+                "Clientes e histórico",
+                "Sinal via PIX",
+                "Notificações e lembretes",
+              ].map((item) => (
+                <div
+                  className="price-feature"
+                  key={item}
+                >
+                  <span>✓</span>
+                  {item}
+                </div>
+              ))}
+
+            </div>
+
+          </div>
+
         </div>
 
-      </footer>
+
+        {/* =====================================================
+            FAYOLA PRO
+            ===================================================== */}
+
+        <div
+          className="price-card"
+          style={{
+            borderColor: "rgba(255,106,61,.55)",
+            boxShadow:
+              "0 0 70px rgba(255,106,61,.10)",
+          }}
+        >
+
+          <div className="price-grid">
+
+            <div>
+
+              <div
+                className="price-label"
+                style={{
+                  color: "#ff6a3d",
+                }}
+              >
+                FAYOLA PRO
+              </div>
+
+              <h3>
+                Tudo organizado.
+              </h3>
+
+              <p className="price-description">
+                Para tatuadores e estúdios que querem
+                profissionalizar o atendimento sem
+                transformar o próprio trabalho em
+                burocracia.
+              </p>
+
+              <div className="price-value">
+                <small>R$</small>
+                <strong>199,99</strong>
+                <span>/mês</span>
+              </div>
+
+              <MagneticButton
+                href={WHATSAPP_ASSINAR}
+                className="primary-button price-button"
+              >
+                Quero começar
+                <span>→</span>
+              </MagneticButton>
+
+            </div>
+
+            <div className="price-features">
+
+              {[
+                "Tudo do Fayola Studio",
+                "Link público para seus clientes",
+                "Pedidos de tatuagem",
+                "Referências e informações do projeto",
+                "Tamanho e serviços",
+                "Orçamentos",
+                "Agenda",
+                "Clientes",
+                "Sinal via PIX",
+                "Notificações e lembretes",
+                "Profissionais e comissões",
+                "Acesso individual para profissionais",
+              ].map((item) => (
+                <div
+                  className="price-feature"
+                  key={item}
+                >
+                  <span>✓</span>
+                  {item}
+                </div>
+              ))}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </Reveal>
+
+  </div>
+
+</section>
+
+{/* =====================================================
+    CTA FINAL
+    ===================================================== */}
+
+<section className="final-cta">
+
+  <div className="cta-aura" />
+
+  <div className="container cta-content">
+
+    <Reveal>
+
+      <div
+        className="section-label"
+        style={{
+          justifyContent: "center",
+        }}
+      >
+        Seu próximo projeto começa aqui
+      </div>
+
+      <h2>
+        Você tatua.
+        <br />
+        O Fayola <em>atende.</em>
+      </h2>
+
+      <p>
+        Pare de perder tempo procurando conversas,
+        referências e horários. Deixe o atendimento
+        organizado enquanto você faz o que sabe
+        fazer melhor.
+      </p>
+
+      <div className="cta-buttons">
+
+        <MagneticButton
+          href={WHATSAPP_ASSINAR}
+          className="primary-button"
+        >
+          Quero usar o Fayola
+          <span>→</span>
+        </MagneticButton>
+
+        <a
+          href={WHATSAPP}
+          target="_blank"
+          rel="noreferrer"
+          className="secondary-button"
+        >
+          Falar com a Fayola
+        </a>
+
+      </div>
+
+    </Reveal>
+
+  </div>
+
+</section>
+
+{/* =====================================================
+    FOOTER
+    ===================================================== */}
+
+<footer className="footer">
+
+  <div className="container footer-inner">
+
+    <div className="logo">
+      <span className="logo-mark">
+        ✦
+      </span>
+
+      FAYOLA
+    </div>
+
+    <div className="footer-copy">
+      Sistema de atendimento e agendamento
+      para tatuadores e estúdios.
+    </div>
+
+    <div className="footer-links">
+
+      <a
+        href={WHATSAPP}
+        target="_blank"
+        rel="noreferrer"
+      >
+        WhatsApp
+      </a>
+
+      <a href="#preco">
+        Planos
+      </a>
 
     </div>
-  );
+
+  </div>
+
+  <div
+    className="container"
+    style={{
+      marginTop: 25,
+      paddingTop: 20,
+      borderTop:
+        "1px solid rgba(255,255,255,.04)",
+      color: "#383633",
+      fontSize: 8,
+      fontFamily: "DM Mono, monospace",
+    }}
+  >
+    © 2026 Fayola. Todos os direitos reservados.
+  </div>
+
+</footer>
+
+</div>
+);
 }
