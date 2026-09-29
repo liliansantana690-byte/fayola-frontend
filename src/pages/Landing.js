@@ -1,362 +1,844 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import {
   motion,
   useMotionValue,
   useSpring,
   useTransform,
-} from 'framer-motion';
+  useInView,
+} from "framer-motion";
+
+/* =========================================================
+   FAYOLA — LANDING PARA TATUADORES
+   ========================================================= */
 
 const WHATSAPP =
-  'https://wa.me/5571985119593?text=Quero%20conhecer%20o%20Fayola';
+  "https://wa.me/5571985119593?text=Quero%20conhecer%20o%20Fayola";
 
-const ASSINAR =
-  'https://wa.me/5571985119593?text=Quero%20assinar%20o%20Fayola';
+const WHATSAPP_ASSINAR =
+  "https://wa.me/5571985119593?text=Quero%20assinar%20o%20Fayola";
 
-const ease = [0.22, 1, 0.36, 1];
+/* =========================================================
+   REVEAL
+   ========================================================= */
 
-function Reveal({ children, className = '', delay = 0 }) {
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+  y = 35,
+  once = true,
+}) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 35 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.18 }}
-      transition={{ duration: 0.75, delay, ease }}
       className={className}
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once, amount: 0.15 }}
+      transition={{
+        duration: 0.8,
+        delay,
+        ease: [0.22, 1, 0.36, 1],
+      }}
     >
       {children}
     </motion.div>
   );
 }
 
-function TiltPanel({ children, className = '' }) {
+/* =========================================================
+   COUNT UP
+   ========================================================= */
+
+function CountUp({ value, suffix = "", duration = 1600 }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!isInView) return;
+
+    let start = 0;
+    const startTime = performance.now();
+
+    const animate = (currentTime) => {
+      const progress = Math.min(
+        (currentTime - startTime) / duration,
+        1
+      );
+
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const next = Math.floor(start + (value - start) * eased);
+
+      setCount(next);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setCount(value);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [isInView, value, duration]);
+
+  return (
+    <span ref={ref}>
+      {count}
+      {suffix}
+    </span>
+  );
+}
+
+/* =========================================================
+   ORBIT / AURA
+   ========================================================= */
+
+function Aura({ className = "", delay = 0 }) {
+  return (
+    <motion.div
+      className={`f-aura ${className}`}
+      animate={{
+        x: [0, 35, -20, 0],
+        y: [0, -25, 20, 0],
+        scale: [1, 1.12, 0.92, 1],
+      }}
+      transition={{
+        duration: 12,
+        repeat: Infinity,
+        delay,
+        ease: "easeInOut",
+      }}
+    />
+  );
+}
+
+/* =========================================================
+   PHYSICAL CARD
+   ========================================================= */
+
+function PhysicalCard({
+  children,
+  className = "",
+  x = 0,
+  y = 0,
+  rotate = 0,
+}) {
   const ref = useRef(null);
 
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
 
-  const rotateY = useSpring(
-    useTransform(mx, [-1, 1], [-7, 7]),
-    {
-      stiffness: 180,
-      damping: 22,
-    }
-  );
+  const springX = useSpring(mouseX, {
+    stiffness: 170,
+    damping: 18,
+    mass: 0.7,
+  });
 
-  const rotateX = useSpring(
-    useTransform(my, [-1, 1], [6, -6]),
-    {
-      stiffness: 180,
-      damping: 22,
-    }
-  );
+  const springY = useSpring(mouseY, {
+    stiffness: 170,
+    damping: 18,
+    mass: 0.7,
+  });
 
-  function handleMove(e) {
-    if (!ref.current) return;
+  const rotateX = useTransform(springY, [-50, 50], [8, -8]);
+  const rotateY = useTransform(springX, [-50, 50], [-8, 8]);
 
-    const rect = ref.current.getBoundingClientRect();
+  const handleMouseMove = (event) => {
+    const rect = ref.current?.getBoundingClientRect();
 
-    mx.set(
-      ((e.clientX - rect.left) / rect.width) * 2 - 1
-    );
+    if (!rect) return;
 
-    my.set(
-      ((e.clientY - rect.top) / rect.height) * 2 - 1
-    );
-  }
+    const px = event.clientX - (rect.left + rect.width / 2);
+    const py = event.clientY - (rect.top + rect.height / 2);
 
-  function reset() {
-    mx.set(0);
-    my.set(0);
-  }
+    mouseX.set(px * 0.55);
+    mouseY.set(py * 0.55);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   return (
     <motion.div
       ref={ref}
-      onMouseMove={handleMove}
-      onMouseLeave={reset}
+      className={`physical-card ${className}`}
       style={{
+        x: springX,
+        y: springY,
         rotateX,
         rotateY,
-        transformPerspective: 1200,
+        transformStyle: "preserve-3d",
       }}
-      className={className}
+      initial={{
+        x,
+        y,
+        rotate,
+      }}
+      animate={{
+        y: [y, y - 8, y],
+      }}
+      transition={{
+        y: {
+          duration: 5,
+          repeat: Infinity,
+          ease: "easeInOut",
+        },
+      }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
     >
       {children}
     </motion.div>
   );
 }
+
+/* =========================================================
+   MAGNETIC BUTTON
+   ========================================================= */
+
+function MagneticButton({ children, href, className = "" }) {
+  const ref = useRef(null);
+
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const sx = useSpring(x, {
+    stiffness: 250,
+    damping: 20,
+  });
+
+  const sy = useSpring(y, {
+    stiffness: 250,
+    damping: 20,
+  });
+
+  const move = (event) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    x.set((event.clientX - (rect.left + rect.width / 2)) * 0.18);
+    y.set((event.clientY - (rect.top + rect.height / 2)) * 0.18);
+  };
+
+  const leave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.a
+      ref={ref}
+      href={href}
+      className={className}
+      style={{ x: sx, y: sy }}
+      onMouseMove={move}
+      onMouseLeave={leave}
+      whileTap={{ scale: 0.96 }}
+    >
+      {children}
+    </motion.a>
+  );
+}
+
+/* =========================================================
+   TATTOO REQUEST CARD
+   ========================================================= */
 
 function TattooRequestCard() {
   return (
-    <div className="tattoo-request-card">
-
-      <div className="trc-top">
-        <div>
-          <span className="mini-label">
-            NOVO PEDIDO
-          </span>
-
-          <strong>
-            Projeto #0248
-          </strong>
-        </div>
-
-        <span className="status-dot">
-          NOVO
-        </span>
+    <motion.div
+      className="request-card"
+      initial={{ opacity: 0, scale: 0.85, y: 35 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{
+        duration: 1,
+        delay: 0.5,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+    >
+      <div className="request-top">
+        <span className="request-dot" />
+        <span>NOVO PROJETO</span>
+        <span className="request-time">agora</span>
       </div>
 
-      <div className="reference-art">
-
-        <div className="ink-orbit ink-one" />
-
-        <div className="ink-orbit ink-two" />
-
-        <div className="ink-flower">
-          ✦
-        </div>
-
+      <div className="request-name">
+        Blackwork no antebraço
       </div>
 
-      <div className="request-info">
+      <div className="request-tags">
+        <span>Blackwork</span>
+        <span>12 cm</span>
+        <span>Antebraço</span>
+      </div>
 
-        <div>
-          <span>CLIENTE</span>
-          <b>Marina Costa</b>
+      <div className="request-images">
+        <div className="reference-image ref-one">
+          <span>✦</span>
         </div>
 
-        <div>
-          <span>ESTILO</span>
-          <b>Fine line</b>
+        <div className="reference-image ref-two">
+          <span>◒</span>
         </div>
 
-        <div>
-          <span>TAMANHO</span>
-          <b>12 cm</b>
+        <div className="reference-more">
+          +2
         </div>
-
-        <div>
-          <span>LOCAL</span>
-          <b>Antebraço</b>
-        </div>
-
       </div>
 
       <div className="request-footer">
-        <span>
-          2 referências anexadas
-        </span>
+        <div>
+          <small>CLIENTE</small>
+          <strong>Marina</strong>
+        </div>
 
-        <span className="arrow">
-          ↗
-        </span>
+        <div className="request-arrow">
+          →
+        </div>
       </div>
-
-    </div>
+    </motion.div>
   );
 }
 
-function StudioDashboard() {
+/* =========================================================
+   PIX CARD
+   ========================================================= */
+
+function PixCard() {
   return (
-    <div className="studio-dashboard">
+    <motion.div
+      className="pix-card"
+      animate={{
+        y: [0, -7, 0],
+      }}
+      transition={{
+        duration: 4,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    >
+      <div className="pix-icon">✦</div>
 
-      <div className="dashboard-top">
-
-        <div className="brand-small">
-          FAYOLA <span>STUDIO</span>
-        </div>
-
-        <div className="dashboard-date">
-          QUARTA · 14 OUT
-        </div>
-
-        <div className="avatar">
-          M
-        </div>
-
+      <div>
+        <span>SINAL PIX</span>
+        <strong>R$ 195,00</strong>
       </div>
 
-      <div className="dashboard-main">
+      <div className="pix-check">✓</div>
+    </motion.div>
+  );
+}
 
-        <div className="dashboard-heading">
+/* =========================================================
+   DASHBOARD MOCKUP
+   ========================================================= */
 
-          <div>
+function DashboardMockup() {
+  return (
+    <div className="dashboard-wrap">
+      <motion.div
+        className="dashboard-shadow"
+        animate={{
+          rotate: [-1, 1, -1],
+          y: [0, -8, 0],
+        }}
+        transition={{
+          duration: 7,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
 
-            <span className="mini-label">
-              VISÃO DO ESTÚDIO
-            </span>
-
-            <h3>
-              Bom dia, Marcelo.
-            </h3>
-
+      <motion.div
+        className="dashboard"
+        initial={{
+          opacity: 0,
+          rotateX: 15,
+          rotateY: -8,
+          y: 50,
+        }}
+        animate={{
+          opacity: 1,
+          rotateX: 0,
+          rotateY: 0,
+          y: 0,
+        }}
+        transition={{
+          duration: 1.2,
+          delay: 0.2,
+          ease: [0.16, 1, 0.3, 1],
+        }}
+      >
+        <div className="dashboard-top">
+          <div className="brand-small">
+            <span>✦</span>
+            FAYOLA
           </div>
 
-          <span className="live">
-            <i /> AO VIVO
-          </span>
-
+          <div className="dash-user">
+            <span className="online-dot" />
+            Seu estúdio
+          </div>
         </div>
 
-        <div className="metric-row">
-
-          <div className="metric">
-
-            <span>HOJE</span>
-
-            <strong>
-              06
-            </strong>
-
-            <small>
-              sessões
-            </small>
-
+        <div className="dashboard-content">
+          <div className="dash-sidebar">
+            <div className="side-active">⌂</div>
+            <div>◫</div>
+            <div>◌</div>
+            <div>◉</div>
+            <div>⚙</div>
           </div>
 
-          <div className="metric accent">
-
-            <span>SINAIS</span>
-
-            <strong>
-              R$ 1.240
-            </strong>
-
-            <small>
-              confirmados
-            </small>
-
-          </div>
-
-          <div className="metric">
-
-            <span>PEDIDOS</span>
-
-            <strong>
-              12
-            </strong>
-
-            <small>
-              aguardando análise
-            </small>
-
-          </div>
-
-        </div>
-
-        <div className="agenda-box">
-
-          <div className="agenda-title">
-
-            <span>
-              PRÓXIMAS SESSÕES
-            </span>
-
-            <span>
-              Ver agenda →
-            </span>
-
-          </div>
-
-          {[
-            [
-              '10:00',
-              'Lucas Almeida',
-              'Blackwork · 18 cm',
-              'CONFIRMADO',
-            ],
-            [
-              '14:00',
-              'Marina Costa',
-              'Fine line · 12 cm',
-              'SINAL PAGO',
-            ],
-            [
-              '18:30',
-              'Rafael Lima',
-              'Neo traditional · 15 cm',
-              'CONFIRMADO',
-            ],
-          ].map((item) => (
-
-            <div
-              className="agenda-item"
-              key={item[0]}
-            >
-
-              <b>
-                {item[0]}
-              </b>
-
+          <div className="dash-main">
+            <div className="dash-heading">
               <div>
-
-                <strong>
-                  {item[1]}
-                </strong>
-
-                <span>
-                  {item[2]}
-                </span>
-
+                <span>QUARTA · 14 OUT</span>
+                <h3>Agenda do dia</h3>
               </div>
 
-              <em>
-                {item[3]}
-              </em>
-
+              <button>+ Novo horário</button>
             </div>
 
-          ))}
+            <div className="dash-stats">
+              <div>
+                <small>AGENDADOS</small>
+                <strong>
+                  <CountUp value={6} />
+                </strong>
+              </div>
 
+              <div>
+                <small>A CONFIRMAR</small>
+                <strong>
+                  <CountUp value={2} />
+                </strong>
+              </div>
+
+              <div>
+                <small>FATURAMENTO</small>
+                <strong>R$ 2.450</strong>
+              </div>
+            </div>
+
+            <div className="schedule">
+              <div className="schedule-line" />
+
+              <div className="appointment">
+                <span className="appointment-time">
+                  10:00
+                </span>
+
+                <div className="appointment-card">
+                  <div className="appointment-avatar">
+                    M
+                  </div>
+
+                  <div>
+                    <strong>Marina</strong>
+                    <span>Blackwork · 12 cm</span>
+                  </div>
+
+                  <em>Confirmado</em>
+                </div>
+              </div>
+
+              <div className="appointment">
+                <span className="appointment-time">
+                  14:30
+                </span>
+
+                <div className="appointment-card orange">
+                  <div className="appointment-avatar">
+                    R
+                  </div>
+
+                  <div>
+                    <strong>Rafael</strong>
+                    <span>Fineline · 8 cm</span>
+                  </div>
+
+                  <em>Aguardando PIX</em>
+                </div>
+              </div>
+
+              <div className="appointment">
+                <span className="appointment-time">
+                  18:00
+                </span>
+
+                <div className="appointment-card">
+                  <div className="appointment-avatar">
+                    A
+                  </div>
+
+                  <div>
+                    <strong>Ana</strong>
+                    <span>Orçamento aprovado</span>
+                  </div>
+
+                  <em>Confirmado</em>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </motion.div>
 
-      </div>
-
+      <TattooRequestCard />
+      <PixCard />
     </div>
   );
 }
 
-function FloatingPill({
+/* =========================================================
+   FLOW CARD
+   ========================================================= */
+
+function FlowCard({
+  number,
+  title,
+  text,
+  icon,
+  delay = 0,
+}) {
+  return (
+    <Reveal delay={delay}>
+      <motion.div
+        className="flow-card"
+        whileHover={{
+          y: -10,
+          rotateX: 3,
+          rotateY: -3,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 220,
+          damping: 18,
+        }}
+      >
+        <div className="flow-number">{number}</div>
+
+        <div className="flow-icon">
+          {icon}
+        </div>
+
+        <h3>{title}</h3>
+        <p>{text}</p>
+      </motion.div>
+    </Reveal>
+  );
+}
+
+/* =========================================================
+   FEATURE CARD
+   ========================================================= */
+
+function FeatureCard({
+  number,
+  title,
+  description,
   children,
-  className = '',
+  className = "",
 }) {
   return (
     <motion.div
-      animate={{
-        y: [0, -9, 0],
+      className={`feature-card ${className}`}
+      whileHover={{
+        y: -8,
+        scale: 1.01,
       }}
       transition={{
-        duration: 4.5,
-        repeat: Infinity,
-        ease: 'easeInOut',
+        type: "spring",
+        stiffness: 220,
+        damping: 20,
       }}
-      className={`floating-pill ${className}`}
     >
+      <div className="feature-number">
+        {number}
+      </div>
+
+      <div className="feature-content">
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
+
       {children}
     </motion.div>
   );
 }
 
-export default function Landing() {
+/* =========================================================
+   BEFORE AFTER
+   ========================================================= */
+
+function BeforeAfter() {
   return (
+    <div className="before-after">
+      <motion.div
+        className="ba-panel before"
+        whileHover={{
+          y: -5,
+        }}
+      >
+        <span className="ba-label">
+          ANTES
+        </span>
 
-    <main
-      className="fayola-3d"
-      id="top"
+        <h3>Você tentando organizar tudo</h3>
+
+        <div className="chaos">
+          <div>WhatsApp</div>
+          <div>Instagram</div>
+          <div>“Quanto fica?”</div>
+          <div>“Tem horário sábado?”</div>
+          <div>“Vou mandar referência”</div>
+          <div>Agenda</div>
+        </div>
+
+        <p>
+          Mensagens espalhadas, pedidos perdidos
+          e tempo que poderia estar sendo usado
+          para tatuar.
+        </p>
+      </motion.div>
+
+      <motion.div
+        className="ba-divider"
+        animate={{
+          rotate: [0, 180, 360],
+        }}
+        transition={{
+          duration: 12,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      >
+        ✦
+      </motion.div>
+
+      <motion.div
+        className="ba-panel after"
+        whileHover={{
+          y: -5,
+        }}
+      >
+        <span className="ba-label">
+          COM FAYOLA
+        </span>
+
+        <h3>Seu atendimento organizado</h3>
+
+        <div className="organized">
+          <div>
+            <span>✓</span>
+            Pedido recebido
+          </div>
+
+          <div>
+            <span>✓</span>
+            Referências anexadas
+          </div>
+
+          <div>
+            <span>✓</span>
+            Orçamento enviado
+          </div>
+
+          <div>
+            <span>✓</span>
+            Sinal PIX confirmado
+          </div>
+
+          <div>
+            <span>✓</span>
+            Horário reservado
+          </div>
+        </div>
+
+        <p>
+          Você entra na conversa quando precisa.
+          O processo continua organizado.
+        </p>
+      </motion.div>
+    </div>
+  );
+}
+
+/* =========================================================
+   QUOTE MOCKUP
+   ========================================================= */
+
+function QuoteMockup() {
+  return (
+    <div className="quote-scene">
+      <motion.div
+        className="quote-orbit orbit-one"
+        animate={{ rotate: 360 }}
+        transition={{
+          duration: 22,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      />
+
+      <motion.div
+        className="quote-orbit orbit-two"
+        animate={{ rotate: -360 }}
+        transition={{
+          duration: 30,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      />
+
+      <motion.div
+        className="quote-window"
+        initial={{
+          opacity: 0,
+          y: 40,
+          rotateX: 10,
+        }}
+        whileInView={{
+          opacity: 1,
+          y: 0,
+          rotateX: 0,
+        }}
+        viewport={{
+          once: true,
+          amount: 0.2,
+        }}
+        transition={{
+          duration: 1,
+          ease: [0.16, 1, 0.3, 1],
+        }}
+      >
+        <div className="quote-header">
+          <div>
+            <span>FAYOLA</span>
+            <strong>Novo projeto</strong>
+          </div>
+
+          <div className="quote-status">
+            EM ANÁLISE
+          </div>
+        </div>
+
+        <div className="quote-body">
+          <div className="quote-left">
+            <div className="quote-photo">
+              <div className="fake-tattoo">
+                ✦
+              </div>
+            </div>
+
+            <div className="reference-row">
+              <div />
+              <div />
+              <div />
+            </div>
+          </div>
+
+          <div className="quote-details">
+            <span>CLIENTE</span>
+            <strong>Marina Oliveira</strong>
+
+            <div className="detail-grid">
+              <div>
+                <small>ESTILO</small>
+                <b>Blackwork</b>
+              </div>
+
+              <div>
+                <small>TAMANHO</small>
+                <b>12 cm</b>
+              </div>
+
+              <div>
+                <small>LOCAL</small>
+                <b>Antebraço</b>
+              </div>
+
+              <div>
+                <small>SESSÃO</small>
+                <b>2h30</b>
+              </div>
+            </div>
+
+            <div className="quote-price">
+              <div>
+                <span>ORÇAMENTO</span>
+                <strong>R$ 650,00</strong>
+              </div>
+
+              <div>
+                <span>SINAL</span>
+                <strong>R$ 195,00</strong>
+              </div>
+            </div>
+
+            <div className="quote-actions">
+              <button className="reject">
+                Ajustar
+              </button>
+
+              <button className="approve">
+                Aprovar orçamento
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* =========================================================
+   MAIN COMPONENT
+   ========================================================= */
+
+export default function Landing() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const heroX = useMotionValue(0);
+  const heroY = useMotionValue(0);
+
+  const smoothX = useSpring(heroX, {
+    stiffness: 80,
+    damping: 20,
+  });
+
+  const smoothY = useSpring(heroY, {
+    stiffness: 80,
+    damping: 20,
+  });
+
+  const handleHeroMove = (event) => {
+    const x =
+      (event.clientX / window.innerWidth - 0.5) * 20;
+
+    const y =
+      (event.clientY / window.innerHeight - 0.5) * 20;
+
+    heroX.set(x);
+    heroY.set(y);
+  };
+
+  const handleHeroLeave = () => {
+    heroX.set(0);
+    heroY.set(0);
+  };
+
+  return (
+    <div
+      className="fayola-page"
+      onMouseMove={handleHeroMove}
+      onMouseLeave={handleHeroLeave}
     >
-
       <style>{`
-
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
-        :root {
-          --ink: #070707;
-          --paper: #f2ede4;
-          --orange: #ff6a3d;
-          --orange2: #ff9a76;
-          --line: rgba(255,255,255,.09);
-          --muted: rgba(255,255,255,.48);
-        }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap');
 
         * {
           box-sizing: border-box;
@@ -368,1968 +850,1690 @@ export default function Landing() {
 
         body {
           margin: 0;
-          background: var(--ink);
+          background: #050505;
         }
 
-        .fayola-3d {
+        .fayola-page {
+          --orange: #ff6a3d;
+          --orange-light: #ff8a63;
+          --cream: #f3ede2;
+          --muted: #85817b;
+          --dark: #050505;
+          --panel: #0d0d0d;
+          --border: rgba(255,255,255,.09);
+
           min-height: 100vh;
-          overflow: hidden;
-          color: #fff;
-
           background:
-            radial-gradient(
-              circle at 70% 5%,
-              rgba(255,106,61,.13),
-              transparent 28%
-            ),
-            radial-gradient(
-              circle at 8% 22%,
-              rgba(255,255,255,.035),
-              transparent 22%
-            ),
-            #070707;
-
-          font-family:
-            'DM Sans',
-            sans-serif;
+            radial-gradient(circle at 50% -10%, rgba(255,106,61,.09), transparent 35%),
+            #050505;
+          color: var(--cream);
+          font-family: Inter, system-ui, sans-serif;
+          overflow: hidden;
         }
 
-        .fayola-3d a {
+        .fayola-page a {
           color: inherit;
           text-decoration: none;
         }
 
-        .nav3d {
+        .container {
+          width: min(1180px, calc(100% - 40px));
+          margin: 0 auto;
+        }
+
+        /* ================= HEADER ================= */
+
+        .f-header {
           position: fixed;
-          inset: 16px 18px auto;
-
-          z-index: 50;
-
-          max-width: 1280px;
-
-          margin: auto;
-
+          top: 0;
           left: 0;
           right: 0;
+          z-index: 100;
+          padding: 18px 0;
+          background: linear-gradient(
+            to bottom,
+            rgba(5,5,5,.92),
+            rgba(5,5,5,.55),
+            transparent
+          );
+          backdrop-filter: blur(10px);
+        }
 
-          height: 66px;
-
+        .nav {
           display: flex;
           align-items: center;
           justify-content: space-between;
-
-          padding: 0 10px 0 18px;
-
-          border:
-            1px solid
-            rgba(255,255,255,.1);
-
-          border-radius: 22px;
-
-          background:
-            rgba(10,10,10,.66);
-
-          backdrop-filter:
-            blur(22px);
-
-          box-shadow:
-            0 20px 60px
-            rgba(0,0,0,.25);
         }
 
-        .logo3d {
+        .logo {
           display: flex;
           align-items: center;
-          gap: 11px;
-
-          font-weight: 700;
-
-          letter-spacing: .24em;
-
-          font-size: 13px;
+          gap: 9px;
+          font-size: 15px;
+          font-weight: 800;
+          letter-spacing: .18em;
         }
 
-        .logo3d-mark {
-          width: 34px;
-          height: 34px;
-
-          border-radius: 11px;
-
+        .logo-mark {
+          width: 27px;
+          height: 27px;
           display: grid;
           place-items: center;
-
-          background:
-            var(--orange);
-
-          color: #080808;
-
-          font-weight: 900;
-
-          letter-spacing: 0;
-
-          box-shadow:
-            0 8px 28px
-            rgba(255,106,61,.28);
+          border: 1px solid rgba(255,255,255,.25);
+          border-radius: 50%;
+          color: var(--orange);
+          font-size: 12px;
         }
 
         .nav-links {
           display: flex;
+          align-items: center;
           gap: 30px;
+        }
 
-          color:
-            rgba(255,255,255,.52);
-
-          font-size: 13px;
+        .nav-links a {
+          color: #9d9992;
+          font-size: 12px;
+          transition: color .25s ease;
         }
 
         .nav-links a:hover {
-          color: #fff;
+          color: white;
         }
 
         .nav-cta {
-          padding: 11px 16px;
-
-          border-radius: 14px;
-
-          background: #fff;
-
-          color: #080808 !important;
-
+          padding: 11px 18px;
+          border: 1px solid rgba(255,255,255,.15);
+          border-radius: 100px;
           font-size: 12px;
-
-          font-weight: 700;
-
-          transition:
-            .25s;
+          background: rgba(255,255,255,.04);
+          transition: .3s ease;
         }
 
         .nav-cta:hover {
-          transform:
-            translateY(-1px);
-
-          background:
-            var(--orange);
+          background: white;
+          color: black;
         }
 
-        .hero3d {
+        .mobile-menu {
+          display: none;
+          border: 1px solid rgba(255,255,255,.14);
+          background: rgba(255,255,255,.04);
+          color: white;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+        }
+
+        /* ================= HERO ================= */
+
+        .hero {
           position: relative;
-
-          min-height: 980px;
-
-          max-width: 1280px;
-
-          margin: auto;
-
-          padding:
-            175px 34px
-            110px;
-
-          display: grid;
-
-          grid-template-columns:
-            .88fr 1.12fr;
-
+          min-height: 100vh;
+          padding-top: 150px;
+          display: flex;
           align-items: center;
+          isolation: isolate;
+        }
 
-          gap: 35px;
+        .hero-grid {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+          background-size: 80px 80px;
+          mask-image: linear-gradient(to bottom, black, transparent 80%);
+          opacity: .5;
+          pointer-events: none;
+        }
+
+        .hero-noise {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          opacity: .04;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+        }
+
+        .f-aura {
+          position: absolute;
+          width: 500px;
+          height: 500px;
+          border-radius: 50%;
+          filter: blur(100px);
+          opacity: .18;
+          pointer-events: none;
+          z-index: -1;
+        }
+
+        .aura-one {
+          background: var(--orange);
+          top: 15%;
+          left: 5%;
+        }
+
+        .aura-two {
+          background: #7b2cff;
+          top: 25%;
+          right: 5%;
+          opacity: .10;
+        }
+
+        .aura-three {
+          background: #ff3d81;
+          bottom: -15%;
+          left: 40%;
+          opacity: .08;
+        }
+
+        .hero-inner {
+          position: relative;
+          z-index: 2;
         }
 
         .hero-copy {
           position: relative;
-          z-index: 5;
+          z-index: 8;
+          width: 680px;
+          max-width: 100%;
         }
 
-        .eyebrow3d {
+        .eyebrow {
           display: inline-flex;
-
           align-items: center;
-
-          gap: 8px;
-
-          padding:
-            8px 12px;
-
-          border:
-            1px solid
-            rgba(255,106,61,.25);
-
-          border-radius: 999px;
-
-          color: #ffb39c;
-
-          background:
-            rgba(255,106,61,.06);
-
+          gap: 9px;
+          margin-bottom: 25px;
+          color: #aaa49c;
+          font-family: "DM Mono", monospace;
           font-size: 10px;
-
-          font-weight: 700;
-
-          letter-spacing: .18em;
-
-          text-transform:
-            uppercase;
+          letter-spacing: .16em;
+          text-transform: uppercase;
         }
 
-        .eyebrow3d i {
-          width: 6px;
-          height: 6px;
-
+        .eyebrow-dot {
+          width: 7px;
+          height: 7px;
+          background: var(--orange);
           border-radius: 50%;
-
-          background:
-            var(--orange);
-
-          box-shadow:
-            0 0 16px
-            var(--orange);
+          box-shadow: 0 0 18px var(--orange);
         }
 
-        .hero-title {
-          margin: 28px 0 0;
-
-          font-family:
-            'Space Grotesk',
-            sans-serif;
-
-          font-size:
-            clamp(
-              58px,
-              7vw,
-              105px
-            );
-
-          line-height: .89;
-
-          letter-spacing:
-            -.065em;
-
-          max-width: 760px;
+        .hero h1 {
+          margin: 0;
+          max-width: 800px;
+          font-size: clamp(52px, 7vw, 94px);
+          line-height: .91;
+          letter-spacing: -.065em;
+          font-weight: 700;
         }
 
-        .hero-title .orange {
-          color:
-            var(--orange);
+        .hero h1 em {
+          font-family: "Playfair Display", serif;
+          font-weight: 500;
+          color: var(--orange);
+          letter-spacing: -.055em;
         }
 
-        .hero-text {
+        .hero-subtitle {
           max-width: 570px;
-
-          margin-top: 30px;
-
-          color:
-            var(--muted);
-
+          margin: 30px 0 0;
+          color: #9b9791;
           font-size: 17px;
-
           line-height: 1.75;
+        }
+
+        .hero-subtitle strong {
+          color: #d8d2c9;
+          font-weight: 500;
         }
 
         .hero-actions {
           display: flex;
-
           gap: 12px;
-
-          margin-top: 34px;
-
-          flex-wrap: wrap;
+          align-items: center;
+          margin-top: 35px;
         }
 
-        .btn-primary,
-        .btn-ghost {
+        .primary-button {
           display: inline-flex;
-
           align-items: center;
           justify-content: center;
-
-          gap: 10px;
-
-          padding:
-            15px 20px;
-
-          border-radius: 16px;
-
+          gap: 12px;
+          padding: 15px 22px;
+          border-radius: 100px;
+          background: var(--orange);
+          color: #080808 !important;
           font-size: 13px;
-
           font-weight: 700;
-
-          transition:
-            transform .25s,
-            background .25s,
-            border .25s;
-        }
-
-        .btn-primary {
-          background:
-            var(--orange);
-
-          color:
-            #080808 !important;
-
           box-shadow:
-            0 16px 45px
-            rgba(255,106,61,.2);
+            0 10px 40px rgba(255,106,61,.16),
+            inset 0 1px rgba(255,255,255,.25);
         }
 
-        .btn-primary:hover {
-          transform:
-            translateY(-3px);
-
-          background:
-            #ff825e;
+        .primary-button:hover {
+          background: #ff805b;
         }
 
-        .btn-ghost {
-          border:
-            1px solid
-            var(--line);
-
-          color:
-            #fff !important;
-        }
-
-        .btn-ghost:hover {
-          transform:
-            translateY(-3px);
-
-          border-color:
-            rgba(255,255,255,.2);
-
-          background:
-            rgba(255,255,255,.04);
+        .secondary-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 15px 20px;
+          border: 1px solid rgba(255,255,255,.12);
+          border-radius: 100px;
+          color: #b7b2aa !important;
+          font-size: 13px;
+          background: rgba(255,255,255,.025);
         }
 
         .hero-note {
-          display: flex;
-
-          gap: 18px;
-
-          flex-wrap: wrap;
-
-          margin-top: 28px;
-
-          color:
-            rgba(255,255,255,.34);
-
-          font-size: 11px;
+          margin-top: 17px;
+          color: #5f5b56;
+          font-size: 10px;
+          font-family: "DM Mono", monospace;
         }
 
-        .hero-note span {
-          display: flex;
-
-          align-items: center;
-
-          gap: 7px;
-        }
-
-        .hero-note b {
-          color:
-            var(--orange);
-        }
-
-        .hero-stage {
-          position: relative;
-
-          height: 680px;
-
-          perspective: 1500px;
-        }
-
-        .stage-glow {
+        .hero-product {
           position: absolute;
-
-          width: 520px;
-          height: 520px;
-
-          border-radius: 50%;
-
-          left: 50%;
-          top: 50%;
-
-          transform:
-            translate(-50%,-50%);
-
-          background:
-            rgba(255,106,61,.13);
-
-          filter:
-            blur(100px);
-        }
-
-        .dashboard-wrap {
-          position: absolute;
-
-          left: 50%;
-          top: 50%;
-
-          width:
-            min(
-              680px,
-              95%
-            );
-
-          transform:
-            translate(-46%,-48%)
-            rotateY(-13deg)
-            rotateX(5deg)
-            rotateZ(1deg);
-
-          transform-style:
-            preserve-3d;
-
-          z-index: 3;
-        }
-
-        .studio-dashboard {
-          position: relative;
-
-          overflow: hidden;
-
-          border:
-            1px solid
-            rgba(255,255,255,.14);
-
-          border-radius: 27px;
-
-          background:
-            linear-gradient(
-              145deg,
-              #171717,
-              #0d0d0d
-            );
-
-          box-shadow:
-            35px 45px 100px
-            rgba(0,0,0,.72),
-
-            0 0 0 1px
-            rgba(255,255,255,.03)
-            inset;
-        }
-
-        .studio-dashboard:before {
-          content: '';
-
-          position: absolute;
-
-          inset: 0;
-
-          background:
-            linear-gradient(
-              120deg,
-              rgba(255,255,255,.08),
-              transparent 28%,
-              transparent 70%,
-              rgba(255,106,61,.05)
-            );
-
+          z-index: 4;
+          top: 17%;
+          right: -10%;
+          width: 650px;
+          height: 570px;
+          perspective: 1400px;
           pointer-events: none;
         }
 
+        .dashboard-wrap {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          perspective: 1400px;
+        }
+
+        .dashboard-shadow {
+          position: absolute;
+          width: 80%;
+          height: 50%;
+          left: 10%;
+          bottom: 3%;
+          border-radius: 50%;
+          background: rgba(0,0,0,.8);
+          filter: blur(50px);
+        }
+
+        .dashboard {
+          position: absolute;
+          width: 570px;
+          left: 30px;
+          top: 50px;
+          border: 1px solid rgba(255,255,255,.13);
+          border-radius: 17px;
+          overflow: hidden;
+          background:
+            linear-gradient(145deg, rgba(25,25,25,.98), rgba(9,9,9,.98));
+          box-shadow:
+            0 50px 100px rgba(0,0,0,.6),
+            0 0 0 1px rgba(255,255,255,.025);
+          transform-style: preserve-3d;
+        }
+
         .dashboard-top {
-          height: 62px;
-
-          padding:
-            0 20px;
-
+          height: 48px;
           display: flex;
-
           align-items: center;
-
-          gap: 16px;
-
-          border-bottom:
-            1px solid
-            rgba(255,255,255,.07);
+          justify-content: space-between;
+          padding: 0 17px;
+          border-bottom: 1px solid rgba(255,255,255,.07);
         }
 
         .brand-small {
-          font-weight: 700;
-
-          font-size: 11px;
-
-          letter-spacing: .18em;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: .15em;
         }
 
         .brand-small span {
-          color:
-            rgba(255,255,255,.3);
+          color: var(--orange);
+          margin-right: 5px;
         }
 
-        .dashboard-date {
-          margin-left: auto;
-
-          color:
-            rgba(255,255,255,.35);
-
+        .dash-user {
+          color: #777;
           font-size: 9px;
-
-          letter-spacing: .16em;
-        }
-
-        .avatar {
-          width: 29px;
-          height: 29px;
-
-          display: grid;
-          place-items: center;
-
-          border-radius: 50%;
-
-          background:
-            var(--orange);
-
-          color:
-            #080808;
-
-          font-size: 10px;
-
-          font-weight: 800;
-        }
-
-        .dashboard-main {
-          padding: 24px;
-        }
-
-        .dashboard-heading {
           display: flex;
-
           align-items: center;
-
-          justify-content:
-            space-between;
+          gap: 7px;
         }
 
-        .mini-label {
-          display: block;
-
-          color:
-            rgba(255,255,255,.31);
-
-          font-size: 8px;
-
-          font-weight: 700;
-
-          letter-spacing: .2em;
-        }
-
-        .dashboard-heading h3 {
-          margin: 5px 0 0;
-
-          font-family:
-            'Space Grotesk';
-
-          font-size: 25px;
-
-          letter-spacing:
-            -.04em;
-        }
-
-        .live {
-          color:
-            #77e2ad;
-
-          font-size: 8px;
-
-          letter-spacing: .15em;
-
-          font-weight: 700;
-        }
-
-        .live i {
-          display: inline-block;
-
+        .online-dot {
           width: 5px;
           height: 5px;
-
-          margin-right: 6px;
-
           border-radius: 50%;
-
-          background:
-            #77e2ad;
-
-          box-shadow:
-            0 0 9px
-            #77e2ad;
+          background: #45d98b;
+          box-shadow: 0 0 10px #45d98b;
         }
 
-        .metric-row {
-          display: grid;
-
-          grid-template-columns:
-            repeat(3,1fr);
-
-          gap: 9px;
-
-          margin-top: 20px;
-        }
-
-        .metric {
-          min-height: 104px;
-
-          padding: 14px;
-
-          border-radius: 16px;
-
-          background:
-            #121212;
-
-          border:
-            1px solid
-            rgba(255,255,255,.06);
-        }
-
-        .metric.accent {
-          background:
-            linear-gradient(
-              145deg,
-              rgba(255,106,61,.18),
-              rgba(255,106,61,.04)
-            );
-
-          border-color:
-            rgba(255,106,61,.18);
-        }
-
-        .metric span {
-          display: block;
-
-          color:
-            rgba(255,255,255,.31);
-
-          font-size: 8px;
-
-          letter-spacing: .16em;
-        }
-
-        .metric strong {
-          display: block;
-
-          margin-top: 11px;
-
-          font-family:
-            'Space Grotesk';
-
-          font-size: 25px;
-
-          letter-spacing:
-            -.05em;
-        }
-
-        .metric small {
-          display: block;
-
-          margin-top: 4px;
-
-          color:
-            rgba(255,255,255,.29);
-
-          font-size: 9px;
-        }
-
-        .agenda-box {
-          margin-top: 12px;
-
-          border-radius: 17px;
-
-          background:
-            #101010;
-
-          border:
-            1px solid
-            rgba(255,255,255,.06);
-
-          overflow: hidden;
-        }
-
-        .agenda-title {
+        .dashboard-content {
           display: flex;
-
-          justify-content:
-            space-between;
-
-          padding:
-            14px 15px;
-
-          border-bottom:
-            1px solid
-            rgba(255,255,255,.06);
-
-          color:
-            rgba(255,255,255,.35);
-
-          font-size: 8px;
-
-          letter-spacing: .16em;
         }
 
-        .agenda-title span:last-child {
-          color:
-            var(--orange);
-        }
-
-        .agenda-item {
-          display: grid;
-
-          grid-template-columns:
-            52px 1fr auto;
-
-          gap: 10px;
-
+        .dash-sidebar {
+          width: 48px;
+          padding: 18px 0;
+          display: flex;
+          flex-direction: column;
           align-items: center;
-
-          padding:
-            13px 15px;
-
-          border-bottom:
-            1px solid
-            rgba(255,255,255,.045);
+          gap: 19px;
+          color: #4e4e4e;
+          font-size: 12px;
+          border-right: 1px solid rgba(255,255,255,.06);
         }
 
-        .agenda-item:last-child {
-          border-bottom: 0;
+        .dash-active {
+          color: var(--orange);
         }
 
-        .agenda-item > b {
-          color:
-            rgba(255,255,255,.48);
-
-          font-size: 10px;
+        .side-active {
+          color: var(--orange);
         }
 
-        .agenda-item div strong {
+        .dash-main {
+          flex: 1;
+          padding: 21px;
+        }
+
+        .dash-heading {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .dash-heading span {
+          font-size: 7px;
+          color: #666;
+          font-family: "DM Mono", monospace;
+        }
+
+        .dash-heading h3 {
+          margin: 4px 0 0;
+          font-size: 16px;
+          letter-spacing: -.03em;
+        }
+
+        .dash-heading button {
+          border: 0;
+          border-radius: 6px;
+          padding: 8px 10px;
+          background: var(--orange);
+          color: #080808;
+          font-size: 7px;
+          font-weight: 700;
+        }
+
+        .dash-stats {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+          margin-top: 19px;
+        }
+
+        .dash-stats > div {
+          padding: 12px;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 8px;
+          background: rgba(255,255,255,.02);
+        }
+
+        .dash-stats small {
           display: block;
-
-          font-size: 11px;
+          color: #5d5d5d;
+          font-size: 6px;
+          font-family: "DM Mono", monospace;
         }
 
-        .agenda-item div span {
+        .dash-stats strong {
           display: block;
+          margin-top: 7px;
+          font-size: 16px;
+          font-weight: 500;
+        }
 
-          margin-top: 3px;
+        .schedule {
+          position: relative;
+          margin-top: 17px;
+        }
 
-          color:
-            rgba(255,255,255,.31);
+        .schedule-line {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 44px;
+          width: 1px;
+          background: rgba(255,255,255,.06);
+        }
 
+        .appointment {
+          position: relative;
+          display: flex;
+          gap: 13px;
+          margin-bottom: 12px;
+        }
+
+        .appointment-time {
+          width: 32px;
+          padding-top: 12px;
+          color: #565656;
+          font-size: 7px;
+          font-family: "DM Mono", monospace;
+        }
+
+        .appointment-card {
+          flex: 1;
+          min-height: 49px;
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 8px;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 8px;
+          background: rgba(255,255,255,.025);
+        }
+
+        .appointment-card.orange {
+          border-color: rgba(255,106,61,.18);
+        }
+
+        .appointment-avatar {
+          width: 27px;
+          height: 27px;
+          display: grid;
+          place-items: center;
+          border-radius: 7px;
+          background: #252525;
+          color: #bdb8b0;
           font-size: 8px;
         }
 
-        .agenda-item em {
+        .appointment-card strong {
+          display: block;
+          font-size: 8px;
+        }
+
+        .appointment-card span {
+          display: block;
+          margin-top: 3px;
+          color: #555;
+          font-size: 6px;
+        }
+
+        .appointment-card em {
+          margin-left: auto;
+          padding: 4px 6px;
+          border-radius: 20px;
+          background: rgba(255,255,255,.04);
+          color: #6f6f6f;
+          font-size: 5px;
           font-style: normal;
-
-          color:
-            #76dca8;
-
-          font-size: 7px;
-
-          letter-spacing: .08em;
         }
 
-        .tattoo-request {
+        .request-card {
           position: absolute;
-
           z-index: 7;
-
-          width: 310px;
-
-          left: -25px;
-
-          bottom: 75px;
-
-          transform:
-            translateZ(80px)
-            rotateZ(-3deg);
-        }
-
-        .tattoo-request-card {
-          padding: 18px;
-
-          border:
-            1px solid
-            rgba(255,255,255,.13);
-
-          border-radius: 22px;
-
-          background:
-            rgba(19,19,19,.92);
-
-          backdrop-filter:
-            blur(20px);
-
-          box-shadow:
-            0 30px 80px
-            rgba(0,0,0,.6);
-        }
-
-        .trc-top {
-          display: flex;
-
-          justify-content:
-            space-between;
-
-          align-items:
-            flex-start;
-        }
-
-        .trc-top strong {
-          display: block;
-
-          margin-top: 4px;
-
-          font-size: 15px;
-        }
-
-        .status-dot {
-          padding: 5px 7px;
-
-          border-radius: 7px;
-
-          background:
-            rgba(255,106,61,.1);
-
-          color:
-            #ff9a76;
-
-          font-size: 7px;
-
-          font-weight: 800;
-
-          letter-spacing: .12em;
-        }
-
-        .reference-art {
-          position: relative;
-
-          height: 115px;
-
-          margin-top: 14px;
-
-          overflow: hidden;
-
+          width: 220px;
+          right: -18px;
+          top: 20px;
+          padding: 15px;
+          border: 1px solid rgba(255,255,255,.13);
           border-radius: 14px;
-
-          background:
-            radial-gradient(
-              circle at 65% 42%,
-              rgba(255,255,255,.14),
-              transparent 2%
-            ),
-            radial-gradient(
-              circle at 42% 60%,
-              rgba(255,255,255,.11),
-              transparent 2%
-            ),
-            linear-gradient(
-              135deg,
-              #202020,
-              #0b0b0b
-            );
+          background: rgba(15,15,15,.88);
+          backdrop-filter: blur(22px);
+          box-shadow:
+            0 25px 60px rgba(0,0,0,.5),
+            inset 0 1px rgba(255,255,255,.07);
         }
 
-        .ink-flower {
-          position: absolute;
-
-          left: 50%;
-          top: 50%;
-
-          transform:
-            translate(-50%,-50%);
-
-          color: #eee;
-
-          font-size: 54px;
-
-          filter:
-            drop-shadow(
-              0 0 12px
-              rgba(255,255,255,.25)
-            );
-        }
-
-        .ink-orbit {
-          position: absolute;
-
-          border:
-            1px solid
-            rgba(255,255,255,.12);
-
-          border-radius: 50%;
-        }
-
-        .ink-one {
-          width: 140px;
-          height: 70px;
-
-          left: 50%;
-          top: 50%;
-
-          transform:
-            translate(-50%,-50%)
-            rotate(27deg);
-        }
-
-        .ink-two {
-          width: 90px;
-          height: 135px;
-
-          left: 50%;
-          top: 50%;
-
-          transform:
-            translate(-50%,-50%)
-            rotate(-28deg);
-        }
-
-        .request-info {
-          display: grid;
-
-          grid-template-columns:
-            1fr 1fr;
-
-          gap: 10px;
-
-          margin-top: 14px;
-        }
-
-        .request-info span {
-          display: block;
-
-          color:
-            rgba(255,255,255,.28);
-
+        .request-top {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #777;
           font-size: 7px;
-
-          letter-spacing: .14em;
+          font-family: "DM Mono", monospace;
         }
 
-        .request-info b {
-          display: block;
+        .request-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: var(--orange);
+          box-shadow: 0 0 10px var(--orange);
+        }
 
-          margin-top: 4px;
+        .request-time {
+          margin-left: auto;
+          color: #444;
+        }
 
-          font-size: 10px;
+        .request-name {
+          margin-top: 14px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .request-tags {
+          display: flex;
+          gap: 4px;
+          flex-wrap: wrap;
+          margin-top: 9px;
+        }
+
+        .request-tags span {
+          padding: 5px 7px;
+          border-radius: 20px;
+          color: #8d8982;
+          background: rgba(255,255,255,.05);
+          font-size: 6px;
+        }
+
+        .request-images {
+          display: flex;
+          gap: 5px;
+          margin-top: 12px;
+        }
+
+        .reference-image,
+        .reference-more {
+          width: 42px;
+          height: 42px;
+          display: grid;
+          place-items: center;
+          border-radius: 7px;
+          overflow: hidden;
+        }
+
+        .reference-image {
+          background:
+            radial-gradient(circle at 50% 45%, #777 0 8%, transparent 9%),
+            radial-gradient(circle at 35% 70%, #aaa 0 5%, transparent 6%),
+            linear-gradient(135deg,#171717,#353535);
+          color: #d9d2c8;
+          font-size: 17px;
+        }
+
+        .ref-two {
+          background:
+            radial-gradient(circle at 55% 40%, #aaa 0 7%, transparent 8%),
+            linear-gradient(135deg,#242424,#101010);
+        }
+
+        .reference-more {
+          background: rgba(255,255,255,.05);
+          color: #777;
+          font-size: 8px;
         }
 
         .request-footer {
           display: flex;
-
-          justify-content:
-            space-between;
-
           align-items: center;
+          margin-top: 13px;
+          padding-top: 12px;
+          border-top: 1px solid rgba(255,255,255,.06);
+        }
 
-          margin-top: 15px;
+        .request-footer small {
+          display: block;
+          color: #484848;
+          font-size: 5px;
+        }
 
-          padding-top: 13px;
-
-          border-top:
-            1px solid
-            rgba(255,255,255,.07);
-
-          color:
-            rgba(255,255,255,.35);
-
+        .request-footer strong {
+          display: block;
+          margin-top: 3px;
+          color: #bbb5ad;
           font-size: 8px;
         }
 
-        .arrow {
-          color:
-            var(--orange);
-
-          font-size: 16px;
+        .request-arrow {
+          margin-left: auto;
+          width: 27px;
+          height: 27px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          background: var(--orange);
+          color: #111;
+          font-size: 12px;
         }
 
-        .float-pix {
+        .pix-card {
           position: absolute;
-
           z-index: 8;
-
-          right: 8px;
-
-          top: 82px;
-        }
-
-        .floating-pill {
-          padding:
-            12px 14px;
-
-          border:
-            1px solid
-            rgba(255,255,255,.12);
-
-          border-radius: 15px;
-
-          background:
-            rgba(20,20,20,.88);
-
-          backdrop-filter:
-            blur(18px);
-
-          box-shadow:
-            0 18px 45px
-            rgba(0,0,0,.4);
-        }
-
-        .pix-pill {
+          left: -5px;
+          bottom: 53px;
+          width: 185px;
           display: flex;
-
           align-items: center;
-
           gap: 10px;
+          padding: 12px;
+          border: 1px solid rgba(255,255,255,.1);
+          border-radius: 12px;
+          background: rgba(16,16,16,.92);
+          backdrop-filter: blur(20px);
+          box-shadow: 0 20px 50px rgba(0,0,0,.5);
         }
 
         .pix-icon {
-          width: 28px;
-          height: 28px;
-
+          width: 30px;
+          height: 30px;
           display: grid;
           place-items: center;
-
-          border-radius: 9px;
-
-          background:
-            #173c2c;
-
-          color:
-            #74e3a7;
-
-          font-size: 12px;
+          border-radius: 8px;
+          background: rgba(255,106,61,.12);
+          color: var(--orange);
         }
 
-        .pix-pill span {
+        .pix-card span {
           display: block;
-
-          color:
-            rgba(255,255,255,.35);
-
-          font-size: 7px;
-
-          letter-spacing: .12em;
+          color: #555;
+          font-size: 5px;
+          font-family: "DM Mono", monospace;
         }
 
-        .pix-pill b {
+        .pix-card strong {
           display: block;
-
           margin-top: 3px;
-
-          font-size: 12px;
+          font-size: 10px;
         }
 
-        .scroll-mark {
-          position: absolute;
-
-          left: 34px;
-
-          bottom: 42px;
-
-          display: flex;
-
-          align-items: center;
-
-          gap: 10px;
-
-          color:
-            rgba(255,255,255,.28);
-
-          font-size: 9px;
-
-          letter-spacing: .18em;
-
-          text-transform:
-            uppercase;
+        .pix-check {
+          margin-left: auto;
+          width: 20px;
+          height: 20px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          background: rgba(60,220,140,.1);
+          color: #4cda8d;
+          font-size: 8px;
         }
 
-        .scroll-mark:before {
-          content: '';
-
-          width: 32px;
-
-          height: 1px;
-
-          background:
-            rgba(255,255,255,.2);
-        }
+        /* ================= MARQUEE ================= */
 
         .ticker {
-          border-top:
-            1px solid var(--line);
-
-          border-bottom:
-            1px solid var(--line);
-
+          position: relative;
+          z-index: 5;
+          border-top: 1px solid rgba(255,255,255,.06);
+          border-bottom: 1px solid rgba(255,255,255,.06);
           overflow: hidden;
-
-          background:
-            #0b0b0b;
+          background: rgba(255,255,255,.015);
         }
 
         .ticker-track {
           display: flex;
-
           width: max-content;
-
-          animation:
-            ticker 28s linear infinite;
+          animation: ticker 30s linear infinite;
         }
 
         .ticker-item {
           display: flex;
-
           align-items: center;
-
-          gap: 26px;
-
-          padding:
-            20px 26px;
-
-          color:
-            rgba(255,255,255,.34);
-
-          font-size: 10px;
-
-          font-weight: 700;
-
-          letter-spacing: .18em;
-
+          gap: 35px;
+          padding: 17px 35px;
+          color: #555;
+          font-family: "DM Mono", monospace;
+          font-size: 9px;
+          letter-spacing: .12em;
           white-space: nowrap;
         }
 
         .ticker-item b {
-          color:
-            var(--orange);
-
-          font-size: 15px;
+          color: var(--orange);
         }
 
         @keyframes ticker {
+          from {
+            transform: translateX(0);
+          }
+
           to {
-            transform:
-              translateX(-50%);
+            transform: translateX(-50%);
           }
         }
 
-        .dark-section {
-          background:
-            #090909;
-        }
-
-        .paper-section {
-          background:
-            var(--paper);
-
-          color:
-            #0a0a0a;
-        }
+        /* ================= SECTION ================= */
 
         .section {
-          max-width: 1180px;
-
-          margin: auto;
-
-          padding:
-            150px 34px;
+          position: relative;
+          padding: 145px 0;
         }
 
-        .section-kicker {
-          color:
-            var(--orange);
-
-          font-size: 10px;
-
-          font-weight: 800;
-
-          letter-spacing: .22em;
-
-          text-transform:
-            uppercase;
+        .section-label {
+          color: var(--orange);
+          font-family: "DM Mono", monospace;
+          font-size: 9px;
+          letter-spacing: .18em;
+          text-transform: uppercase;
         }
 
         .section-title {
-          margin:
-            17px 0 0;
-
-          max-width: 800px;
-
-          font-family:
-            'Space Grotesk';
-
-          font-size:
-            clamp(
-              42px,
-              5.2vw,
-              76px
-            );
-
-          line-height: .96;
-
-          letter-spacing:
-            -.06em;
+          max-width: 780px;
+          margin: 18px 0 0;
+          font-size: clamp(40px, 5.3vw, 72px);
+          line-height: .98;
+          letter-spacing: -.055em;
         }
 
-        .section-text {
-          max-width: 570px;
-
-          margin-top: 24px;
-
-          color:
-            rgba(255,255,255,.48);
-
-          font-size: 16px;
-
-          line-height: 1.75;
+        .section-title em {
+          color: #79746d;
+          font-family: "Playfair Display", serif;
+          font-weight: 500;
         }
 
-        .paper-section .section-text {
-          color:
-            rgba(0,0,0,.54);
+        .section-intro {
+          max-width: 560px;
+          margin-top: 25px;
+          color: #77736d;
+          font-size: 15px;
+          line-height: 1.8;
         }
 
-        .problem-grid {
+        /* ================= BEFORE AFTER ================= */
+
+        .before-after {
+          position: relative;
           display: grid;
-
-          grid-template-columns:
-            1fr 1fr 1fr;
-
-          gap: 12px;
-
-          margin-top: 70px;
+          grid-template-columns: 1fr 80px 1fr;
+          align-items: center;
+          margin-top: 75px;
         }
 
-        .problem-card {
-          min-height: 250px;
+        .ba-panel {
+          min-height: 430px;
+          padding: 35px;
+          border: 1px solid rgba(255,255,255,.08);
+          border-radius: 20px;
+          background: #0a0a0a;
+        }
 
-          padding: 28px;
-
-          border:
-            1px solid
-            rgba(255,255,255,.08);
-
-          border-radius: 25px;
-
+        .ba-panel.before {
           background:
-            #0e0e0e;
+            radial-gradient(circle at 70% 10%, rgba(255,255,255,.03), transparent 30%),
+            #0a0a0a;
         }
 
-        .problem-card .num {
-          color:
-            rgba(255,106,61,.7);
+        .ba-panel.after {
+          border-color: rgba(255,106,61,.18);
+          background:
+            radial-gradient(circle at 80% 10%, rgba(255,106,61,.07), transparent 35%),
+            #0a0a0a;
+        }
 
+        .ba-label {
+          color: #555;
+          font-family: "DM Mono", monospace;
+          font-size: 8px;
+          letter-spacing: .15em;
+        }
+
+        .after .ba-label {
+          color: var(--orange);
+        }
+
+        .ba-panel h3 {
+          max-width: 350px;
+          margin: 18px 0 30px;
+          font-size: 25px;
+          letter-spacing: -.04em;
+        }
+
+        .chaos {
+          position: relative;
+          height: 190px;
+        }
+
+        .chaos div {
+          position: absolute;
+          padding: 12px 15px;
+          border: 1px solid rgba(255,255,255,.07);
+          border-radius: 9px;
+          background: #111;
+          color: #777;
           font-size: 10px;
-
-          letter-spacing: .2em;
-
-          font-weight: 800;
         }
 
-        .problem-card h3 {
-          margin-top: 78px;
-
-          font-size: 20px;
-
-          letter-spacing:
-            -.03em;
+        .chaos div:nth-child(1) {
+          left: 5%;
+          top: 5%;
+          transform: rotate(-7deg);
         }
 
-        .problem-card p {
-          margin-top: 9px;
-
-          color:
-            rgba(255,255,255,.4);
-
-          font-size: 13px;
-
-          line-height: 1.65;
+        .chaos div:nth-child(2) {
+          right: 8%;
+          top: 3%;
+          transform: rotate(5deg);
         }
 
-        .flow {
+        .chaos div:nth-child(3) {
+          left: 20%;
+          top: 38%;
+          transform: rotate(3deg);
+        }
+
+        .chaos div:nth-child(4) {
+          right: 5%;
+          top: 46%;
+          transform: rotate(-4deg);
+        }
+
+        .chaos div:nth-child(5) {
+          left: 3%;
+          bottom: 2%;
+          transform: rotate(5deg);
+        }
+
+        .chaos div:nth-child(6) {
+          right: 24%;
+          bottom: 0;
+          transform: rotate(-5deg);
+        }
+
+        .ba-panel p {
+          color: #62605c;
+          font-size: 11px;
+          line-height: 1.7;
+        }
+
+        .organized {
           display: grid;
+          gap: 9px;
+        }
 
-          grid-template-columns:
-            repeat(5,1fr);
+        .organized div {
+          display: flex;
+          align-items: center;
+          gap: 11px;
+          padding: 12px;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 8px;
+          color: #aaa49c;
+          font-size: 10px;
+          background: rgba(255,255,255,.025);
+        }
 
-          gap: 0;
+        .organized span {
+          color: var(--orange);
+        }
 
+        .ba-divider {
+          width: 48px;
+          height: 48px;
+          display: grid;
+          place-items: center;
+          justify-self: center;
+          border: 1px solid rgba(255,106,61,.25);
+          border-radius: 50%;
+          color: var(--orange);
+          background: #080808;
+          box-shadow: 0 0 40px rgba(255,106,61,.08);
+        }
+
+        /* ================= FLOW ================= */
+
+        .flow-grid {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          gap: 10px;
           margin-top: 70px;
-
-          border-top:
-            1px solid
-            rgba(0,0,0,.12);
-
-          border-bottom:
-            1px solid
-            rgba(0,0,0,.12);
         }
 
         .flow-card {
           position: relative;
-
-          min-height: 250px;
-
-          padding: 25px 20px;
-
-          border-right:
-            1px solid
-            rgba(0,0,0,.12);
+          min-height: 245px;
+          padding: 22px;
+          border: 1px solid rgba(255,255,255,.07);
+          border-radius: 15px;
+          background:
+            linear-gradient(145deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+          overflow: hidden;
+          transform-style: preserve-3d;
         }
 
-        .flow-card:last-child {
-          border-right: 0;
+        .flow-card::after {
+          content: "";
+          position: absolute;
+          width: 100px;
+          height: 100px;
+          right: -50px;
+          bottom: -50px;
+          background: var(--orange);
+          opacity: .05;
+          filter: blur(25px);
+          border-radius: 50%;
         }
 
         .flow-number {
-          width: 34px;
-          height: 34px;
+          color: #494642;
+          font-family: "DM Mono", monospace;
+          font-size: 9px;
+        }
 
+        .flow-icon {
+          width: 42px;
+          height: 42px;
           display: grid;
           place-items: center;
-
-          border-radius: 50%;
-
-          background:
-            #0b0b0b;
-
-          color:
-            #fff;
-
-          font-size: 10px;
-
-          font-weight: 800;
+          margin-top: 38px;
+          border: 1px solid rgba(255,106,61,.2);
+          border-radius: 10px;
+          color: var(--orange);
+          background: rgba(255,106,61,.05);
+          font-size: 14px;
         }
 
         .flow-card h3 {
-          margin-top: 80px;
-
-          font-size: 17px;
-
-          letter-spacing:
-            -.03em;
+          margin: 18px 0 9px;
+          font-size: 15px;
+          letter-spacing: -.025em;
         }
 
         .flow-card p {
-          margin-top: 8px;
-
-          color:
-            rgba(0,0,0,.52);
-
-          font-size: 12px;
-
-          line-height: 1.6;
+          margin: 0;
+          color: #62605b;
+          font-size: 10px;
+          line-height: 1.65;
         }
 
-        .flow-arrow {
-          position: absolute;
+        /* ================= QUOTE ================= */
 
-          right: -8px;
+        .quote-section {
+          background:
+            radial-gradient(circle at 50% 40%, rgba(255,106,61,.055), transparent 35%);
+        }
 
-          top: 30px;
-
-          z-index: 2;
-
-          width: 16px;
-          height: 16px;
-
+        .quote-scene {
+          position: relative;
+          min-height: 650px;
+          margin-top: 65px;
           display: grid;
           place-items: center;
-
-          background:
-            var(--paper);
-
-          color:
-            var(--orange);
-
-          font-size: 12px;
+          perspective: 1400px;
         }
 
-        .showcase {
-          display: grid;
+        .quote-orbit {
+          position: absolute;
+          border: 1px solid rgba(255,255,255,.05);
+          border-radius: 50%;
+          pointer-events: none;
+        }
 
-          grid-template-columns:
-            .85fr 1.15fr;
+        .orbit-one {
+          width: 760px;
+          height: 330px;
+          transform: rotate(-14deg);
+        }
 
+        .orbit-two {
+          width: 620px;
+          height: 260px;
+          transform: rotate(17deg);
+        }
+
+        .quote-window {
+          position: relative;
+          z-index: 2;
+          width: min(880px, 100%);
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,.11);
+          border-radius: 20px;
+          background: #0b0b0b;
+          box-shadow:
+            0 50px 100px rgba(0,0,0,.55),
+            0 0 80px rgba(255,106,61,.04);
+        }
+
+        .quote-header {
+          display: flex;
           align-items: center;
-
-          gap: 70px;
-
-          margin-top: 90px;
+          justify-content: space-between;
+          padding: 20px 25px;
+          border-bottom: 1px solid rgba(255,255,255,.06);
         }
 
-        .showcase-copy h3 {
-          margin-top: 16px;
-
-          font-family:
-            'Space Grotesk';
-
-          font-size: 48px;
-
-          line-height: 1;
-
-          letter-spacing:
-            -.055em;
+        .quote-header span {
+          display: block;
+          color: var(--orange);
+          font-family: "DM Mono", monospace;
+          font-size: 7px;
+          letter-spacing: .15em;
         }
 
-        .showcase-copy p {
-          margin-top: 20px;
-
-          max-width: 470px;
-
-          color:
-            rgba(0,0,0,.52);
-
-          line-height: 1.75;
-
+        .quote-header strong {
+          display: block;
+          margin-top: 4px;
           font-size: 15px;
         }
 
-        .showcase-list {
-          display: grid;
-
-          gap: 10px;
-
-          margin-top: 30px;
-        }
-
-        .showcase-list div {
-          display: flex;
-
-          gap: 10px;
-
-          align-items: center;
-
-          font-size: 12px;
-
-          font-weight: 600;
-        }
-
-        .showcase-list b {
-          width: 20px;
-          height: 20px;
-
-          display: grid;
-          place-items: center;
-
-          border-radius: 50%;
-
-          background:
-            #0a0a0a;
-
-          color:
-            #fff;
-
-          font-size: 9px;
-        }
-
-        .quote-3d {
-          position: relative;
-
-          min-height: 510px;
-
-          display: grid;
-
-          place-items: center;
-
-          perspective: 1200px;
-        }
-
-        .quote-card {
-          width:
-            min(
-              490px,
-              100%
-            );
-
-          padding: 34px;
-
+        .quote-status {
+          padding: 6px 9px;
+          border: 1px solid rgba(255,106,61,.2);
           border-radius: 30px;
+          color: var(--orange);
+          font-family: "DM Mono", monospace;
+          font-size: 7px;
+        }
 
+        .quote-body {
+          display: grid;
+          grid-template-columns: 42% 58%;
+          min-height: 470px;
+        }
+
+        .quote-left {
+          padding: 25px;
+          border-right: 1px solid rgba(255,255,255,.06);
           background:
-            #0a0a0a;
-
-          color:
-            #fff;
-
-          transform:
-            rotateY(-8deg)
-            rotateX(5deg)
-            rotateZ(2deg);
-
-          box-shadow:
-            30px 35px 80px
-            rgba(0,0,0,.25);
+            radial-gradient(circle at 50% 30%, rgba(255,255,255,.05), transparent 35%);
         }
 
-        .quote-card-top {
+        .quote-photo {
+          height: 355px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 13px;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 48% 43%, rgba(255,255,255,.22) 0 2%, transparent 3%),
+            radial-gradient(circle at 54% 49%, rgba(255,255,255,.16) 0 8%, transparent 9%),
+            radial-gradient(circle at 40% 58%, rgba(255,255,255,.14) 0 7%, transparent 8%),
+            linear-gradient(145deg,#1d1d1d,#080808);
+        }
+
+        .fake-tattoo {
+          font-size: 90px;
+          color: rgba(255,255,255,.6);
+          transform: rotate(-13deg);
+          filter: blur(.3px);
+        }
+
+        .reference-row {
           display: flex;
-
-          justify-content:
-            space-between;
-
-          color:
-            rgba(255,255,255,.35);
-
-          font-size: 8px;
-
-          letter-spacing: .16em;
+          gap: 6px;
+          margin-top: 8px;
         }
 
-        .quote-card h4 {
-          margin-top: 50px;
+        .reference-row div {
+          flex: 1;
+          height: 43px;
+          border-radius: 6px;
+          background:
+            linear-gradient(135deg,#222,#0d0d0d);
+          border: 1px solid rgba(255,255,255,.05);
+        }
 
-          font-family:
-            'Space Grotesk';
+        .quote-details {
+          padding: 30px;
+        }
 
-          font-size: 34px;
+        .quote-details > span {
+          color: #555;
+          font-family: "DM Mono", monospace;
+          font-size: 7px;
+        }
 
-          letter-spacing:
-            -.05em;
+        .quote-details > strong {
+          display: block;
+          margin-top: 7px;
+          font-size: 21px;
+          letter-spacing: -.04em;
+        }
+
+        .detail-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-top: 25px;
+        }
+
+        .detail-grid div {
+          padding: 13px;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 8px;
+          background: rgba(255,255,255,.02);
+        }
+
+        .detail-grid small,
+        .quote-price span {
+          display: block;
+          color: #555;
+          font-family: "DM Mono", monospace;
+          font-size: 6px;
+        }
+
+        .detail-grid b {
+          display: block;
+          margin-top: 6px;
+          color: #b4aea6;
+          font-size: 9px;
+          font-weight: 500;
         }
 
         .quote-price {
-          margin-top: 32px;
-
-          display: flex;
-
-          justify-content:
-            space-between;
-
-          align-items:
-            flex-end;
-
-          padding-top: 20px;
-
-          border-top:
-            1px solid
-            rgba(255,255,255,.1);
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-top: 10px;
         }
 
-        .quote-price span {
-          color:
-            rgba(255,255,255,.35);
-
-          font-size: 8px;
-
-          letter-spacing: .14em;
+        .quote-price > div {
+          padding: 16px;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 8px;
         }
 
         .quote-price strong {
-          margin-top: 5px;
-
           display: block;
-
-          font-size: 28px;
+          margin-top: 5px;
+          font-size: 15px;
         }
 
-        .quote-pix {
-          padding:
-            10px 12px;
+        .quote-actions {
+          display: flex;
+          gap: 8px;
+          margin-top: 20px;
+        }
 
-          border-radius: 12px;
+        .quote-actions button {
+          flex: 1;
+          padding: 12px;
+          border-radius: 7px;
+          font-size: 8px;
+          cursor: pointer;
+        }
 
-          background:
-            #173c2c;
+        .reject {
+          border: 1px solid rgba(255,255,255,.08);
+          background: transparent;
+          color: #777;
+        }
 
-          color:
-            #78dfa9;
-
-          font-size: 9px;
-
+        .approve {
+          border: 0;
+          background: var(--orange);
+          color: #111;
           font-weight: 700;
         }
 
-        .feature-grid {
+        /* ================= FEATURES ================= */
+
+        .features-grid {
           display: grid;
-
-          grid-template-columns:
-            repeat(3,1fr);
-
+          grid-template-columns: repeat(12, 1fr);
           gap: 12px;
-
           margin-top: 70px;
         }
 
         .feature-card {
-          min-height: 245px;
-
-          padding: 28px;
-
-          border-radius: 25px;
-
-          border:
-            1px solid
-            rgba(255,255,255,.08);
-
-          background:
-            linear-gradient(
-              145deg,
-              #111,
-              #0b0b0b
-            );
-
-          transition:
-            transform .35s,
-            border .35s;
-        }
-
-        .feature-card:hover {
-          transform:
-            translateY(-8px);
-
-          border-color:
-            rgba(255,106,61,.3);
-        }
-
-        .feature-icon {
-          width: 42px;
-          height: 42px;
-
-          display: grid;
-          place-items: center;
-
-          border-radius: 13px;
-
-          background:
-            rgba(255,106,61,.09);
-
-          color:
-            var(--orange);
-
-          font-size: 18px;
-        }
-
-        .feature-card h3 {
-          margin-top: 55px;
-
-          font-size: 18px;
-
-          letter-spacing:
-            -.03em;
-        }
-
-        .feature-card p {
-          margin-top: 9px;
-
-          color:
-            rgba(255,255,255,.4);
-
-          font-size: 12px;
-
-          line-height: 1.65;
-        }
-
-        .price-section {
-          padding:
-            150px 34px;
-
-          text-align: center;
-        }
-
-        .price-card {
-          width:
-            min(
-              480px,
-              100%
-            );
-
-          margin:
-            55px auto 0;
-
-          padding: 34px;
-
-          border-radius: 30px;
-
-          background:
-            #101010;
-
-          border:
-            1px solid
-            rgba(255,106,61,.24);
-
-          box-shadow:
-            0 30px 100px
-            rgba(0,0,0,.35);
-
-          text-align: left;
-        }
-
-        .price-card .price {
-          margin-top: 12px;
-
-          font-family:
-            'Space Grotesk';
-
-          font-size: 53px;
-
-          letter-spacing:
-            -.06em;
-        }
-
-        .price-card .price small {
-          color:
-            rgba(255,255,255,.35);
-
-          font-family:
-            'DM Sans';
-
-          font-size: 13px;
-
-          letter-spacing: 0;
-        }
-
-        .price-card hr {
-          margin: 26px 0;
-
-          border: 0;
-
-          border-top:
-            1px solid
-            rgba(255,255,255,.08);
-        }
-
-        .price-list {
-          display: grid;
-
-          gap: 11px;
-
-          color:
-            rgba(255,255,255,.62);
-
-          font-size: 12px;
-        }
-
-        .price-list span {
-          color:
-            var(--orange);
-
-          margin-right: 9px;
-        }
-
-        .price-button {
-          display: block;
-
-          margin-top: 28px;
-
-          padding: 16px;
-
-          border-radius: 15px;
-
-          background:
-            var(--orange);
-
-          color:
-            #080808 !important;
-
-          text-align: center;
-
-          font-size: 12px;
-
-          font-weight: 800;
-        }
-
-        .final-cta {
           position: relative;
-
-          min-height: 620px;
-
-          display: grid;
-
-          place-items: center;
-
+          min-height: 360px;
+          padding: 30px;
           overflow: hidden;
-
-          text-align: center;
-
-          background:
-            radial-gradient(
-              circle at 50% 55%,
-              rgba(255,106,61,.19),
-              transparent 32%
-            ),
-            #070707;
+          border: 1px solid rgba(255,255,255,.07);
+          border-radius: 18px;
+          background: #0a0a0a;
+          transform-style: preserve-3d;
         }
 
-        .final-ring {
-          position: absolute;
-
-          width: 650px;
-          height: 650px;
-
-          border:
-            1px solid
-            rgba(255,106,61,.12);
-
-          border-radius: 50%;
+        .feature-card:nth-child(1),
+        .feature-card:nth-child(4) {
+          grid-column: span 7;
         }
 
-        .final-ring.two {
-          width: 850px;
-          height: 850px;
-
-          border-color:
-            rgba(255,255,255,.05);
+        .feature-card:nth-child(2),
+        .feature-card:nth-child(3),
+        .feature-card:nth-child(5),
+        .feature-card:nth-child(6) {
+          grid-column: span 5;
         }
 
-        .final-content {
+        .feature-number {
+          color: #44413e;
+          font-family: "DM Mono", monospace;
+          font-size: 8px;
+        }
+
+        .feature-content {
           position: relative;
-
           z-index: 2;
-
-          padding:
-            40px 24px;
+          max-width: 340px;
+          margin-top: 75px;
         }
 
-        .final-content h2 {
-          margin-top: 15px;
-
-          font-family:
-            'Space Grotesk';
-
-          font-size:
-            clamp(
-              48px,
-              7vw,
-              92px
-            );
-
-          line-height: .9;
-
-          letter-spacing:
-            -.065em;
+        .feature-content h3 {
+          margin: 0;
+          font-size: 26px;
+          letter-spacing: -.045em;
         }
 
-        .final-content h2 span {
-          color:
-            var(--orange);
-        }
-
-        .final-content p {
-          max-width: 530px;
-
-          margin:
-            25px auto 0;
-
-          color:
-            rgba(255,255,255,.43);
-
+        .feature-content p {
+          margin-top: 13px;
+          color: #64615c;
+          font-size: 11px;
           line-height: 1.7;
         }
 
-        .final-content .hero-actions {
-          justify-content:
-            center;
+        .feature-visual {
+          position: absolute;
+          right: 25px;
+          bottom: 25px;
+          width: 210px;
+          height: 170px;
         }
 
-        .footer3d {
-          padding:
-            30px 34px;
+        .mini-phone {
+          position: absolute;
+          right: 15px;
+          bottom: 0;
+          width: 105px;
+          height: 180px;
+          border: 5px solid #1d1d1d;
+          border-radius: 18px;
+          background: #0e0e0e;
+          box-shadow: 0 25px 50px rgba(0,0,0,.5);
+          overflow: hidden;
+        }
 
-          border-top:
-            1px solid
-            var(--line);
+        .mini-phone::before {
+          content: "";
+          position: absolute;
+          top: 7px;
+          left: 50%;
+          width: 35px;
+          height: 5px;
+          transform: translateX(-50%);
+          border-radius: 10px;
+          background: #252525;
+        }
 
+        .phone-screen {
+          padding: 27px 8px 8px;
+        }
+
+        .phone-title {
+          color: #888;
+          font-size: 5px;
+        }
+
+        .phone-line {
+          height: 7px;
+          margin-top: 7px;
+          border-radius: 3px;
+          background: #242424;
+        }
+
+        .phone-line.short {
+          width: 60%;
+        }
+
+        .phone-button {
+          height: 20px;
+          margin-top: 13px;
+          border-radius: 5px;
+          background: var(--orange);
+        }
+
+        .feature-ring {
+          position: absolute;
+          width: 130px;
+          height: 130px;
+          left: 0;
+          bottom: 10px;
+          border: 1px solid rgba(255,106,61,.15);
+          border-radius: 50%;
+        }
+
+        .feature-chat {
+          position: absolute;
+          right: 0;
+          bottom: 20px;
+          padding: 13px;
+          border: 1px solid rgba(255,255,255,.07);
+          border-radius: 10px;
+          background: #121212;
+          color: #8b8780;
+          font-size: 7px;
+          box-shadow: 0 20px 40px rgba(0,0,0,.4);
+        }
+
+        .feature-chat b {
+          display: block;
+          color: #bbb4ab;
+          margin-bottom: 4px;
+          font-size: 8px;
+        }
+
+        .service-stack {
+          position: absolute;
+          right: 20px;
+          bottom: 25px;
+          width: 230px;
+        }
+
+        .service-item {
           display: flex;
+          justify-content: space-between;
+          padding: 12px;
+          margin-top: 5px;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 7px;
+          background: #101010;
+          color: #777;
+          font-size: 8px;
+        }
 
-          justify-content:
-            space-between;
+        .service-item strong {
+          color: #aaa;
+          font-weight: 500;
+        }
 
-          gap: 20px;
+        .commission-chart {
+          position: absolute;
+          right: 30px;
+          bottom: 30px;
+          width: 250px;
+          height: 130px;
+          display: flex;
+          align-items: end;
+          gap: 9px;
+          padding: 20px;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 10px;
+          background: #0e0e0e;
+        }
 
-          max-width: 1280px;
+        .bar {
+          flex: 1;
+          border-radius: 4px 4px 0 0;
+          background: linear-gradient(
+            to top,
+            rgba(255,106,61,.12),
+            rgba(255,106,61,.8)
+          );
+        }
 
-          margin: auto;
+        .bar:nth-child(1) { height: 35%; }
+        .bar:nth-child(2) { height: 50%; }
+        .bar:nth-child(3) { height: 40%; }
+        .bar:nth-child(4) { height: 75%; }
+        .bar:nth-child(5) { height: 62%; }
+        .bar:nth-child(6) { height: 92%; }
 
-          color:
-            rgba(255,255,255,.3);
+        /* ================= NUMBERS ================= */
 
+        .numbers {
+          padding: 80px 0;
+          border-top: 1px solid rgba(255,255,255,.06);
+          border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+
+        .numbers-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+        }
+
+        .number {
+          padding: 15px 30px;
+          border-right: 1px solid rgba(255,255,255,.06);
+        }
+
+        .number:last-child {
+          border-right: 0;
+        }
+
+        .number strong {
+          display: block;
+          font-size: 45px;
+          letter-spacing: -.06em;
+        }
+
+        .number span {
+          display: block;
+          margin-top: 6px;
+          color: #5f5b56;
+          font-family: "DM Mono", monospace;
+          font-size: 8px;
+          letter-spacing: .08em;
+        }
+
+        /* ================= PRICE ================= */
+
+        .price-section {
+          padding-bottom: 160px;
+        }
+
+        .price-card {
+          position: relative;
+          max-width: 900px;
+          margin: 70px auto 0;
+          padding: 50px;
+          overflow: hidden;
+          border: 1px solid rgba(255,106,61,.2);
+          border-radius: 22px;
+          background:
+            radial-gradient(circle at 90% 10%, rgba(255,106,61,.09), transparent 30%),
+            #0a0a0a;
+          box-shadow: 0 40px 100px rgba(0,0,0,.4);
+        }
+
+        .price-card::before {
+          content: "";
+          position: absolute;
+          width: 350px;
+          height: 350px;
+          right: -180px;
+          top: -180px;
+          border: 1px solid rgba(255,106,61,.12);
+          border-radius: 50%;
+        }
+
+        .price-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 60px;
+          align-items: center;
+        }
+
+        .price-label {
+          color: var(--orange);
+          font-family: "DM Mono", monospace;
+          font-size: 8px;
+          letter-spacing: .16em;
+        }
+
+        .price-card h3 {
+          margin: 14px 0;
+          font-size: 35px;
+          letter-spacing: -.05em;
+        }
+
+        .price-description {
+          color: #69655f;
+          font-size: 12px;
+          line-height: 1.75;
+        }
+
+        .price-value {
+          display: flex;
+          align-items: baseline;
+          gap: 4px;
+          margin-top: 20px;
+        }
+
+        .price-value small {
+          color: #888;
+          font-size: 12px;
+        }
+
+        .price-value strong {
+          font-size: 54px;
+          letter-spacing: -.07em;
+        }
+
+        .price-value span {
+          color: #666;
+          font-size: 12px;
+        }
+
+        .price-features {
+          display: grid;
+          gap: 10px;
+        }
+
+        .price-feature {
+          display: flex;
+          gap: 9px;
+          color: #96918a;
           font-size: 10px;
         }
 
-        .footer3d b {
-          color: #fff;
-
-          letter-spacing:
-            .22em;
+        .price-feature span {
+          color: var(--orange);
         }
 
-        @media (max-width: 980px) {
+        .price-button {
+          display: inline-flex;
+          margin-top: 25px;
+        }
 
-          .hero3d {
-            grid-template-columns: 1fr;
+        /* ================= CTA ================= */
 
-            padding-top: 145px;
+        .final-cta {
+          position: relative;
+          min-height: 720px;
+          display: grid;
+          place-items: center;
+          text-align: center;
+          overflow: hidden;
+          border-top: 1px solid rgba(255,255,255,.05);
+        }
 
-            min-height: auto;
+        .cta-aura {
+          position: absolute;
+          width: 600px;
+          height: 600px;
+          border-radius: 50%;
+          background: var(--orange);
+          opacity: .055;
+          filter: blur(100px);
+        }
+
+        .cta-lines {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          background:
+            repeating-radial-gradient(
+              ellipse at center,
+              transparent 0,
+              transparent 85px,
+              rgba(255,255,255,.025) 86px,
+              transparent 87px
+            );
+          mask-image: radial-gradient(
+            ellipse at center,
+            black,
+            transparent 65%
+          );
+        }
+
+        .cta-content {
+          position: relative;
+          z-index: 2;
+          max-width: 850px;
+        }
+
+        .cta-content h2 {
+          margin: 18px 0 0;
+          font-size: clamp(50px, 7vw, 90px);
+          line-height: .92;
+          letter-spacing: -.065em;
+        }
+
+        .cta-content h2 em {
+          color: var(--orange);
+          font-family: "Playfair Display", serif;
+          font-weight: 500;
+        }
+
+        .cta-content p {
+          max-width: 500px;
+          margin: 28px auto;
+          color: #77736d;
+          font-size: 14px;
+          line-height: 1.75;
+        }
+
+        .cta-buttons {
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+        }
+
+        /* ================= FOOTER ================= */
+
+        .footer {
+          padding: 30px 0;
+          border-top: 1px solid rgba(255,255,255,.06);
+        }
+
+        .footer-inner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .footer-copy {
+          color: #4d4a46;
+          font-size: 9px;
+        }
+
+        .footer-links {
+          display: flex;
+          gap: 20px;
+          color: #555;
+          font-size: 9px;
+        }
+
+        .footer-links a:hover {
+          color: #aaa;
+        }
+
+        /* ================= RESPONSIVE ================= */
+
+        @media (max-width: 1100px) {
+          .hero-product {
+            right: -25%;
+            opacity: .75;
           }
 
-          .hero-stage {
-            height: 640px;
-
-            margin-top: 20px;
+          .hero-copy {
+            width: 620px;
           }
 
-          .dashboard-wrap {
-            width:
-              min(
-                650px,
-                92%
-              );
-
-            transform:
-              translate(-48%,-50%)
-              rotateY(-7deg)
-              rotateX(3deg);
+          .flow-grid {
+            grid-template-columns: repeat(3, 1fr);
           }
 
-          .showcase {
-            grid-template-columns:
-              1fr;
-          }
-
-          .problem-grid,
-          .feature-grid {
-            grid-template-columns:
-              1fr 1fr;
-          }
-
-          .flow {
-            grid-template-columns:
-              1fr;
-          }
-
-          .flow-card {
-            min-height: 170px;
-
-            border-right: 0;
-
-            border-bottom:
-              1px solid
-              rgba(0,0,0,.12);
-          }
-
-          .flow-card:last-child {
-            border-bottom: 0;
-          }
-
-          .flow-arrow {
-            right: 50%;
-
-            top: auto;
-
-            bottom: -8px;
-
-            transform:
-              translateX(50%)
-              rotate(90deg);
+          .feature-card:nth-child(n) {
+            grid-column: span 6;
           }
         }
 
-        @media (max-width: 680px) {
-
-          .nav3d {
-            inset:
-              10px 10px auto;
-
-            height: 58px;
-
-            border-radius: 18px;
+        @media (max-width: 800px) {
+          .container {
+            width: min(100% - 28px, 600px);
           }
 
           .nav-links {
@@ -2337,1034 +2541,1043 @@ export default function Landing() {
           }
 
           .nav-cta {
-            padding:
-              10px 12px;
-          }
-
-          .hero3d {
-            padding:
-              125px 20px 70px;
-          }
-
-          .hero-title {
-            font-size: 56px;
-          }
-
-          .hero-text {
-            font-size: 15px;
-          }
-
-          .hero-stage {
-            height: 530px;
-          }
-
-          .dashboard-wrap {
-            width: 590px;
-
-            max-width: none;
-
-            left: 53%;
-
-            transform:
-              translate(-50%,-50%)
-              scale(.72)
-              rotateY(-6deg);
-
-            transform-origin:
-              center;
-          }
-
-          .tattoo-request {
-            width: 255px;
-
-            left: -2px;
-
-            bottom: 20px;
-
-            transform:
-              scale(.78)
-              rotateZ(-3deg);
-
-            transform-origin:
-              left bottom;
-          }
-
-          .float-pix {
-            right: -4px;
-
-            top: 30px;
-
-            transform:
-              scale(.82);
-
-            transform-origin:
-              right top;
-          }
-
-          .scroll-mark {
             display: none;
           }
 
+          .mobile-menu {
+            display: block;
+          }
+
+          .hero {
+            min-height: auto;
+            padding-top: 135px;
+            padding-bottom: 80px;
+          }
+
+          .hero-copy {
+            width: 100%;
+          }
+
+          .hero h1 {
+            font-size: clamp(48px, 15vw, 75px);
+          }
+
+          .hero-subtitle {
+            font-size: 14px;
+          }
+
+          .hero-actions {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .primary-button,
+          .secondary-button {
+            width: 100%;
+          }
+
+          .hero-product {
+            position: relative;
+            top: auto;
+            right: auto;
+            width: 100%;
+            height: 450px;
+            margin-top: 40px;
+            opacity: 1;
+            transform: scale(.72);
+            transform-origin: top center;
+          }
+
+          .dashboard {
+            left: 50%;
+            transform: translateX(-50%);
+          }
+
+          .request-card {
+            right: -10px;
+          }
+
+          .pix-card {
+            left: 0;
+          }
+
           .section {
-            padding:
-              100px 20px;
+            padding: 90px 0;
           }
 
-          .problem-grid,
-          .feature-grid {
-            grid-template-columns:
-              1fr;
+          .before-after {
+            grid-template-columns: 1fr;
+            gap: 15px;
           }
 
-          .problem-card {
-            min-height: 205px;
+          .ba-divider {
+            transform: rotate(90deg);
+            justify-self: center;
           }
 
-          .problem-card h3 {
-            margin-top: 55px;
+          .ba-panel {
+            min-height: auto;
           }
 
-          .showcase-copy h3 {
-            font-size: 39px;
+          .flow-grid {
+            grid-template-columns: 1fr 1fr;
           }
 
-          .quote-card {
-            transform: none;
+          .quote-scene {
+            min-height: auto;
+            display: block;
           }
 
-          .price-section {
-            padding:
-              100px 20px;
+          .quote-window {
+            margin-top: 40px;
           }
 
-          .footer3d {
-            padding:
-              24px 20px;
+          .quote-body {
+            grid-template-columns: 1fr;
+          }
 
-            flex-direction:
-              column;
+          .quote-left {
+            border-right: 0;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+          }
+
+          .quote-photo {
+            height: 280px;
+          }
+
+          .features-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+          }
+
+          .feature-card:nth-child(n) {
+            grid-column: span 1;
+          }
+
+          .numbers-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .number:nth-child(2) {
+            border-right: 0;
+          }
+
+          .number:nth-child(-n+2) {
+            border-bottom: 1px solid rgba(255,255,255,.06);
+          }
+
+          .price-grid {
+            grid-template-columns: 1fr;
+            gap: 35px;
+          }
+
+          .price-card {
+            padding: 30px;
+          }
+
+          .final-cta {
+            min-height: 600px;
           }
         }
 
+        @media (max-width: 500px) {
+          .hero-product {
+            height: 360px;
+            transform: scale(.52);
+            margin-bottom: -120px;
+          }
+
+          .dashboard {
+            left: 50%;
+          }
+
+          .request-card {
+            right: -15px;
+          }
+
+          .pix-card {
+            left: -10px;
+          }
+
+          .flow-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .quote-details {
+            padding: 20px;
+          }
+
+          .quote-left {
+            padding: 15px;
+          }
+
+          .detail-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .quote-actions {
+            flex-direction: column;
+          }
+
+          .feature-card {
+            min-height: 330px;
+          }
+
+          .feature-content {
+            margin-top: 50px;
+          }
+
+          .feature-visual,
+          .service-stack,
+          .commission-chart {
+            transform: scale(.8);
+            transform-origin: bottom right;
+          }
+
+          .numbers {
+            padding: 50px 0;
+          }
+
+          .number {
+            padding: 15px;
+          }
+
+          .number strong {
+            font-size: 35px;
+          }
+
+          .price-value strong {
+            font-size: 43px;
+          }
+
+          .cta-buttons {
+            flex-direction: column;
+          }
+
+          .footer-inner {
+            flex-direction: column;
+            gap: 15px;
+          }
+        }
       `}</style>
 
-      {/* NAVBAR */}
+      {/* =====================================================
+          HEADER
+          ===================================================== */}
 
-      <header className="nav3d">
-
-        <a
-          href="#top"
-          className="logo3d"
-        >
-          <span className="logo3d-mark">
-            F
-          </span>
-
-          FAYOLA
-        </a>
-
-        <nav className="nav-links">
-
-          <a href="#fluxo">
-            Como funciona
+      <header className="f-header">
+        <div className="container nav">
+          <a href="#" className="logo">
+            <span className="logo-mark">✦</span>
+            FAYOLA
           </a>
 
-          <a href="#recursos">
-            Recursos
+          <nav className="nav-links">
+            <a href="#como-funciona">
+              Como funciona
+            </a>
+
+            <a href="#recursos">
+              Recursos
+            </a>
+
+            <a href="#preco">
+              Preço
+            </a>
+          </nav>
+
+          <a
+            href={WHATSAPP}
+            target="_blank"
+            rel="noreferrer"
+            className="nav-cta"
+          >
+            Falar com a Fayola
           </a>
 
-          <a href="#preco">
-            Preço
-          </a>
-
-        </nav>
-
-        <a
-          href={WHATSAPP}
-          target="_blank"
-          rel="noreferrer"
-          className="nav-cta"
-        >
-          Falar com o Fayola
-        </a>
-
-      </header>
-
-      {/* HERO */}
-
-      <section
-        id="top"
-        className="hero3d"
-      >
-
-        <div className="hero-copy">
-
-          <Reveal>
-
-            <div className="eyebrow3d">
-
-              <i />
-
-              O sistema feito para tatuadores
-
-            </div>
-
-          </Reveal>
-
-          <Reveal delay={0.08}>
-
-            <h1 className="hero-title">
-
-              Enquanto você{' '}
-
-              <span className="orange">
-                tatua,
-              </span>
-
-              <br />
-
-              o Fayola{' '}
-
-              <span className="orange">
-                atende.
-              </span>
-
-            </h1>
-
-          </Reveal>
-
-          <Reveal delay={0.14}>
-
-            <p className="hero-text">
-
-              Transforme pedidos de tattoo em projetos
-              organizados: referências, tamanho, local
-              do corpo, orçamento, sinal via PIX e
-              horário confirmado — sem deixar o
-              atendimento parar enquanto você está
-              trabalhando.
-
-            </p>
-
-          </Reveal>
-
-          <Reveal delay={0.2}>
-
-            <div className="hero-actions">
-
-              <a
-                href={ASSINAR}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-primary"
-              >
-                Quero conhecer o Fayola
-                <span>↗</span>
-              </a>
-
-              <a
-                href="#fluxo"
-                className="btn-ghost"
-              >
-                Ver a experiência
-              </a>
-
-            </div>
-
-          </Reveal>
-
-          <Reveal delay={0.26}>
-
-            <div className="hero-note">
-
-              <span>
-                <b>✦</b>
-                Pedido de tattoo
-              </span>
-
-              <span>
-                <b>✦</b>
-                Referências
-              </span>
-
-              <span>
-                <b>✦</b>
-                Sinal PIX
-              </span>
-
-              <span>
-                <b>✦</b>
-                Agenda
-              </span>
-
-            </div>
-
-          </Reveal>
-
+          <button
+            className="mobile-menu"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? "×" : "☰"}
+          </button>
         </div>
 
-        {/* PAINEL 3D */}
-
-        <div className="hero-stage">
-
-          <div className="stage-glow" />
-
-          <TiltPanel
-            className="dashboard-wrap"
-          >
-            <StudioDashboard />
-          </TiltPanel>
-
-          {/* PEDIDO FLUTUANTE */}
-
+        {menuOpen && (
           <motion.div
-            className="tattoo-request"
-            initial={{
-              opacity: 0,
-              x: -35,
-              y: 20,
-            }}
-            animate={{
-              opacity: 1,
-              x: 0,
-              y: 0,
-            }}
-            transition={{
-              delay: 0.8,
-              duration: 0.8,
-              ease,
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mobile-nav"
+            style={{
+              padding: "20px 25px",
+              background: "#080808",
+              borderBottom:
+                "1px solid rgba(255,255,255,.08)",
             }}
           >
-            <TattooRequestCard />
-          </motion.div>
-
-          {/* PIX */}
-
-          <div className="float-pix">
-
-            <FloatingPill>
-
-              <div className="pix-pill">
-
-                <div className="pix-icon">
-                  ◆
-                </div>
-
-                <div>
-
-                  <span>
-                    SINAL RECEBIDO
-                  </span>
-
-                  <b>
-                    R$ 195,00 · PIX
-                  </b>
-
-                </div>
-
-              </div>
-
-            </FloatingPill>
-
-          </div>
-
-        </div>
-
-        <div className="scroll-mark">
-          Role para entrar no estúdio
-        </div>
-
-      </section>
-
-      {/* TICKER */}
-
-      <div className="ticker">
-
-        <div className="ticker-track">
-
-          {[1, 2].map((copy) => (
-
-            <React.Fragment key={copy}>
-
-              <div className="ticker-item">
-                <b>✦</b>
-                PEDIDO
-              </div>
-
-              <div className="ticker-item">
-                REFERÊNCIA
-              </div>
-
-              <div className="ticker-item">
-                <b>✦</b>
-                ORÇAMENTO
-              </div>
-
-              <div className="ticker-item">
-                SINAL PIX
-              </div>
-
-              <div className="ticker-item">
-                <b>✦</b>
-                HORÁRIO
-              </div>
-
-              <div className="ticker-item">
-                CONFIRMADO
-              </div>
-
-            </React.Fragment>
-
-          ))}
-
-        </div>
-
-      </div>
-
-      {/* PROBLEMA */}
-
-      <section className="dark-section">
-
-        <div className="section">
-
-          <Reveal>
-
-            <div className="section-kicker">
-              A rotina real do tatuador
-            </div>
-
-            <h2 className="section-title">
-
-              Você não deveria precisar parar
-              de tatuar para administrar o atendimento.
-
-            </h2>
-
-            <p className="section-text">
-
-              O Fayola tira a operação do meio da
-              sua arte. Em vez de procurar mensagens,
-              referências e comprovantes, você encontra
-              cada projeto organizado em um fluxo único.
-
-            </p>
-
-          </Reveal>
-
-          <div className="problem-grid">
-
-            {[
-              [
-                '01',
-                'Mensagens que acumulam',
-                '“Quanto fica?” “Tem horário?” “Posso mandar uma referência?”',
-              ],
-              [
-                '02',
-                'Orçamentos sem contexto',
-                'Tamanho, estilo e local do corpo ficam espalhados em conversas.',
-              ],
-              [
-                '03',
-                'Sessões sem confirmação',
-                'Você reserva seu tempo antes de saber se o cliente realmente confirmou.',
-              ],
-            ].map(
-              ([n, title, text], index) => (
-
-                <Reveal
-                  key={n}
-                  delay={index * 0.08}
-                >
-
-                  <div className="problem-card">
-
-                    <span className="num">
-                      {n}
-                    </span>
-
-                    <h3>
-                      {title}
-                    </h3>
-
-                    <p>
-                      {text}
-                    </p>
-
-                  </div>
-
-                </Reveal>
-
-              )
-            )}
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* FLUXO */}
-
-      <section
-        id="fluxo"
-        className="paper-section"
-      >
-
-        <div className="section">
-
-          <Reveal>
-
-            <div className="section-kicker">
-              A experiência
-            </div>
-
-            <h2 className="section-title">
-
-              Do primeiro pedido ao horário confirmado.
-
-            </h2>
-
-            <p className="section-text">
-
-              O cliente entende o próximo passo.
-              Você recebe as informações certas.
-              E o estúdio continua funcionando mesmo
-              quando você está com a máquina na mão.
-
-            </p>
-
-          </Reveal>
-
-          <div className="flow">
-
-            {[
-              [
-                '01',
-                'Pedido',
-                'O cliente descreve a ideia da tattoo.',
-              ],
-              [
-                '02',
-                'Referências',
-                'Envia imagens, estilo e inspirações.',
-              ],
-              [
-                '03',
-                'Projeto',
-                'Você define tamanho, local e orçamento.',
-              ],
-              [
-                '04',
-                'Sinal',
-                'O cliente confirma com PIX.',
-              ],
-              [
-                '05',
-                'Sessão',
-                'O horário entra na sua agenda.',
-              ],
-            ].map(
-              ([n, title, text], index) => (
-
-                <Reveal
-                  key={n}
-                  delay={index * 0.06}
-                >
-
-                  <div className="flow-card">
-
-                    <div className="flow-number">
-                      {n}
-                    </div>
-
-                    <h3>
-                      {title}
-                    </h3>
-
-                    <p>
-                      {text}
-                    </p>
-
-                    {index < 4 && (
-                      <span className="flow-arrow">
-                        →
-                      </span>
-                    )}
-
-                  </div>
-
-                </Reveal>
-
-              )
-            )}
-
-          </div>
-
-          {/* ORÇAMENTO */}
-
-          <div className="showcase">
-
-            <Reveal className="showcase-copy">
-
-              <div className="section-kicker">
-                Orçamento sem confusão
-              </div>
-
-              <h3>
-                Seu cliente chega com o projeto mais claro.
-              </h3>
-
-              <p>
-
-                Registre centímetros, região do corpo,
-                estilo, referências e valor antes de
-                transformar o pedido em horário.
-                Para projetos personalizados, você
-                decide o orçamento.
-
-              </p>
-
-              <div className="showcase-list">
-
-                <div>
-                  <b>✓</b>
-                  Tamanho em centímetros
-                </div>
-
-                <div>
-                  <b>✓</b>
-                  Local do corpo
-                </div>
-
-                <div>
-                  <b>✓</b>
-                  Estilo e referências
-                </div>
-
-                <div>
-                  <b>✓</b>
-                  Valor e sinal
-                </div>
-
-              </div>
-
-            </Reveal>
-
-            <Reveal delay={0.1}>
-
-              <div className="quote-3d">
-
-                <motion.div
-                  animate={{
-                    y: [0, -7, 0],
-                  }}
-                  transition={{
-                    duration: 5,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                  className="quote-card"
-                >
-
-                  <div className="quote-card-top">
-
-                    <span>
-                      FAYOLA · PROJETO #0248
-                    </span>
-
-                    <span>
-                      APROVADO
-                    </span>
-
-                  </div>
-
-                  <h4>
-
-                    Blackwork
-                    <br />
-
-                    12 cm · Antebraço
-
-                  </h4>
-
-                  <div className="quote-price">
-
-                    <div>
-
-                      <span>
-                        ORÇAMENTO
-                      </span>
-
-                      <strong>
-                        R$ 650,00
-                      </strong>
-
-                    </div>
-
-                    <div className="quote-pix">
-                      SINAL R$ 195 · PAGO
-                    </div>
-
-                  </div>
-
-                </motion.div>
-
-              </div>
-
-            </Reveal>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* RECURSOS */}
-
-      <section
-        id="recursos"
-        className="dark-section"
-      >
-
-        <div className="section">
-
-          <Reveal>
-
-            <div className="section-kicker">
-              O estúdio inteiro em um lugar
-            </div>
-
-            <h2 className="section-title">
-
-              Não é só uma agenda.
-              <br />
-              É a operação do seu estúdio.
-
-            </h2>
-
-            <p className="section-text">
-
-              O Fayola conecta atendimento,
-              projetos, clientes, profissionais,
-              serviços, pagamentos e horários
-              em uma experiência única.
-
-            </p>
-
-          </Reveal>
-
-          <div className="feature-grid">
-
-            {[
-              [
-                '✦',
-                'Pedidos de tattoo',
-                'Receba as informações do projeto antes da conversa começar.',
-              ],
-              [
-                '◎',
-                'Referências',
-                'Imagens e inspirações ficam ligadas ao pedido do cliente.',
-              ],
-              [
-                '⌁',
-                'Tamanho e local',
-                'Registre centímetros e região do corpo.',
-              ],
-              [
-                'R$',
-                'Orçamentos',
-                'Trabalhe com preços definidos ou projetos personalizados.',
-              ],
-              [
-                '◆',
-                'Sinal via PIX',
-                'Confirme o compromisso antes de bloquear seu horário.',
-              ],
-              [
-                '◷',
-                'Agenda',
-                'Veja suas sessões e horários em uma visão limpa.',
-              ],
-              [
-                '↗',
-                'WhatsApp',
-                'Mantenha o cliente informado sem perder o contexto.',
-              ],
-              [
-                '◌',
-                'Equipe',
-                'Cada profissional acompanha seus próprios atendimentos.',
-              ],
-              [
-                'F',
-                'Gestão',
-                'Tenha uma visão organizada do estúdio conforme ele cresce.',
-              ],
-            ].map(
-              ([icon, title, text], index) => (
-
-                <Reveal
-                  key={title}
-                  delay={(index % 3) * 0.05}
-                >
-
-                  <div className="feature-card">
-
-                    <div className="feature-icon">
-                      {icon}
-                    </div>
-
-                    <h3>
-                      {title}
-                    </h3>
-
-                    <p>
-                      {text}
-                    </p>
-
-                  </div>
-
-                </Reveal>
-
-              )
-            )}
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* PREÇO */}
-
-      <section
-        id="preco"
-        className="dark-section"
-      >
-
-        <div className="price-section">
-
-          <Reveal>
-
-            <div className="section-kicker">
-              Comece sem complicar
-            </div>
-
-            <h2
-              className="section-title"
+            <a
+              href="#como-funciona"
+              onClick={() => setMenuOpen(false)}
               style={{
-                marginLeft: 'auto',
-                marginRight: 'auto',
+                display: "block",
+                padding: "12px 0",
+                color: "#aaa",
+                fontSize: 13,
               }}
             >
+              Como funciona
+            </a>
 
-              Seu estúdio merece
-              uma experiência profissional.
+            <a
+              href="#recursos"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                display: "block",
+                padding: "12px 0",
+                color: "#aaa",
+                fontSize: 13,
+              }}
+            >
+              Recursos
+            </a>
 
+            <a
+              href="#preco"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                display: "block",
+                padding: "12px 0",
+                color: "#aaa",
+                fontSize: 13,
+              }}
+            >
+              Preço
+            </a>
+          </motion.div>
+        )}
+      </header>
+
+      {/* =====================================================
+          HERO
+          ===================================================== */}
+
+      <section className="hero">
+        <div className="hero-grid" />
+        <div className="hero-noise" />
+
+        <Aura className="aura-one" />
+        <Aura className="aura-two" delay={2} />
+        <Aura className="aura-three" delay={4} />
+
+        <motion.div
+          style={{
+            x: smoothX,
+            y: smoothY,
+          }}
+          className="container hero-inner"
+        >
+          <div className="hero-copy">
+            <motion.div
+              className="eyebrow"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <span className="eyebrow-dot" />
+              FEITO PARA QUEM VIVE DA TATUAGEM
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 35 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 1,
+                delay: 0.15,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+            >
+              Enquanto você
+              <br />
+              <em>tatua,</em> o Fayola
+              <br />
+              atende.
+            </motion.h1>
+
+            <motion.p
+              className="hero-subtitle"
+              initial={{ opacity: 0, y: 25 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: .8,
+                delay: .35,
+              }}
+            >
+              Você cuida da arte.
+              <strong> O Fayola cuida do atendimento.</strong>
+              <br />
+              Do primeiro pedido ao horário confirmado,
+              tudo organizado em um só lugar.
+            </motion.p>
+
+            <motion.div
+              className="hero-actions"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: .7,
+                delay: .5,
+              }}
+            >
+              <MagneticButton
+                href={WHATSAPP_ASSINAR}
+                className="primary-button"
+              >
+                Quero usar o Fayola
+                <span>→</span>
+              </MagneticButton>
+
+              <a
+                href="#como-funciona"
+                className="secondary-button"
+              >
+                Ver como funciona
+              </a>
+            </motion.div>
+
+            <div className="hero-note">
+              R$ 199,99/mês · sem complicação
+            </div>
+          </div>
+
+          <motion.div
+            className="hero-product"
+            style={{
+              x: useTransform(
+                smoothX,
+                [-20, 20],
+                [18, -18]
+              ),
+              y: useTransform(
+                smoothY,
+                [-20, 20],
+                [10, -10]
+              ),
+            }}
+          >
+            <DashboardMockup />
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* =====================================================
+          TICKER
+          ===================================================== */}
+
+      <div className="ticker">
+        <div className="ticker-track">
+          {[1, 2].map((group) => (
+            <React.Fragment key={group}>
+              <div className="ticker-item">
+                <b>✦</b>
+                PEDIDO DE TATUAGEM
+                <b>✦</b>
+                REFERÊNCIAS
+                <b>✦</b>
+                ORÇAMENTO
+                <b>✦</b>
+                SINAL PIX
+                <b>✦</b>
+                AGENDA
+                <b>✦</b>
+                WHATSAPP
+                <b>✦</b>
+                CLIENTES
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* =====================================================
+          PROBLEMA
+          ===================================================== */}
+
+      <section className="section">
+        <div className="container">
+          <Reveal>
+            <div className="section-label">
+              O problema
+            </div>
+
+            <h2 className="section-title">
+              Você não começou a tatuar
+              <br />
+              para passar o dia <em>respondendo mensagens.</em>
             </h2>
 
+            <p className="section-intro">
+              Enquanto você está tatuando, chegam perguntas,
+              referências, pedidos de orçamento, dúvidas sobre
+              tamanho, local do corpo e horários.
+              E cada conversa pode virar uma oportunidade
+              perdida.
+            </p>
+          </Reveal>
+
+          <BeforeAfter />
+        </div>
+      </section>
+
+      {/* =====================================================
+          COMO FUNCIONA
+          ===================================================== */}
+
+      <section
+        className="section"
+        id="como-funciona"
+      >
+        <div className="container">
+          <Reveal>
+            <div className="section-label">
+              Do pedido à sessão
+            </div>
+
+            <h2 className="section-title">
+              Seu cliente sabe
+              <br />
+              <em>o que fazer.</em>
+            </h2>
+
+            <p className="section-intro">
+              O Fayola transforma o atendimento da tatuagem
+              em um fluxo organizado — sem você precisar
+              controlar tudo no WhatsApp.
+            </p>
+          </Reveal>
+
+          <div className="flow-grid">
+            <FlowCard
+              number="01"
+              icon="↗"
+              title="Pedido"
+              text="O cliente inicia um novo projeto pelo seu link."
+            />
+
+            <FlowCard
+              number="02"
+              icon="◫"
+              title="Referências"
+              text="Ele envia imagens para mostrar o que procura."
+              delay=".05"
+            />
+
+            <FlowCard
+              number="03"
+              icon="⌁"
+              title="Detalhes"
+              text="Estilo, tamanho em cm e local do corpo ficam registrados."
+              delay=".1"
+            />
+
+            <FlowCard
+              number="04"
+              icon="R$"
+              title="Orçamento"
+              text="Você define o valor e envia a proposta."
+              delay=".15"
+            />
+
+            <FlowCard
+              number="05"
+              icon="✦"
+              title="Sinal PIX"
+              text="O cliente confirma o compromisso pagando o sinal."
+              delay=".2"
+            />
+
+            <FlowCard
+              number="06"
+              icon="✓"
+              title="Confirmado"
+              text="O horário entra na sua agenda e o cliente recebe a confirmação."
+              delay=".25"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          QUOTE
+          ===================================================== */}
+
+      <section className="section quote-section">
+        <div className="container">
+          <Reveal>
+            <div className="section-label">
+              Feito para projetos reais
+            </div>
+
+            <h2 className="section-title">
+              Do “quanto fica?”
+              <br />
+              até o <em>horário confirmado.</em>
+            </h2>
+
+            <p className="section-intro">
+              Um pedido de tatuagem tem detalhes.
+              O Fayola organiza todos eles para você.
+            </p>
+          </Reveal>
+
+          <QuoteMockup />
+        </div>
+      </section>
+
+      {/* =====================================================
+          NÚMEROS
+          ===================================================== */}
+
+      <section className="numbers">
+        <div className="container numbers-grid">
+          <div className="number">
+            <strong>
+              <CountUp value={1} />
+            </strong>
+
+            <span>
+              LUGAR PARA ORGANIZAR
+            </span>
+          </div>
+
+          <div className="number">
+            <strong>
+              <CountUp value={6} />
+            </strong>
+
+            <span>
+              ETAPAS DO ATENDIMENTO
+            </span>
+          </div>
+
+          <div className="number">
+            <strong>
+              <CountUp value={24} suffix="h" />
+            </strong>
+
+            <span>
+              SEU LINK DISPONÍVEL
+            </span>
+          </div>
+
+          <div className="number">
+            <strong>
+              <CountUp value={100} suffix="%" />
+            </strong>
+
+            <span>
+              FOCO NA SUA ARTE
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          RECURSOS
+          ===================================================== */}
+
+      <section
+        className="section"
+        id="recursos"
+      >
+        <div className="container">
+          <Reveal>
+            <div className="section-label">
+              O Fayola
+            </div>
+
+            <h2 className="section-title">
+              Mais que uma agenda.
+              <br />
+              <em>Seu atendimento inteiro.</em>
+            </h2>
+
+            <p className="section-intro">
+              O Fayola reúne as partes do seu negócio que
+              normalmente ficam espalhadas entre WhatsApp,
+              Instagram, agenda e anotações.
+            </p>
+          </Reveal>
+
+          <div className="features-grid">
+            <FeatureCard
+              number="01"
+              title="Pedido de tatuagem"
+              description="Receba novos projetos com as informações que realmente importam: referência, estilo, tamanho e local do corpo."
+            >
+              <div className="feature-chat">
+                <b>Novo pedido</b>
+                Blackwork · 12 cm
+              </div>
+            </FeatureCard>
+
+            <FeatureCard
+              number="02"
+              title="Referências"
+              description="Organize as imagens enviadas pelo cliente junto com cada projeto."
+            >
+              <div className="feature-visual">
+                <div className="feature-ring" />
+
+                <div className="mini-phone">
+                  <div className="phone-screen">
+                    <div className="phone-title">
+                      REFERÊNCIAS
+                    </div>
+
+                    <div className="phone-line" />
+                    <div className="phone-line short" />
+                    <div className="phone-line" />
+                  </div>
+                </div>
+              </div>
+            </FeatureCard>
+
+            <FeatureCard
+              number="03"
+              title="Tamanho e preço"
+              description="Cadastre serviços por tamanho, sessão, valor fixo ou deixe projetos personalizados para orçamento."
+            >
+              <div className="service-stack">
+                <div className="service-item">
+                  5 cm
+                  <strong>R$ 250</strong>
+                </div>
+
+                <div className="service-item">
+                  10 cm
+                  <strong>R$ 450</strong>
+                </div>
+
+                <div className="service-item">
+                  15 cm
+                  <strong>R$ 650</strong>
+                </div>
+              </div>
+            </FeatureCard>
+
+            <FeatureCard
+              number="04"
+              title="Agenda do tatuador"
+              description="Veja seus horários, clientes e próximos projetos em uma visão simples."
+            >
+              <div className="feature-visual">
+                <div className="mini-phone">
+                  <div className="phone-screen">
+                    <div className="phone-title">
+                      AGENDA
+                    </div>
+
+                    <div className="phone-line" />
+                    <div className="phone-line" />
+                    <div className="phone-line short" />
+
+                    <div className="phone-button" />
+                  </div>
+                </div>
+              </div>
+            </FeatureCard>
+
+            <FeatureCard
+              number="05"
+              title="Sinal via PIX"
+              description="Receba o sinal antes de reservar o horário e reduza agendamentos sem compromisso."
+            >
+              <div className="feature-chat">
+                <b>PIX confirmado ✓</b>
+                Sinal R$ 195,00
+              </div>
+            </FeatureCard>
+
+            <FeatureCard
+              number="06"
+              title="Equipe e comissões"
+              description="Se o estúdio possui mais tatuadores, cada profissional pode ter seu acesso, seus horários e suas comissões."
+            >
+              <div className="commission-chart">
+                <div className="bar" />
+                <div className="bar" />
+                <div className="bar" />
+                <div className="bar" />
+                <div className="bar" />
+                <div className="bar" />
+              </div>
+            </FeatureCard>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          POSICIONAMENTO
+          ===================================================== */}
+
+      <section className="section">
+        <div className="container">
+          <Reveal>
+            <div
+              style={{
+                maxWidth: 900,
+                margin: "0 auto",
+                textAlign: "center",
+              }}
+            >
+              <div className="section-label">
+                A ideia é simples
+              </div>
+
+              <h2
+                className="section-title"
+                style={{
+                  maxWidth: 900,
+                  marginLeft: "auto",
+                  marginRight: "auto",
+                }}
+              >
+                Você cuida da arte.
+                <br />
+                <em>O Fayola cuida do atendimento.</em>
+              </h2>
+
+              <p
+                className="section-intro"
+                style={{
+                  marginLeft: "auto",
+                  marginRight: "auto",
+                }}
+              >
+                Enquanto você está concentrado em fazer
+                uma tatuagem incrível, seus próximos clientes
+                podem continuar avançando no processo.
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* =====================================================
+          PREÇO
+          ===================================================== */}
+
+      <section
+        className="section price-section"
+        id="preco"
+      >
+        <div className="container">
+          <Reveal>
+            <div className="section-label">
+              Simples e direto
+            </div>
+
+            <h2 className="section-title">
+              Um sistema para o seu
+              <br />
+              <em>estúdio crescer.</em>
+            </h2>
           </Reveal>
 
           <Reveal delay={0.1}>
-
             <div className="price-card">
+              <div className="price-grid">
+                <div>
+                  <div className="price-label">
+                    FAYOLA PRO
+                  </div>
 
-              <div className="section-kicker">
-                FAYOLA PRO
+                  <h3>
+                    Tudo organizado.
+                  </h3>
+
+                  <p className="price-description">
+                    Para tatuadores e estúdios que querem
+                    profissionalizar o atendimento sem
+                    transformar o próprio trabalho em
+                    burocracia.
+                  </p>
+
+                  <div className="price-value">
+                    <small>R$</small>
+                    <strong>199,99</strong>
+                    <span>/mês</span>
+                  </div>
+
+                  <MagneticButton
+                    href={WHATSAPP_ASSINAR}
+                    className="primary-button price-button"
+                  >
+                    Quero começar
+                    <span>→</span>
+                  </MagneticButton>
+                </div>
+
+                <div className="price-features">
+                  <div className="price-feature">
+                    <span>✓</span>
+                    Link público para seus clientes
+                  </div>
+
+                  <div className="price-feature">
+                    <span>✓</span>
+                    Pedidos de tatuagem
+                  </div>
+
+                  <div className="price-feature">
+                    <span>✓</span>
+                    Referências e informações do projeto
+                  </div>
+
+                  <div className="price-feature">
+                    <span>✓</span>
+                    Tamanho e serviços
+                  </div>
+
+                  <div className="price-feature">
+                    <span>✓</span>
+                    Agenda
+                  </div>
+
+                  <div className="price-feature">
+                    <span>✓</span>
+                    Clientes
+                  </div>
+
+                  <div className="price-feature">
+                    <span>✓</span>
+                    Sinal via PIX
+                  </div>
+
+                  <div className="price-feature">
+                    <span>✓</span>
+                    Notificações e lembretes
+                  </div>
+
+                  <div className="price-feature">
+                    <span>✓</span>
+                    Profissionais e comissões
+                  </div>
+
+                  <div className="price-feature">
+                    <span>✓</span>
+                    Acesso individual para profissionais
+                  </div>
+                </div>
               </div>
-
-              <div className="price">
-
-                R$ 199,99
-
-                <small>
-                  /mês
-                </small>
-
-              </div>
-
-              <p
-                className="section-text"
-                style={{
-                  marginTop: 12,
-                }}
-              >
-
-                Tudo para organizar seus pedidos,
-                clientes, projetos, profissionais
-                e horários.
-
-              </p>
-
-              <hr />
-
-              <div className="price-list">
-
-                <div>
-                  <span>✓</span>
-                  Pedidos de tattoo
-                </div>
-
-                <div>
-                  <span>✓</span>
-                  Referências e informações do projeto
-                </div>
-
-                <div>
-                  <span>✓</span>
-                  Orçamentos e serviços
-                </div>
-
-                <div>
-                  <span>✓</span>
-                  Sinal via PIX
-                </div>
-
-                <div>
-                  <span>✓</span>
-                  Agenda por profissional
-                </div>
-
-                <div>
-                  <span>✓</span>
-                  Clientes e atendimentos
-                </div>
-
-                <div>
-                  <span>✓</span>
-                  WhatsApp
-                </div>
-
-              </div>
-
-              <a
-                href={ASSINAR}
-                target="_blank"
-                rel="noreferrer"
-                className="price-button"
-              >
-                Quero conhecer o Fayola
-              </a>
-
             </div>
-
           </Reveal>
-
         </div>
-
       </section>
 
-      {/* CTA FINAL */}
+      {/* =====================================================
+          CTA FINAL
+          ===================================================== */}
 
       <section className="final-cta">
+        <div className="cta-aura" />
 
         <motion.div
-          className="final-ring"
+          className="cta-lines"
           animate={{
-            rotate: 360,
+            scale: [1, 1.08, 1],
+            rotate: [0, 2, 0],
           }}
           transition={{
-            duration: 45,
+            duration: 12,
             repeat: Infinity,
-            ease: 'linear',
+            ease: "easeInOut",
           }}
         />
 
-        <motion.div
-          className="final-ring two"
-          animate={{
-            rotate: -360,
-          }}
-          transition={{
-            duration: 70,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-        />
-
-        <div className="final-content">
-
+        <div className="container cta-content">
           <Reveal>
-
-            <div className="section-kicker">
-              FAYOLA
+            <div className="section-label">
+              Seu próximo projeto começa aqui
             </div>
 
             <h2>
-
-              Você cuida da{' '}
-
-              <span>
-                arte.
-              </span>
-
+              Você tatua.
               <br />
-
-              O Fayola cuida do{' '}
-
-              <span>
-                resto.
-              </span>
-
+              O Fayola <em>atende.</em>
             </h2>
 
             <p>
-
-              Enquanto você está tatuando,
-              o seu atendimento continua andando.
-              Pedido, projeto, sinal e agenda —
-              tudo organizado.
-
+              Pare de perder tempo procurando conversas,
+              referências e horários. Deixe o atendimento
+              organizado enquanto você faz o que sabe fazer
+              melhor.
             </p>
 
-            <div className="hero-actions">
-
-              <a
-                href={ASSINAR}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-primary"
+            <div className="cta-buttons">
+              <MagneticButton
+                href={WHATSAPP_ASSINAR}
+                className="primary-button"
               >
-                Quero começar ↗
-              </a>
+                Quero usar o Fayola
+                <span>→</span>
+              </MagneticButton>
 
               <a
                 href={WHATSAPP}
                 target="_blank"
                 rel="noreferrer"
-                className="btn-ghost"
+                className="secondary-button"
               >
-                Falar com o Fayola
+                Falar com a Fayola
               </a>
-
             </div>
-
           </Reveal>
-
         </div>
-
       </section>
 
-      {/* FOOTER */}
+      {/* =====================================================
+          FOOTER
+          ===================================================== */}
 
-      <footer className="footer3d">
+      <footer className="footer">
+        <div className="container footer-inner">
+          <div className="logo">
+            <span className="logo-mark">✦</span>
+            FAYOLA
+          </div>
 
-        <b>
-          ✦ FAYOLA
-        </b>
+          <div className="footer-copy">
+            Sistema de atendimento e agendamento
+            para tatuadores e estúdios.
+          </div>
 
-        <span>
-          Gestão e agendamento para tatuadores e estúdios.
-        </span>
+          <div className="footer-links">
+            <a href={WHATSAPP}>
+              WhatsApp
+            </a>
 
-        <span>
-          © 2026 Fayola
-        </span>
+            <a href="#preco">
+              Planos
+            </a>
+          </div>
+        </div>
 
+        <div
+          className="container"
+          style={{
+            marginTop: 25,
+            paddingTop: 20,
+            borderTop:
+              "1px solid rgba(255,255,255,.04)",
+            color: "#383633",
+            fontSize: 8,
+            fontFamily: "DM Mono, monospace",
+          }}
+        >
+          © 2026 Fayola. Todos os direitos reservados.
+        </div>
       </footer>
-
-    </main>
+    </div>
   );
 }
