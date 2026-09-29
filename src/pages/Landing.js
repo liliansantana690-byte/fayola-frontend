@@ -21,19 +21,13 @@ const WHATSAPP_ASSINAR =
    REVEAL
    ========================================================= */
 
-function Reveal({
-  children,
-  className = "",
-  delay = 0,
-  y = 35,
-  once = true,
-}) {
+function Reveal({ children, delay = 0, className = "" }) {
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y }}
+      initial={{ opacity: 0, y: 35 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, amount: 0.15 }}
+      viewport={{ once: true, amount: 0.15 }}
       transition={{
         duration: 0.8,
         delay,
@@ -49,37 +43,32 @@ function Reveal({
    COUNT UP
    ========================================================= */
 
-function CountUp({ value, suffix = "", duration = 1600 }) {
+function CountUp({ value, suffix = "" }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
+  const visible = useInView(ref, { once: true });
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (!isInView) return;
+    if (!visible) return;
 
-    let start = 0;
-    const startTime = performance.now();
+    const start = performance.now();
+    const duration = 1300;
 
-    const animate = (currentTime) => {
-      const progress = Math.min(
-        (currentTime - startTime) / duration,
-        1
-      );
-
+    function animate(now) {
+      const progress = Math.min((now - start) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
-      const next = Math.floor(start + (value - start) * eased);
 
-      setCount(next);
+      setCount(Math.floor(value * eased));
 
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
         setCount(value);
       }
-    };
+    }
 
     requestAnimationFrame(animate);
-  }, [isInView, value, duration]);
+  }, [visible, value]);
 
   return (
     <span ref={ref}>
@@ -90,7 +79,7 @@ function CountUp({ value, suffix = "", duration = 1600 }) {
 }
 
 /* =========================================================
-   ORBIT / AURA
+   AURA
    ========================================================= */
 
 function Aura({ className = "", delay = 0 }) {
@@ -109,88 +98,6 @@ function Aura({ className = "", delay = 0 }) {
         ease: "easeInOut",
       }}
     />
-  );
-}
-
-/* =========================================================
-   PHYSICAL CARD
-   ========================================================= */
-
-function PhysicalCard({
-  children,
-  className = "",
-  x = 0,
-  y = 0,
-  rotate = 0,
-}) {
-  const ref = useRef(null);
-
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const springX = useSpring(mouseX, {
-    stiffness: 170,
-    damping: 18,
-    mass: 0.7,
-  });
-
-  const springY = useSpring(mouseY, {
-    stiffness: 170,
-    damping: 18,
-    mass: 0.7,
-  });
-
-  const rotateX = useTransform(springY, [-50, 50], [8, -8]);
-  const rotateY = useTransform(springX, [-50, 50], [-8, 8]);
-
-  const handleMouseMove = (event) => {
-    const rect = ref.current?.getBoundingClientRect();
-
-    if (!rect) return;
-
-    const px = event.clientX - (rect.left + rect.width / 2);
-    const py = event.clientY - (rect.top + rect.height / 2);
-
-    mouseX.set(px * 0.55);
-    mouseY.set(py * 0.55);
-  };
-
-  const handleMouseLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
-  };
-
-  return (
-    <motion.div
-      ref={ref}
-      className={`physical-card ${className}`}
-      style={{
-        x: springX,
-        y: springY,
-        rotateX,
-        rotateY,
-        transformStyle: "preserve-3d",
-      }}
-      initial={{
-        x,
-        y,
-        rotate,
-      }}
-      animate={{
-        y: [y, y - 8, y],
-      }}
-      transition={{
-        y: {
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-        },
-      }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
-      {children}
-    </motion.div>
   );
 }
 
@@ -214,18 +121,24 @@ function MagneticButton({ children, href, className = "" }) {
     damping: 20,
   });
 
-  const move = (event) => {
+  function move(e) {
     const rect = ref.current?.getBoundingClientRect();
+
     if (!rect) return;
 
-    x.set((event.clientX - (rect.left + rect.width / 2)) * 0.18);
-    y.set((event.clientY - (rect.top + rect.height / 2)) * 0.18);
-  };
+    x.set(
+      (e.clientX - (rect.left + rect.width / 2)) * 0.16
+    );
 
-  const leave = () => {
+    y.set(
+      (e.clientY - (rect.top + rect.height / 2)) * 0.16
+    );
+  }
+
+  function leave() {
     x.set(0);
     y.set(0);
-  };
+  }
 
   return (
     <motion.a
@@ -243,18 +156,18 @@ function MagneticButton({ children, href, className = "" }) {
 }
 
 /* =========================================================
-   TATTOO REQUEST CARD
+   TATTOO REQUEST
    ========================================================= */
 
 function TattooRequestCard() {
   return (
     <motion.div
       className="request-card"
-      initial={{ opacity: 0, scale: 0.85, y: 35 }}
+      initial={{ opacity: 0, scale: 0.8, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{
         duration: 1,
-        delay: 0.5,
+        delay: 0.4,
         ease: [0.22, 1, 0.36, 1],
       }}
     >
@@ -275,12 +188,12 @@ function TattooRequestCard() {
       </div>
 
       <div className="request-images">
-        <div className="reference-image ref-one">
-          <span>✦</span>
+        <div className="reference-image">
+          ✦
         </div>
 
-        <div className="reference-image ref-two">
-          <span>◒</span>
+        <div className="reference-image second">
+          ◒
         </div>
 
         <div className="reference-more">
@@ -294,9 +207,7 @@ function TattooRequestCard() {
           <strong>Marina</strong>
         </div>
 
-        <div className="request-arrow">
-          →
-        </div>
+        <b>→</b>
       </div>
     </motion.div>
   );
@@ -310,47 +221,32 @@ function PixCard() {
   return (
     <motion.div
       className="pix-card"
-      animate={{
-        y: [0, -7, 0],
-      }}
+      animate={{ y: [0, -8, 0] }}
       transition={{
         duration: 4,
         repeat: Infinity,
         ease: "easeInOut",
       }}
     >
-      <div className="pix-icon">✦</div>
+      <div className="pix-symbol">✦</div>
 
       <div>
         <span>SINAL PIX</span>
         <strong>R$ 195,00</strong>
       </div>
 
-      <div className="pix-check">✓</div>
+      <div className="pix-ok">✓</div>
     </motion.div>
   );
 }
 
 /* =========================================================
-   DASHBOARD MOCKUP
+   DASHBOARD
    ========================================================= */
 
 function DashboardMockup() {
   return (
     <div className="dashboard-wrap">
-      <motion.div
-        className="dashboard-shadow"
-        animate={{
-          rotate: [-1, 1, -1],
-          y: [0, -8, 0],
-        }}
-        transition={{
-          duration: 7,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-
       <motion.div
         className="dashboard"
         initial={{
@@ -367,7 +263,6 @@ function DashboardMockup() {
         }}
         transition={{
           duration: 1.2,
-          delay: 0.2,
           ease: [0.16, 1, 0.3, 1],
         }}
       >
@@ -378,21 +273,21 @@ function DashboardMockup() {
           </div>
 
           <div className="dash-user">
-            <span className="online-dot" />
+            <i />
             Seu estúdio
           </div>
         </div>
 
         <div className="dashboard-content">
-          <div className="dash-sidebar">
-            <div className="side-active">⌂</div>
+          <aside className="dash-sidebar">
+            <div className="active">⌂</div>
             <div>◫</div>
             <div>◌</div>
             <div>◉</div>
             <div>⚙</div>
-          </div>
+          </aside>
 
-          <div className="dash-main">
+          <main className="dash-main">
             <div className="dash-heading">
               <div>
                 <span>QUARTA · 14 OUT</span>
@@ -424,21 +319,15 @@ function DashboardMockup() {
             </div>
 
             <div className="schedule">
-              <div className="schedule-line" />
-
               <div className="appointment">
-                <span className="appointment-time">
-                  10:00
-                </span>
+                <span>10:00</span>
 
                 <div className="appointment-card">
-                  <div className="appointment-avatar">
-                    M
-                  </div>
+                  <b>M</b>
 
                   <div>
                     <strong>Marina</strong>
-                    <span>Blackwork · 12 cm</span>
+                    <small>Blackwork · 12 cm</small>
                   </div>
 
                   <em>Confirmado</em>
@@ -446,18 +335,14 @@ function DashboardMockup() {
               </div>
 
               <div className="appointment">
-                <span className="appointment-time">
-                  14:30
-                </span>
+                <span>14:30</span>
 
                 <div className="appointment-card orange">
-                  <div className="appointment-avatar">
-                    R
-                  </div>
+                  <b>R</b>
 
                   <div>
                     <strong>Rafael</strong>
-                    <span>Fineline · 8 cm</span>
+                    <small>Fineline · 8 cm</small>
                   </div>
 
                   <em>Aguardando PIX</em>
@@ -465,25 +350,21 @@ function DashboardMockup() {
               </div>
 
               <div className="appointment">
-                <span className="appointment-time">
-                  18:00
-                </span>
+                <span>18:00</span>
 
                 <div className="appointment-card">
-                  <div className="appointment-avatar">
-                    A
-                  </div>
+                  <b>A</b>
 
                   <div>
                     <strong>Ana</strong>
-                    <span>Orçamento aprovado</span>
+                    <small>Projeto aprovado</small>
                   </div>
 
                   <em>Confirmado</em>
                 </div>
               </div>
             </div>
-          </div>
+          </main>
         </div>
       </motion.div>
 
@@ -499,9 +380,9 @@ function DashboardMockup() {
 
 function FlowCard({
   number,
+  icon,
   title,
   text,
-  icon,
   delay = 0,
 }) {
   return (
@@ -509,7 +390,7 @@ function FlowCard({
       <motion.div
         className="flow-card"
         whileHover={{
-          y: -10,
+          y: -9,
           rotateX: 3,
           rotateY: -3,
         }}
@@ -521,11 +402,10 @@ function FlowCard({
       >
         <div className="flow-number">{number}</div>
 
-        <div className="flow-icon">
-          {icon}
-        </div>
+        <div className="flow-icon">{icon}</div>
 
         <h3>{title}</h3>
+
         <p>{text}</p>
       </motion.div>
     </Reveal>
@@ -533,61 +413,21 @@ function FlowCard({
 }
 
 /* =========================================================
-   FEATURE CARD
-   ========================================================= */
-
-function FeatureCard({
-  number,
-  title,
-  description,
-  children,
-  className = "",
-}) {
-  return (
-    <motion.div
-      className={`feature-card ${className}`}
-      whileHover={{
-        y: -8,
-        scale: 1.01,
-      }}
-      transition={{
-        type: "spring",
-        stiffness: 220,
-        damping: 20,
-      }}
-    >
-      <div className="feature-number">
-        {number}
-      </div>
-
-      <div className="feature-content">
-        <h3>{title}</h3>
-        <p>{description}</p>
-      </div>
-
-      {children}
-    </motion.div>
-  );
-}
-
-/* =========================================================
-   BEFORE AFTER
+   BEFORE / AFTER
    ========================================================= */
 
 function BeforeAfter() {
   return (
     <div className="before-after">
       <motion.div
-        className="ba-panel before"
-        whileHover={{
-          y: -5,
-        }}
+        className="ba-panel"
+        whileHover={{ y: -5 }}
       >
-        <span className="ba-label">
-          ANTES
-        </span>
+        <span className="ba-label">ANTES</span>
 
-        <h3>Você tentando organizar tudo</h3>
+        <h3>
+          Você tentando organizar tudo.
+        </h3>
 
         <div className="chaos">
           <div>WhatsApp</div>
@@ -599,63 +439,30 @@ function BeforeAfter() {
         </div>
 
         <p>
-          Mensagens espalhadas, pedidos perdidos
+          Conversas espalhadas, pedidos perdidos
           e tempo que poderia estar sendo usado
           para tatuar.
         </p>
       </motion.div>
 
-      <motion.div
-        className="ba-divider"
-        animate={{
-          rotate: [0, 180, 360],
-        }}
-        transition={{
-          duration: 12,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      >
-        ✦
-      </motion.div>
+      <div className="ba-divider">✦</div>
 
       <motion.div
         className="ba-panel after"
-        whileHover={{
-          y: -5,
-        }}
+        whileHover={{ y: -5 }}
       >
-        <span className="ba-label">
-          COM FAYOLA
-        </span>
+        <span className="ba-label">COM FAYOLA</span>
 
-        <h3>Seu atendimento organizado</h3>
+        <h3>
+          Seu atendimento organizado.
+        </h3>
 
         <div className="organized">
-          <div>
-            <span>✓</span>
-            Pedido recebido
-          </div>
-
-          <div>
-            <span>✓</span>
-            Referências anexadas
-          </div>
-
-          <div>
-            <span>✓</span>
-            Orçamento enviado
-          </div>
-
-          <div>
-            <span>✓</span>
-            Sinal PIX confirmado
-          </div>
-
-          <div>
-            <span>✓</span>
-            Horário reservado
-          </div>
+          <div><span>✓</span> Pedido recebido</div>
+          <div><span>✓</span> Referências anexadas</div>
+          <div><span>✓</span> Orçamento enviado</div>
+          <div><span>✓</span> Sinal PIX confirmado</div>
+          <div><span>✓</span> Horário reservado</div>
         </div>
 
         <p>
@@ -668,6 +475,170 @@ function BeforeAfter() {
 }
 
 /* =========================================================
+   NOVO FLUXO DO PEDIDO DE TATUAGEM
+   ========================================================= */
+
+function TattooLinkFlow() {
+  return (
+    <div className="tattoo-flow">
+
+      <div className="tattoo-link">
+        <span className="green-dot" />
+        fayola.app.br/pedido-tattoo/123
+        <b>LINK DO CLIENTE</b>
+      </div>
+
+      <div className="tattoo-flow-grid">
+
+        <Reveal>
+          <motion.div
+            className="tattoo-step"
+            whileHover={{ y: -8 }}
+          >
+            <span className="step-number">01</span>
+
+            <div className="step-icon">↗</div>
+
+            <small>PEDIDO ENVIADO</small>
+
+            <h3>
+              O cliente envia o projeto.
+            </h3>
+
+            <p>
+              Descrição, estilo, tamanho, local do corpo
+              e referências ficam registrados.
+            </p>
+
+            <div className="step-status">
+              <span>✓</span>
+              Pedido recebido
+            </div>
+          </motion.div>
+        </Reveal>
+
+        <div className="flow-arrow">→</div>
+
+        <Reveal delay={0.08}>
+          <motion.div
+            className="tattoo-step"
+            whileHover={{ y: -8 }}
+          >
+            <span className="step-number">02</span>
+
+            <div className="step-icon">◌</div>
+
+            <small>AGUARDANDO ORÇAMENTO</small>
+
+            <h3>
+              O cliente pode ir embora.
+            </h3>
+
+            <p>
+              Ele fecha a página e depois volta
+              para o mesmo link quando quiser.
+            </p>
+
+            <div className="step-status waiting">
+              <span>⌁</span>
+              Aguardando resposta
+            </div>
+          </motion.div>
+        </Reveal>
+
+        <div className="flow-arrow">→</div>
+
+        <Reveal delay={0.16}>
+          <motion.div
+            className="tattoo-step highlight"
+            whileHover={{ y: -8 }}
+          >
+            <span className="step-number">03</span>
+
+            <div className="step-icon">R$</div>
+
+            <small>ORÇAMENTO + PIX</small>
+
+            <h3>
+              Você respondeu.
+            </h3>
+
+            <p>
+              O mesmo link agora mostra o valor
+              da tatuagem e o sinal para confirmar.
+            </p>
+
+            <div className="mini-price">
+              <div>
+                <span>VALOR</span>
+                <strong>R$ 650</strong>
+              </div>
+
+              <div>
+                <span>SINAL</span>
+                <strong>R$ 195</strong>
+              </div>
+
+              <b>PIX</b>
+            </div>
+          </motion.div>
+        </Reveal>
+
+        <div className="flow-arrow">→</div>
+
+        <Reveal delay={0.24}>
+          <motion.div
+            className="tattoo-step"
+            whileHover={{ y: -8 }}
+          >
+            <span className="step-number">04</span>
+
+            <div className="step-icon">✓</div>
+
+            <small>PAGAMENTO + HORÁRIO</small>
+
+            <h3>
+              Pagou. Escolhe o horário.
+            </h3>
+
+            <p>
+              Depois do pagamento confirmado,
+              os horários disponíveis aparecem.
+            </p>
+
+            <div className="step-status confirmed">
+              <span>✓</span>
+              Sessão confirmada
+            </div>
+          </motion.div>
+        </Reveal>
+
+      </div>
+
+      <div className="tattoo-final-bar">
+        <div>
+          <span>✦</span>
+
+          <div>
+            <strong>
+              O mesmo link acompanha tudo.
+            </strong>
+
+            <p>
+              Pedido → orçamento → PIX → horário → confirmação.
+            </p>
+          </div>
+        </div>
+
+        <b>
+          WHATSAPP · CONFIRMAÇÃO · LEMBRETE
+        </b>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
    QUOTE MOCKUP
    ========================================================= */
 
@@ -675,41 +646,10 @@ function QuoteMockup() {
   return (
     <div className="quote-scene">
       <motion.div
-        className="quote-orbit orbit-one"
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 22,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      />
-
-      <motion.div
-        className="quote-orbit orbit-two"
-        animate={{ rotate: -360 }}
-        transition={{
-          duration: 30,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      />
-
-      <motion.div
         className="quote-window"
-        initial={{
-          opacity: 0,
-          y: 40,
-          rotateX: 10,
-        }}
-        whileInView={{
-          opacity: 1,
-          y: 0,
-          rotateX: 0,
-        }}
-        viewport={{
-          once: true,
-          amount: 0.2,
-        }}
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
         transition={{
           duration: 1,
           ease: [0.16, 1, 0.3, 1],
@@ -721,24 +661,12 @@ function QuoteMockup() {
             <strong>Novo projeto</strong>
           </div>
 
-          <div className="quote-status">
-            EM ANÁLISE
-          </div>
+          <b>EM ANÁLISE</b>
         </div>
 
         <div className="quote-body">
-          <div className="quote-left">
-            <div className="quote-photo">
-              <div className="fake-tattoo">
-                ✦
-              </div>
-            </div>
-
-            <div className="reference-row">
-              <div />
-              <div />
-              <div />
-            </div>
+          <div className="quote-photo">
+            <div>✦</div>
           </div>
 
           <div className="quote-details">
@@ -780,13 +708,8 @@ function QuoteMockup() {
             </div>
 
             <div className="quote-actions">
-              <button className="reject">
-                Ajustar
-              </button>
-
-              <button className="approve">
-                Aprovar orçamento
-              </button>
+              <button>Ajustar</button>
+              <button>Aprovar orçamento</button>
             </div>
           </div>
         </div>
@@ -796,7 +719,44 @@ function QuoteMockup() {
 }
 
 /* =========================================================
-   MAIN COMPONENT
+   FEATURE CARD
+   ========================================================= */
+
+function FeatureCard({
+  number,
+  title,
+  description,
+  children,
+}) {
+  return (
+    <motion.div
+      className="feature-card"
+      whileHover={{
+        y: -7,
+        scale: 1.01,
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 220,
+        damping: 20,
+      }}
+    >
+      <span className="feature-number">
+        {number}
+      </span>
+
+      <div className="feature-content">
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
+
+      {children}
+    </motion.div>
+  );
+}
+
+/* =========================================================
+   MAIN
    ========================================================= */
 
 export default function Landing() {
@@ -815,30 +775,33 @@ export default function Landing() {
     damping: 20,
   });
 
-  const handleHeroMove = (event) => {
-    const x =
-      (event.clientX / window.innerWidth - 0.5) * 20;
+  function handleMove(e) {
+    heroX.set(
+      (e.clientX / window.innerWidth - 0.5) * 20
+    );
 
-    const y =
-      (event.clientY / window.innerHeight - 0.5) * 20;
+    heroY.set(
+      (e.clientY / window.innerHeight - 0.5) * 20
+    );
+  }
 
-    heroX.set(x);
-    heroY.set(y);
-  };
-
-  const handleHeroLeave = () => {
+  function resetMove() {
     heroX.set(0);
     heroY.set(0);
-  };
+  }
 
   return (
     <div
       className="fayola-page"
-      onMouseMove={handleHeroMove}
-      onMouseLeave={handleHeroLeave}
+      onMouseMove={handleMove}
+      onMouseLeave={resetMove}
     >
+
+      {/* =====================================================
+          STYLE
+          ===================================================== */}
+
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap');
 
         * {
           box-sizing: border-box;
@@ -855,20 +818,21 @@ export default function Landing() {
 
         .fayola-page {
           --orange: #ff6a3d;
-          --orange-light: #ff8a63;
           --cream: #f3ede2;
-          --muted: #85817b;
-          --dark: #050505;
-          --panel: #0d0d0d;
-          --border: rgba(255,255,255,.09);
+          --muted: #77736d;
+          --panel: #0c0c0c;
 
           min-height: 100vh;
-          background:
-            radial-gradient(circle at 50% -10%, rgba(255,106,61,.09), transparent 35%),
-            #050505;
-          color: var(--cream);
-          font-family: Inter, system-ui, sans-serif;
           overflow: hidden;
+          color: var(--cream);
+          background:
+            radial-gradient(
+              circle at 50% -10%,
+              rgba(255,106,61,.10),
+              transparent 34%
+            ),
+            #050505;
+          font-family: Inter, system-ui, sans-serif;
         }
 
         .fayola-page a {
@@ -892,7 +856,7 @@ export default function Landing() {
           padding: 18px 0;
           background: linear-gradient(
             to bottom,
-            rgba(5,5,5,.92),
+            rgba(5,5,5,.94),
             rgba(5,5,5,.55),
             transparent
           );
@@ -919,22 +883,20 @@ export default function Landing() {
           height: 27px;
           display: grid;
           place-items: center;
-          border: 1px solid rgba(255,255,255,.25);
+          border: 1px solid rgba(255,255,255,.2);
           border-radius: 50%;
           color: var(--orange);
-          font-size: 12px;
         }
 
         .nav-links {
           display: flex;
-          align-items: center;
           gap: 30px;
         }
 
         .nav-links a {
-          color: #9d9992;
+          color: #97928b;
           font-size: 12px;
-          transition: color .25s ease;
+          transition: .25s;
         }
 
         .nav-links a:hover {
@@ -943,26 +905,26 @@ export default function Landing() {
 
         .nav-cta {
           padding: 11px 18px;
-          border: 1px solid rgba(255,255,255,.15);
+          border: 1px solid rgba(255,255,255,.14);
           border-radius: 100px;
-          font-size: 12px;
           background: rgba(255,255,255,.04);
-          transition: .3s ease;
+          font-size: 12px;
+          transition: .3s;
         }
 
         .nav-cta:hover {
-          background: white;
           color: black;
+          background: white;
         }
 
         .mobile-menu {
           display: none;
-          border: 1px solid rgba(255,255,255,.14);
-          background: rgba(255,255,255,.04);
-          color: white;
-          border-radius: 50%;
           width: 40px;
           height: 40px;
+          border: 1px solid rgba(255,255,255,.12);
+          border-radius: 50%;
+          background: rgba(255,255,255,.04);
+          color: white;
         }
 
         /* ================= HERO ================= */
@@ -970,212 +932,190 @@ export default function Landing() {
         .hero {
           position: relative;
           min-height: 100vh;
-          padding-top: 150px;
+          padding-top: 145px;
           display: flex;
           align-items: center;
-          isolation: isolate;
         }
 
         .hero-grid {
           position: absolute;
           inset: 0;
           background-image:
-            linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+            linear-gradient(
+              rgba(255,255,255,.025) 1px,
+              transparent 1px
+            ),
+            linear-gradient(
+              90deg,
+              rgba(255,255,255,.025) 1px,
+              transparent 1px
+            );
           background-size: 80px 80px;
-          mask-image: linear-gradient(to bottom, black, transparent 80%);
-          opacity: .5;
-          pointer-events: none;
-        }
-
-        .hero-noise {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          opacity: .04;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
-        }
-
-        .f-aura {
-          position: absolute;
-          width: 500px;
-          height: 500px;
-          border-radius: 50%;
-          filter: blur(100px);
-          opacity: .18;
-          pointer-events: none;
-          z-index: -1;
-        }
-
-        .aura-one {
-          background: var(--orange);
-          top: 15%;
-          left: 5%;
-        }
-
-        .aura-two {
-          background: #7b2cff;
-          top: 25%;
-          right: 5%;
-          opacity: .10;
-        }
-
-        .aura-three {
-          background: #ff3d81;
-          bottom: -15%;
-          left: 40%;
-          opacity: .08;
+          mask-image:
+            linear-gradient(
+              to bottom,
+              black,
+              transparent 85%
+            );
         }
 
         .hero-inner {
           position: relative;
           z-index: 2;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          align-items: center;
+          gap: 20px;
         }
 
         .hero-copy {
           position: relative;
-          z-index: 8;
-          width: 680px;
-          max-width: 100%;
+          z-index: 4;
         }
 
-        .eyebrow {
-          display: inline-flex;
+        .eyebrow,
+        .section-label {
+          display: flex;
           align-items: center;
           gap: 9px;
-          margin-bottom: 25px;
-          color: #aaa49c;
+          color: var(--orange);
           font-family: "DM Mono", monospace;
-          font-size: 10px;
-          letter-spacing: .16em;
-          text-transform: uppercase;
+          font-size: 8px;
+          letter-spacing: .14em;
         }
 
-        .eyebrow-dot {
-          width: 7px;
-          height: 7px;
-          background: var(--orange);
+        .eyebrow-dot,
+        .green-dot {
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
-          box-shadow: 0 0 18px var(--orange);
+          background: var(--orange);
+          box-shadow: 0 0 12px var(--orange);
         }
 
         .hero h1 {
-          margin: 0;
-          max-width: 800px;
-          font-size: clamp(52px, 7vw, 94px);
+          margin: 25px 0 0;
+          max-width: 700px;
+          font-size: clamp(58px, 7vw, 95px);
           line-height: .91;
-          letter-spacing: -.065em;
-          font-weight: 700;
+          letter-spacing: -.07em;
         }
 
         .hero h1 em {
+          color: var(--orange);
           font-family: "Playfair Display", serif;
           font-weight: 500;
-          color: var(--orange);
-          letter-spacing: -.055em;
         }
 
         .hero-subtitle {
-          max-width: 570px;
-          margin: 30px 0 0;
-          color: #9b9791;
-          font-size: 17px;
+          max-width: 540px;
+          margin-top: 28px;
+          color: #77736d;
+          font-size: 14px;
           line-height: 1.75;
         }
 
         .hero-subtitle strong {
-          color: #d8d2c9;
-          font-weight: 500;
+          color: #aaa49c;
         }
 
         .hero-actions {
           display: flex;
-          gap: 12px;
-          align-items: center;
-          margin-top: 35px;
+          gap: 10px;
+          margin-top: 32px;
         }
 
-        .primary-button {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          padding: 15px 22px;
-          border-radius: 100px;
-          background: var(--orange);
-          color: #080808 !important;
-          font-size: 13px;
-          font-weight: 700;
-          box-shadow:
-            0 10px 40px rgba(255,106,61,.16),
-            inset 0 1px rgba(255,255,255,.25);
-        }
-
-        .primary-button:hover {
-          background: #ff805b;
-        }
-
+        .primary-button,
         .secondary-button {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          padding: 15px 20px;
-          border: 1px solid rgba(255,255,255,.12);
-          border-radius: 100px;
-          color: #b7b2aa !important;
-          font-size: 13px;
+          gap: 20px;
+          min-height: 48px;
+          padding: 0 22px;
+          border-radius: 8px;
+          font-size: 11px;
+        }
+
+        .primary-button {
+          background: var(--orange);
+          color: #111 !important;
+          font-weight: 700;
+          box-shadow: 0 15px 40px rgba(255,106,61,.16);
+        }
+
+        .primary-button span {
+          font-size: 17px;
+        }
+
+        .secondary-button {
+          border: 1px solid rgba(255,255,255,.1);
+          color: #aaa49c !important;
           background: rgba(255,255,255,.025);
         }
 
         .hero-note {
-          margin-top: 17px;
-          color: #5f5b56;
-          font-size: 10px;
+          margin-top: 15px;
+          color: #45413d;
           font-family: "DM Mono", monospace;
+          font-size: 7px;
         }
 
-        .hero-product {
+        /* ================= AURA ================= */
+
+        .f-aura {
           position: absolute;
-          z-index: 4;
-          top: 17%;
-          right: -10%;
-          width: 650px;
-          height: 570px;
-          perspective: 1400px;
+          width: 380px;
+          height: 380px;
+          border-radius: 50%;
+          background: var(--orange);
+          opacity: .07;
+          filter: blur(100px);
           pointer-events: none;
+        }
+
+        .aura-one {
+          left: 30%;
+          top: 25%;
+        }
+
+        .aura-two {
+          right: 10%;
+          bottom: 10%;
+          opacity: .045;
+        }
+
+        /* ================= DASHBOARD ================= */
+
+        .hero-product {
+          position: relative;
+          height: 620px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          perspective: 1200px;
         }
 
         .dashboard-wrap {
           position: relative;
-          width: 100%;
-          height: 100%;
-          perspective: 1400px;
-        }
-
-        .dashboard-shadow {
-          position: absolute;
-          width: 80%;
-          height: 50%;
-          left: 10%;
-          bottom: 3%;
-          border-radius: 50%;
-          background: rgba(0,0,0,.8);
-          filter: blur(50px);
+          width: 670px;
+          height: 530px;
+          transform: scale(.88);
         }
 
         .dashboard {
           position: absolute;
-          width: 570px;
           left: 30px;
-          top: 50px;
-          border: 1px solid rgba(255,255,255,.13);
-          border-radius: 17px;
+          top: 45px;
+          width: 610px;
+          height: 390px;
           overflow: hidden;
-          background:
-            linear-gradient(145deg, rgba(25,25,25,.98), rgba(9,9,9,.98));
+          border: 1px solid rgba(255,255,255,.12);
+          border-radius: 15px;
+          background: #0b0b0b;
           box-shadow:
-            0 50px 100px rgba(0,0,0,.6),
-            0 0 0 1px rgba(255,255,255,.025);
+            0 60px 120px rgba(0,0,0,.55),
+            0 0 80px rgba(255,106,61,.04);
           transform-style: preserve-3d;
         }
 
@@ -1185,222 +1125,205 @@ export default function Landing() {
           align-items: center;
           justify-content: space-between;
           padding: 0 17px;
-          border-bottom: 1px solid rgba(255,255,255,.07);
+          border-bottom: 1px solid rgba(255,255,255,.06);
         }
 
         .brand-small {
-          font-size: 9px;
-          font-weight: 800;
-          letter-spacing: .15em;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 8px;
+          font-weight: 700;
+          letter-spacing: .12em;
         }
 
         .brand-small span {
           color: var(--orange);
-          margin-right: 5px;
         }
 
         .dash-user {
-          color: #777;
-          font-size: 9px;
-          display: flex;
-          align-items: center;
-          gap: 7px;
+          color: #68635d;
+          font-size: 7px;
         }
 
-        .online-dot {
+        .dash-user i {
+          display: inline-block;
           width: 5px;
           height: 5px;
+          margin-right: 5px;
           border-radius: 50%;
-          background: #45d98b;
-          box-shadow: 0 0 10px #45d98b;
+          background: #49d48a;
         }
 
         .dashboard-content {
-          display: flex;
+          display: grid;
+          grid-template-columns: 45px 1fr;
+          height: calc(100% - 48px);
         }
 
         .dash-sidebar {
-          width: 48px;
-          padding: 18px 0;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 19px;
-          color: #4e4e4e;
-          font-size: 12px;
-          border-right: 1px solid rgba(255,255,255,.06);
+          gap: 25px;
+          padding-top: 22px;
+          border-right: 1px solid rgba(255,255,255,.05);
+          color: #44413d;
+          font-size: 11px;
         }
 
-        .dash-active {
-          color: var(--orange);
-        }
-
-        .side-active {
+        .dash-sidebar .active {
           color: var(--orange);
         }
 
         .dash-main {
-          flex: 1;
-          padding: 21px;
+          padding: 22px;
         }
 
         .dash-heading {
           display: flex;
-          align-items: center;
           justify-content: space-between;
         }
 
         .dash-heading span {
-          font-size: 7px;
-          color: #666;
+          color: #4f4b46;
           font-family: "DM Mono", monospace;
+          font-size: 6px;
         }
 
         .dash-heading h3 {
-          margin: 4px 0 0;
-          font-size: 16px;
-          letter-spacing: -.03em;
+          margin: 6px 0 0;
+          font-size: 18px;
+          letter-spacing: -.04em;
         }
 
         .dash-heading button {
+          align-self: center;
           border: 0;
-          border-radius: 6px;
+          border-radius: 5px;
           padding: 8px 10px;
           background: var(--orange);
-          color: #080808;
-          font-size: 7px;
+          color: #111;
+          font-size: 6px;
           font-weight: 700;
         }
 
         .dash-stats {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
-          margin-top: 19px;
+          gap: 7px;
+          margin-top: 18px;
         }
 
-        .dash-stats > div {
+        .dash-stats div {
           padding: 12px;
           border: 1px solid rgba(255,255,255,.06);
-          border-radius: 8px;
+          border-radius: 7px;
           background: rgba(255,255,255,.02);
         }
 
         .dash-stats small {
           display: block;
-          color: #5d5d5d;
-          font-size: 6px;
+          color: #44413d;
           font-family: "DM Mono", monospace;
+          font-size: 5px;
         }
 
         .dash-stats strong {
           display: block;
-          margin-top: 7px;
-          font-size: 16px;
-          font-weight: 500;
+          margin-top: 6px;
+          color: #aaa49c;
+          font-size: 15px;
         }
 
         .schedule {
-          position: relative;
-          margin-top: 17px;
-        }
-
-        .schedule-line {
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          left: 44px;
-          width: 1px;
-          background: rgba(255,255,255,.06);
+          margin-top: 16px;
         }
 
         .appointment {
-          position: relative;
-          display: flex;
-          gap: 13px;
-          margin-bottom: 12px;
+          display: grid;
+          grid-template-columns: 45px 1fr;
+          gap: 8px;
+          margin-top: 8px;
         }
 
-        .appointment-time {
-          width: 32px;
-          padding-top: 12px;
-          color: #565656;
-          font-size: 7px;
+        .appointment > span {
+          padding-top: 9px;
+          color: #48443f;
           font-family: "DM Mono", monospace;
+          font-size: 6px;
         }
 
         .appointment-card {
-          flex: 1;
-          min-height: 49px;
           display: flex;
           align-items: center;
           gap: 9px;
-          padding: 8px;
-          border: 1px solid rgba(255,255,255,.06);
-          border-radius: 8px;
-          background: rgba(255,255,255,.025);
+          padding: 9px;
+          border: 1px solid rgba(255,255,255,.05);
+          border-radius: 7px;
+          background: #101010;
         }
 
-        .appointment-card.orange {
-          border-color: rgba(255,106,61,.18);
-        }
-
-        .appointment-avatar {
-          width: 27px;
-          height: 27px;
+        .appointment-card > b {
+          width: 22px;
+          height: 22px;
           display: grid;
           place-items: center;
-          border-radius: 7px;
-          background: #252525;
-          color: #bdb8b0;
-          font-size: 8px;
+          border-radius: 6px;
+          background: #1b1b1b;
+          color: #8d8880;
+          font-size: 7px;
+        }
+
+        .appointment-card div {
+          flex: 1;
         }
 
         .appointment-card strong {
           display: block;
+          color: #aaa49c;
           font-size: 8px;
         }
 
-        .appointment-card span {
+        .appointment-card small {
           display: block;
-          margin-top: 3px;
-          color: #555;
+          margin-top: 2px;
+          color: #4e4a46;
           font-size: 6px;
         }
 
         .appointment-card em {
-          margin-left: auto;
-          padding: 4px 6px;
-          border-radius: 20px;
-          background: rgba(255,255,255,.04);
-          color: #6f6f6f;
+          color: #4bd78d;
           font-size: 5px;
           font-style: normal;
         }
 
+        .appointment-card.orange em {
+          color: var(--orange);
+        }
+
+        /* ================= FLOATING CARDS ================= */
+
         .request-card {
           position: absolute;
-          z-index: 7;
-          width: 220px;
-          right: -18px;
-          top: 20px;
-          padding: 15px;
-          border: 1px solid rgba(255,255,255,.13);
-          border-radius: 14px;
-          background: rgba(15,15,15,.88);
-          backdrop-filter: blur(22px);
-          box-shadow:
-            0 25px 60px rgba(0,0,0,.5),
-            inset 0 1px rgba(255,255,255,.07);
+          right: -8px;
+          top: 5px;
+          z-index: 5;
+          width: 230px;
+          padding: 17px;
+          border: 1px solid rgba(255,255,255,.1);
+          border-radius: 12px;
+          background: rgba(13,13,13,.96);
+          box-shadow: 0 30px 70px rgba(0,0,0,.55);
         }
 
         .request-top {
           display: flex;
           align-items: center;
           gap: 6px;
-          color: #777;
-          font-size: 7px;
+          color: #65615b;
           font-family: "DM Mono", monospace;
+          font-size: 6px;
         }
 
         .request-dot {
@@ -1408,184 +1331,169 @@ export default function Landing() {
           height: 5px;
           border-radius: 50%;
           background: var(--orange);
-          box-shadow: 0 0 10px var(--orange);
         }
 
         .request-time {
           margin-left: auto;
-          color: #444;
         }
 
         .request-name {
-          margin-top: 14px;
-          font-size: 12px;
+          margin-top: 15px;
+          color: #aaa49c;
+          font-size: 11px;
           font-weight: 600;
         }
 
         .request-tags {
           display: flex;
           gap: 4px;
-          flex-wrap: wrap;
-          margin-top: 9px;
+          margin-top: 8px;
         }
 
         .request-tags span {
-          padding: 5px 7px;
-          border-radius: 20px;
-          color: #8d8982;
-          background: rgba(255,255,255,.05);
-          font-size: 6px;
+          padding: 4px 6px;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 4px;
+          color: #66615b;
+          font-size: 5px;
         }
 
         .request-images {
           display: flex;
           gap: 5px;
-          margin-top: 12px;
+          margin-top: 13px;
         }
 
         .reference-image,
         .reference-more {
-          width: 42px;
-          height: 42px;
+          width: 39px;
+          height: 39px;
           display: grid;
           place-items: center;
-          border-radius: 7px;
-          overflow: hidden;
+          border-radius: 5px;
+          background:
+            radial-gradient(
+              circle,
+              #35312d,
+              #141414
+            );
+          color: #746f68;
+          font-size: 13px;
         }
 
-        .reference-image {
+        .reference-image.second {
           background:
-            radial-gradient(circle at 50% 45%, #777 0 8%, transparent 9%),
-            radial-gradient(circle at 35% 70%, #aaa 0 5%, transparent 6%),
-            linear-gradient(135deg,#171717,#353535);
-          color: #d9d2c8;
-          font-size: 17px;
-        }
-
-        .ref-two {
-          background:
-            radial-gradient(circle at 55% 40%, #aaa 0 7%, transparent 8%),
-            linear-gradient(135deg,#242424,#101010);
+            radial-gradient(
+              circle at 30% 30%,
+              #48433d,
+              #111
+            );
         }
 
         .reference-more {
-          background: rgba(255,255,255,.05);
-          color: #777;
-          font-size: 8px;
+          color: #55514c;
+          font-family: "DM Mono", monospace;
+          font-size: 7px;
         }
 
         .request-footer {
           display: flex;
           align-items: center;
-          margin-top: 13px;
+          justify-content: space-between;
+          margin-top: 15px;
           padding-top: 12px;
-          border-top: 1px solid rgba(255,255,255,.06);
+          border-top: 1px solid rgba(255,255,255,.05);
         }
 
         .request-footer small {
           display: block;
-          color: #484848;
+          color: #45413d;
           font-size: 5px;
         }
 
         .request-footer strong {
           display: block;
           margin-top: 3px;
-          color: #bbb5ad;
-          font-size: 8px;
+          color: #88827a;
+          font-size: 7px;
         }
 
-        .request-arrow {
-          margin-left: auto;
-          width: 27px;
-          height: 27px;
-          display: grid;
-          place-items: center;
-          border-radius: 50%;
-          background: var(--orange);
-          color: #111;
-          font-size: 12px;
+        .request-footer > b {
+          color: var(--orange);
+          font-size: 15px;
         }
 
         .pix-card {
           position: absolute;
-          z-index: 8;
-          left: -5px;
-          bottom: 53px;
-          width: 185px;
+          left: 0;
+          bottom: 5px;
+          z-index: 5;
           display: flex;
           align-items: center;
           gap: 10px;
+          width: 190px;
           padding: 12px;
-          border: 1px solid rgba(255,255,255,.1);
-          border-radius: 12px;
-          background: rgba(16,16,16,.92);
-          backdrop-filter: blur(20px);
-          box-shadow: 0 20px 50px rgba(0,0,0,.5);
+          border: 1px solid rgba(255,106,61,.16);
+          border-radius: 10px;
+          background: #0e0e0e;
+          box-shadow: 0 25px 60px rgba(0,0,0,.5);
         }
 
-        .pix-icon {
+        .pix-symbol {
           width: 30px;
           height: 30px;
           display: grid;
           place-items: center;
-          border-radius: 8px;
-          background: rgba(255,106,61,.12);
+          border-radius: 7px;
+          background: rgba(255,106,61,.09);
           color: var(--orange);
         }
 
         .pix-card span {
           display: block;
-          color: #555;
-          font-size: 5px;
+          color: #4f4b46;
           font-family: "DM Mono", monospace;
+          font-size: 5px;
         }
 
         .pix-card strong {
           display: block;
           margin-top: 3px;
-          font-size: 10px;
+          color: #aaa49c;
+          font-size: 9px;
         }
 
-        .pix-check {
+        .pix-ok {
           margin-left: auto;
-          width: 20px;
-          height: 20px;
-          display: grid;
-          place-items: center;
-          border-radius: 50%;
-          background: rgba(60,220,140,.1);
-          color: #4cda8d;
-          font-size: 8px;
+          color: #4bd78d;
+          font-size: 13px;
         }
 
-        /* ================= MARQUEE ================= */
+        /* ================= TICKER ================= */
 
         .ticker {
-          position: relative;
-          z-index: 5;
-          border-top: 1px solid rgba(255,255,255,.06);
-          border-bottom: 1px solid rgba(255,255,255,.06);
           overflow: hidden;
-          background: rgba(255,255,255,.015);
+          border-top: 1px solid rgba(255,255,255,.05);
+          border-bottom: 1px solid rgba(255,255,255,.05);
+          padding: 14px 0;
+          background: #080808;
         }
 
         .ticker-track {
           display: flex;
           width: max-content;
-          animation: ticker 30s linear infinite;
+          animation: ticker 25s linear infinite;
         }
 
         .ticker-item {
           display: flex;
           align-items: center;
           gap: 35px;
-          padding: 17px 35px;
-          color: #555;
+          padding-right: 35px;
+          color: #4b4742;
           font-family: "DM Mono", monospace;
-          font-size: 9px;
+          font-size: 7px;
           letter-spacing: .12em;
-          white-space: nowrap;
         }
 
         .ticker-item b {
@@ -1593,87 +1501,73 @@ export default function Landing() {
         }
 
         @keyframes ticker {
-          from {
-            transform: translateX(0);
-          }
-
           to {
             transform: translateX(-50%);
           }
         }
 
-        /* ================= SECTION ================= */
+        /* ================= SECTIONS ================= */
 
         .section {
           position: relative;
           padding: 145px 0;
         }
 
-        .section-label {
-          color: var(--orange);
-          font-family: "DM Mono", monospace;
-          font-size: 9px;
-          letter-spacing: .18em;
-          text-transform: uppercase;
-        }
-
         .section-title {
-          max-width: 780px;
-          margin: 18px 0 0;
-          font-size: clamp(40px, 5.3vw, 72px);
+          max-width: 850px;
+          margin: 20px 0 0;
+          font-size: clamp(43px, 5vw, 72px);
           line-height: .98;
-          letter-spacing: -.055em;
+          letter-spacing: -.06em;
         }
 
         .section-title em {
-          color: #79746d;
+          color: var(--orange);
           font-family: "Playfair Display", serif;
           font-weight: 500;
         }
 
         .section-intro {
-          max-width: 560px;
+          max-width: 590px;
           margin-top: 25px;
-          color: #77736d;
-          font-size: 15px;
+          color: #68635d;
+          font-size: 13px;
           line-height: 1.8;
         }
 
         /* ================= BEFORE AFTER ================= */
 
         .before-after {
-          position: relative;
           display: grid;
-          grid-template-columns: 1fr 80px 1fr;
+          grid-template-columns: 1fr 50px 1fr;
+          gap: 15px;
           align-items: center;
-          margin-top: 75px;
+          margin-top: 70px;
         }
 
         .ba-panel {
-          min-height: 430px;
-          padding: 35px;
-          border: 1px solid rgba(255,255,255,.08);
-          border-radius: 20px;
-          background: #0a0a0a;
-        }
-
-        .ba-panel.before {
-          background:
-            radial-gradient(circle at 70% 10%, rgba(255,255,255,.03), transparent 30%),
-            #0a0a0a;
+          min-height: 370px;
+          padding: 30px;
+          border: 1px solid rgba(255,255,255,.07);
+          border-radius: 17px;
+          background: #090909;
         }
 
         .ba-panel.after {
-          border-color: rgba(255,106,61,.18);
+          border-color: rgba(255,106,61,.16);
           background:
-            radial-gradient(circle at 80% 10%, rgba(255,106,61,.07), transparent 35%),
-            #0a0a0a;
+            radial-gradient(
+              circle at 90% 10%,
+              rgba(255,106,61,.08),
+              transparent 35%
+            ),
+            #090909;
         }
 
         .ba-label {
-          color: #555;
+          color: #4d4944;
           font-family: "DM Mono", monospace;
-          font-size: 8px;
+          font-size: 7px;
           letter-spacing: .15em;
         }
 
@@ -1682,222 +1576,373 @@ export default function Landing() {
         }
 
         .ba-panel h3 {
-          max-width: 350px;
-          margin: 18px 0 30px;
-          font-size: 25px;
+          margin: 18px 0 0;
+          font-size: 23px;
           letter-spacing: -.04em;
         }
 
         .chaos {
-          position: relative;
-          height: 190px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+          margin-top: 30px;
         }
 
         .chaos div {
-          position: absolute;
-          padding: 12px 15px;
-          border: 1px solid rgba(255,255,255,.07);
-          border-radius: 9px;
-          background: #111;
-          color: #777;
-          font-size: 10px;
-        }
-
-        .chaos div:nth-child(1) {
-          left: 5%;
-          top: 5%;
-          transform: rotate(-7deg);
+          padding: 12px;
+          border: 1px solid rgba(255,255,255,.05);
+          border-radius: 7px;
+          color: #5e5953;
+          font-size: 8px;
+          transform: rotate(var(--r, 0deg));
         }
 
         .chaos div:nth-child(2) {
-          right: 8%;
-          top: 3%;
-          transform: rotate(5deg);
+          transform: rotate(2deg);
         }
 
         .chaos div:nth-child(3) {
-          left: 20%;
-          top: 38%;
-          transform: rotate(3deg);
-        }
-
-        .chaos div:nth-child(4) {
-          right: 5%;
-          top: 46%;
-          transform: rotate(-4deg);
+          transform: rotate(-2deg);
         }
 
         .chaos div:nth-child(5) {
-          left: 3%;
-          bottom: 2%;
-          transform: rotate(5deg);
-        }
-
-        .chaos div:nth-child(6) {
-          right: 24%;
-          bottom: 0;
-          transform: rotate(-5deg);
+          transform: rotate(2deg);
         }
 
         .ba-panel p {
-          color: #62605c;
-          font-size: 11px;
+          margin-top: 25px;
+          color: #55514c;
+          font-size: 10px;
           line-height: 1.7;
         }
 
         .organized {
           display: grid;
-          gap: 9px;
+          gap: 7px;
+          margin-top: 30px;
         }
 
         .organized div {
           display: flex;
           align-items: center;
-          gap: 11px;
-          padding: 12px;
-          border: 1px solid rgba(255,255,255,.06);
-          border-radius: 8px;
-          color: #aaa49c;
-          font-size: 10px;
-          background: rgba(255,255,255,.025);
+          gap: 8px;
+          padding: 10px;
+          border: 1px solid rgba(255,255,255,.05);
+          border-radius: 7px;
+          background: rgba(255,255,255,.02);
+          color: #77716a;
+          font-size: 8px;
         }
 
         .organized span {
-          color: var(--orange);
+          color: #4bd78d;
         }
 
         .ba-divider {
-          width: 48px;
-          height: 48px;
           display: grid;
           place-items: center;
-          justify-self: center;
-          border: 1px solid rgba(255,106,61,.25);
-          border-radius: 50%;
           color: var(--orange);
-          background: #080808;
-          box-shadow: 0 0 40px rgba(255,106,61,.08);
         }
 
         /* ================= FLOW ================= */
 
         .flow-grid {
           display: grid;
-          grid-template-columns: repeat(6, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 10px;
-          margin-top: 70px;
+          margin-top: 65px;
         }
 
         .flow-card {
-          position: relative;
-          min-height: 245px;
-          padding: 22px;
+          min-height: 255px;
+          padding: 25px;
           border: 1px solid rgba(255,255,255,.07);
           border-radius: 15px;
-          background:
-            linear-gradient(145deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
-          overflow: hidden;
+          background: #090909;
           transform-style: preserve-3d;
         }
 
-        .flow-card::after {
-          content: "";
-          position: absolute;
-          width: 100px;
-          height: 100px;
-          right: -50px;
-          bottom: -50px;
-          background: var(--orange);
-          opacity: .05;
-          filter: blur(25px);
-          border-radius: 50%;
-        }
-
         .flow-number {
-          color: #494642;
+          color: #45413d;
           font-family: "DM Mono", monospace;
-          font-size: 9px;
+          font-size: 7px;
         }
 
         .flow-icon {
-          width: 42px;
-          height: 42px;
+          width: 40px;
+          height: 40px;
           display: grid;
           place-items: center;
-          margin-top: 38px;
-          border: 1px solid rgba(255,106,61,.2);
-          border-radius: 10px;
+          margin-top: 35px;
+          border: 1px solid rgba(255,106,61,.17);
+          border-radius: 9px;
           color: var(--orange);
           background: rgba(255,106,61,.05);
-          font-size: 14px;
+          font-size: 12px;
         }
 
         .flow-card h3 {
-          margin: 18px 0 9px;
-          font-size: 15px;
-          letter-spacing: -.025em;
+          margin: 17px 0 0;
+          font-size: 18px;
         }
 
         .flow-card p {
-          margin: 0;
-          color: #62605b;
-          font-size: 10px;
-          line-height: 1.65;
+          margin-top: 9px;
+          color: #5f5a54;
+          font-size: 9px;
+          line-height: 1.7;
+        }
+
+        /* ================= NOVO FLUXO ================= */
+
+        .tattoo-flow {
+          margin-top: 75px;
+        }
+
+        .tattoo-link {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 13px 15px;
+          border: 1px solid rgba(255,255,255,.08);
+          border-radius: 8px;
+          background: rgba(255,255,255,.025);
+          color: #716c65;
+          font-family: "DM Mono", monospace;
+          font-size: 8px;
+        }
+
+        .green-dot {
+          background: #4bd78d;
+          box-shadow: 0 0 12px #4bd78d;
+        }
+
+        .tattoo-link b {
+          margin-left: auto;
+          color: var(--orange);
+          font-size: 6px;
+          font-weight: 400;
+          letter-spacing: .1em;
+        }
+
+        .tattoo-flow-grid {
+          display: grid;
+          grid-template-columns:
+            1fr 25px
+            1fr 25px
+            1fr 25px
+            1fr;
+          align-items: center;
+          gap: 8px;
+          margin-top: 15px;
+        }
+
+        .tattoo-step {
+          position: relative;
+          min-height: 315px;
+          padding: 24px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,.07);
+          border-radius: 16px;
+          background:
+            linear-gradient(
+              145deg,
+              rgba(255,255,255,.04),
+              rgba(255,255,255,.012)
+            );
+          transform-style: preserve-3d;
+        }
+
+        .tattoo-step.highlight {
+          border-color: rgba(255,106,61,.23);
+          background:
+            radial-gradient(
+              circle at 90% 0,
+              rgba(255,106,61,.09),
+              transparent 38%
+            ),
+            #0a0a0a;
+        }
+
+        .step-number {
+          color: #45413d;
+          font-family: "DM Mono", monospace;
+          font-size: 8px;
+        }
+
+        .step-icon {
+          width: 43px;
+          height: 43px;
+          display: grid;
+          place-items: center;
+          margin-top: 30px;
+          border: 1px solid rgba(255,106,61,.18);
+          border-radius: 10px;
+          color: var(--orange);
+          background: rgba(255,106,61,.05);
+        }
+
+        .tattoo-step > small {
+          display: block;
+          margin-top: 20px;
+          color: #55514c;
+          font-family: "DM Mono", monospace;
+          font-size: 6px;
+          letter-spacing: .12em;
+        }
+
+        .tattoo-step h3 {
+          margin: 9px 0 0;
+          font-size: 17px;
+          letter-spacing: -.035em;
+        }
+
+        .tattoo-step p {
+          margin-top: 10px;
+          color: #64605a;
+          font-size: 9px;
+          line-height: 1.7;
+        }
+
+        .step-status {
+          position: absolute;
+          left: 24px;
+          right: 24px;
+          bottom: 22px;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 10px;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 7px;
+          color: #77716a;
+          font-size: 7px;
+        }
+
+        .step-status span {
+          color: #4bd78d;
+        }
+
+        .step-status.waiting span {
+          color: #aaa;
+        }
+
+        .step-status.confirmed {
+          border-color: rgba(75,215,141,.12);
+        }
+
+        .mini-price {
+          position: absolute;
+          left: 24px;
+          right: 24px;
+          bottom: 22px;
+          display: grid;
+          grid-template-columns: 1fr 1fr 40px;
+          gap: 5px;
+        }
+
+        .mini-price div {
+          padding: 9px;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 7px;
+        }
+
+        .mini-price span {
+          display: block;
+          color: #4b4742;
+          font-family: "DM Mono", monospace;
+          font-size: 5px;
+        }
+
+        .mini-price strong {
+          display: block;
+          margin-top: 4px;
+          color: #aaa49c;
+          font-size: 8px;
+        }
+
+        .mini-price > b {
+          display: grid;
+          place-items: center;
+          border-radius: 7px;
+          background: var(--orange);
+          color: #111;
+          font-size: 7px;
+        }
+
+        .flow-arrow {
+          display: grid;
+          place-items: center;
+          color: #45413d;
+          font-size: 15px;
+        }
+
+        .tattoo-final-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 20px;
+          margin-top: 15px;
+          padding: 17px;
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 11px;
+          background: rgba(255,255,255,.018);
+        }
+
+        .tattoo-final-bar > div {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .tattoo-final-bar > div > span {
+          color: var(--orange);
+        }
+
+        .tattoo-final-bar strong {
+          display: block;
+          color: #aaa49c;
+          font-size: 9px;
+        }
+
+        .tattoo-final-bar p {
+          margin: 4px 0 0;
+          color: #57534d;
+          font-size: 7px;
+        }
+
+        .tattoo-final-bar > b {
+          color: #4f4a45;
+          font-family: "DM Mono", monospace;
+          font-size: 6px;
+          font-weight: 400;
         }
 
         /* ================= QUOTE ================= */
 
-        .quote-section {
-          background:
-            radial-gradient(circle at 50% 40%, rgba(255,106,61,.055), transparent 35%);
-        }
-
         .quote-scene {
           position: relative;
-          min-height: 650px;
-          margin-top: 65px;
-          display: grid;
-          place-items: center;
-          perspective: 1400px;
-        }
-
-        .quote-orbit {
-          position: absolute;
-          border: 1px solid rgba(255,255,255,.05);
-          border-radius: 50%;
-          pointer-events: none;
-        }
-
-        .orbit-one {
-          width: 760px;
-          height: 330px;
-          transform: rotate(-14deg);
-        }
-
-        .orbit-two {
-          width: 620px;
-          height: 260px;
-          transform: rotate(17deg);
+          margin-top: 70px;
+          padding: 20px;
         }
 
         .quote-window {
           position: relative;
           z-index: 2;
-          width: min(880px, 100%);
+          max-width: 920px;
+          margin: 0 auto;
           overflow: hidden;
-          border: 1px solid rgba(255,255,255,.11);
-          border-radius: 20px;
-          background: #0b0b0b;
-          box-shadow:
-            0 50px 100px rgba(0,0,0,.55),
-            0 0 80px rgba(255,106,61,.04);
+          border: 1px solid rgba(255,255,255,.1);
+          border-radius: 16px;
+          background: #0a0a0a;
+          box-shadow: 0 50px 100px rgba(0,0,0,.45);
         }
 
         .quote-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 20px 25px;
+          padding: 17px 20px;
           border-bottom: 1px solid rgba(255,255,255,.06);
         }
 
@@ -1905,161 +1950,128 @@ export default function Landing() {
           display: block;
           color: var(--orange);
           font-family: "DM Mono", monospace;
-          font-size: 7px;
-          letter-spacing: .15em;
+          font-size: 6px;
         }
 
         .quote-header strong {
           display: block;
           margin-top: 4px;
-          font-size: 15px;
+          font-size: 10px;
         }
 
-        .quote-status {
+        .quote-header > b {
           padding: 6px 9px;
-          border: 1px solid rgba(255,106,61,.2);
-          border-radius: 30px;
+          border-radius: 20px;
+          background: rgba(255,106,61,.07);
           color: var(--orange);
           font-family: "DM Mono", monospace;
-          font-size: 7px;
+          font-size: 5px;
         }
 
         .quote-body {
           display: grid;
-          grid-template-columns: 42% 58%;
-          min-height: 470px;
-        }
-
-        .quote-left {
-          padding: 25px;
-          border-right: 1px solid rgba(255,255,255,.06);
-          background:
-            radial-gradient(circle at 50% 30%, rgba(255,255,255,.05), transparent 35%);
+          grid-template-columns: 40% 60%;
         }
 
         .quote-photo {
-          height: 355px;
+          min-height: 390px;
           display: grid;
           place-items: center;
-          border: 1px solid rgba(255,255,255,.06);
-          border-radius: 13px;
-          overflow: hidden;
           background:
-            radial-gradient(circle at 48% 43%, rgba(255,255,255,.22) 0 2%, transparent 3%),
-            radial-gradient(circle at 54% 49%, rgba(255,255,255,.16) 0 8%, transparent 9%),
-            radial-gradient(circle at 40% 58%, rgba(255,255,255,.14) 0 7%, transparent 8%),
-            linear-gradient(145deg,#1d1d1d,#080808);
+            radial-gradient(
+              circle at 50% 45%,
+              #37322d,
+              #111
+            );
         }
 
-        .fake-tattoo {
+        .quote-photo div {
           font-size: 90px;
-          color: rgba(255,255,255,.6);
-          transform: rotate(-13deg);
-          filter: blur(.3px);
-        }
-
-        .reference-row {
-          display: flex;
-          gap: 6px;
-          margin-top: 8px;
-        }
-
-        .reference-row div {
-          flex: 1;
-          height: 43px;
-          border-radius: 6px;
-          background:
-            linear-gradient(135deg,#222,#0d0d0d);
-          border: 1px solid rgba(255,255,255,.05);
+          color: #756e65;
+          opacity: .5;
         }
 
         .quote-details {
-          padding: 30px;
+          padding: 28px;
         }
 
         .quote-details > span {
-          color: #555;
+          color: #4b4742;
           font-family: "DM Mono", monospace;
-          font-size: 7px;
+          font-size: 6px;
         }
 
         .quote-details > strong {
           display: block;
-          margin-top: 7px;
-          font-size: 21px;
-          letter-spacing: -.04em;
+          margin-top: 5px;
+          font-size: 14px;
         }
 
         .detail-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          margin-top: 25px;
+          gap: 7px;
+          margin-top: 20px;
         }
 
         .detail-grid div {
-          padding: 13px;
+          padding: 12px;
           border: 1px solid rgba(255,255,255,.06);
-          border-radius: 8px;
-          background: rgba(255,255,255,.02);
+          border-radius: 7px;
         }
 
         .detail-grid small,
         .quote-price span {
           display: block;
-          color: #555;
+          color: #4c4843;
           font-family: "DM Mono", monospace;
-          font-size: 6px;
+          font-size: 5px;
         }
 
         .detail-grid b {
           display: block;
-          margin-top: 6px;
-          color: #b4aea6;
-          font-size: 9px;
+          margin-top: 5px;
+          color: #aaa49c;
+          font-size: 8px;
           font-weight: 500;
         }
 
         .quote-price {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          margin-top: 10px;
+          gap: 7px;
+          margin-top: 7px;
         }
 
-        .quote-price > div {
-          padding: 16px;
+        .quote-price div {
+          padding: 14px;
           border: 1px solid rgba(255,255,255,.06);
-          border-radius: 8px;
+          border-radius: 7px;
         }
 
         .quote-price strong {
           display: block;
           margin-top: 5px;
-          font-size: 15px;
+          font-size: 13px;
         }
 
         .quote-actions {
-          display: flex;
-          gap: 8px;
-          margin-top: 20px;
+          display: grid;
+          grid-template-columns: 1fr 1.5fr;
+          gap: 7px;
+          margin-top: 15px;
         }
 
         .quote-actions button {
-          flex: 1;
-          padding: 12px;
+          padding: 11px;
+          border: 1px solid rgba(255,255,255,.07);
           border-radius: 7px;
-          font-size: 8px;
-          cursor: pointer;
-        }
-
-        .reject {
-          border: 1px solid rgba(255,255,255,.08);
           background: transparent;
-          color: #777;
+          color: #77716a;
+          font-size: 7px;
         }
 
-        .approve {
+        .quote-actions button:last-child {
           border: 0;
           background: var(--orange);
           color: #111;
@@ -2071,78 +2083,80 @@ export default function Landing() {
         .features-grid {
           display: grid;
           grid-template-columns: repeat(12, 1fr);
-          gap: 12px;
-          margin-top: 70px;
+          gap: 10px;
+          margin-top: 65px;
         }
 
         .feature-card {
           position: relative;
-          min-height: 360px;
-          padding: 30px;
+          min-height: 320px;
+          grid-column: span 4;
+          padding: 28px;
           overflow: hidden;
           border: 1px solid rgba(255,255,255,.07);
-          border-radius: 18px;
-          background: #0a0a0a;
-          transform-style: preserve-3d;
+          border-radius: 16px;
+          background: #090909;
         }
 
         .feature-card:nth-child(1),
         .feature-card:nth-child(4) {
-          grid-column: span 7;
-        }
-
-        .feature-card:nth-child(2),
-        .feature-card:nth-child(3),
-        .feature-card:nth-child(5),
-        .feature-card:nth-child(6) {
-          grid-column: span 5;
+          grid-column: span 6;
         }
 
         .feature-number {
-          color: #44413e;
+          color: #45413d;
           font-family: "DM Mono", monospace;
-          font-size: 8px;
+          font-size: 7px;
         }
 
         .feature-content {
           position: relative;
           z-index: 2;
-          max-width: 340px;
-          margin-top: 75px;
+          max-width: 330px;
+          margin-top: 70px;
         }
 
         .feature-content h3 {
           margin: 0;
-          font-size: 26px;
-          letter-spacing: -.045em;
+          font-size: 21px;
+          letter-spacing: -.04em;
         }
 
         .feature-content p {
-          margin-top: 13px;
-          color: #64615c;
-          font-size: 11px;
+          margin-top: 11px;
+          color: #625d57;
+          font-size: 9px;
           line-height: 1.7;
         }
 
-        .feature-visual {
+        .feature-chat {
           position: absolute;
-          right: 25px;
-          bottom: 25px;
-          width: 210px;
-          height: 170px;
+          right: 20px;
+          bottom: 20px;
+          padding: 12px;
+          border: 1px solid rgba(255,255,255,.07);
+          border-radius: 8px;
+          background: #111;
+          color: #77716a;
+          font-size: 7px;
+        }
+
+        .feature-chat b {
+          display: block;
+          margin-bottom: 4px;
+          color: #aaa49c;
         }
 
         .mini-phone {
           position: absolute;
-          right: 15px;
-          bottom: 0;
-          width: 105px;
-          height: 180px;
-          border: 5px solid #1d1d1d;
-          border-radius: 18px;
+          right: 25px;
+          bottom: 20px;
+          width: 95px;
+          height: 160px;
+          border: 5px solid #1c1c1c;
+          border-radius: 17px;
           background: #0e0e0e;
           box-shadow: 0 25px 50px rgba(0,0,0,.5);
-          overflow: hidden;
         }
 
         .mini-phone::before {
@@ -2150,27 +2164,27 @@ export default function Landing() {
           position: absolute;
           top: 7px;
           left: 50%;
-          width: 35px;
-          height: 5px;
+          width: 30px;
+          height: 4px;
           transform: translateX(-50%);
           border-radius: 10px;
-          background: #252525;
+          background: #272727;
         }
 
         .phone-screen {
-          padding: 27px 8px 8px;
+          padding: 27px 8px;
         }
 
-        .phone-title {
-          color: #888;
+        .phone-screen small {
+          color: #55514c;
           font-size: 5px;
         }
 
         .phone-line {
-          height: 7px;
-          margin-top: 7px;
+          height: 6px;
+          margin-top: 8px;
           border-radius: 3px;
-          background: #242424;
+          background: #252525;
         }
 
         .phone-line.short {
@@ -2178,84 +2192,53 @@ export default function Landing() {
         }
 
         .phone-button {
-          height: 20px;
-          margin-top: 13px;
+          height: 19px;
+          margin-top: 15px;
           border-radius: 5px;
           background: var(--orange);
-        }
-
-        .feature-ring {
-          position: absolute;
-          width: 130px;
-          height: 130px;
-          left: 0;
-          bottom: 10px;
-          border: 1px solid rgba(255,106,61,.15);
-          border-radius: 50%;
-        }
-
-        .feature-chat {
-          position: absolute;
-          right: 0;
-          bottom: 20px;
-          padding: 13px;
-          border: 1px solid rgba(255,255,255,.07);
-          border-radius: 10px;
-          background: #121212;
-          color: #8b8780;
-          font-size: 7px;
-          box-shadow: 0 20px 40px rgba(0,0,0,.4);
-        }
-
-        .feature-chat b {
-          display: block;
-          color: #bbb4ab;
-          margin-bottom: 4px;
-          font-size: 8px;
         }
 
         .service-stack {
           position: absolute;
           right: 20px;
-          bottom: 25px;
-          width: 230px;
+          bottom: 20px;
+          width: 210px;
         }
 
         .service-item {
           display: flex;
           justify-content: space-between;
-          padding: 12px;
           margin-top: 5px;
+          padding: 10px;
           border: 1px solid rgba(255,255,255,.06);
-          border-radius: 7px;
+          border-radius: 6px;
           background: #101010;
-          color: #777;
-          font-size: 8px;
+          color: #68625b;
+          font-size: 7px;
         }
 
         .service-item strong {
-          color: #aaa;
-          font-weight: 500;
+          color: #aaa49c;
         }
 
         .commission-chart {
           position: absolute;
-          right: 30px;
-          bottom: 30px;
-          width: 250px;
-          height: 130px;
+          right: 25px;
+          bottom: 25px;
+          width: 210px;
+          height: 110px;
           display: flex;
           align-items: end;
-          gap: 9px;
-          padding: 20px;
+          gap: 7px;
+          padding: 15px;
           border: 1px solid rgba(255,255,255,.06);
-          border-radius: 10px;
+          border-radius: 8px;
           background: #0e0e0e;
         }
 
         .bar {
           flex: 1;
-          border-radius: 4px 4px 0 0;
+          border-radius: 3px 3px 0 0;
           background: linear-gradient(
             to top,
             rgba(255,106,61,.12),
@@ -2265,15 +2248,15 @@ export default function Landing() {
 
         .bar:nth-child(1) { height: 35%; }
         .bar:nth-child(2) { height: 50%; }
-        .bar:nth-child(3) { height: 40%; }
+        .bar:nth-child(3) { height: 42%; }
         .bar:nth-child(4) { height: 75%; }
-        .bar:nth-child(5) { height: 62%; }
+        .bar:nth-child(5) { height: 60%; }
         .bar:nth-child(6) { height: 92%; }
 
         /* ================= NUMBERS ================= */
 
         .numbers {
-          padding: 80px 0;
+          padding: 75px 0;
           border-top: 1px solid rgba(255,255,255,.06);
           border-bottom: 1px solid rgba(255,255,255,.06);
         }
@@ -2289,7 +2272,7 @@ export default function Landing() {
         }
 
         .number:last-child {
-          border-right: 0;
+          border: 0;
         }
 
         .number strong {
@@ -2300,90 +2283,72 @@ export default function Landing() {
 
         .number span {
           display: block;
-          margin-top: 6px;
-          color: #5f5b56;
+          margin-top: 5px;
+          color: #55514c;
           font-family: "DM Mono", monospace;
-          font-size: 8px;
-          letter-spacing: .08em;
+          font-size: 7px;
         }
 
         /* ================= PRICE ================= */
 
-        .price-section {
-          padding-bottom: 160px;
-        }
-
         .price-card {
-          position: relative;
           max-width: 900px;
-          margin: 70px auto 0;
-          padding: 50px;
-          overflow: hidden;
-          border: 1px solid rgba(255,106,61,.2);
-          border-radius: 22px;
+          margin: 65px auto 0;
+          padding: 45px;
+          border: 1px solid rgba(255,106,61,.18);
+          border-radius: 20px;
           background:
-            radial-gradient(circle at 90% 10%, rgba(255,106,61,.09), transparent 30%),
-            #0a0a0a;
-          box-shadow: 0 40px 100px rgba(0,0,0,.4);
-        }
-
-        .price-card::before {
-          content: "";
-          position: absolute;
-          width: 350px;
-          height: 350px;
-          right: -180px;
-          top: -180px;
-          border: 1px solid rgba(255,106,61,.12);
-          border-radius: 50%;
+            radial-gradient(
+              circle at 90% 10%,
+              rgba(255,106,61,.09),
+              transparent 30%
+            ),
+            #090909;
         }
 
         .price-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 60px;
-          align-items: center;
         }
 
         .price-label {
           color: var(--orange);
           font-family: "DM Mono", monospace;
-          font-size: 8px;
-          letter-spacing: .16em;
+          font-size: 7px;
+          letter-spacing: .15em;
         }
 
         .price-card h3 {
           margin: 14px 0;
-          font-size: 35px;
-          letter-spacing: -.05em;
+          font-size: 32px;
         }
 
         .price-description {
-          color: #69655f;
-          font-size: 12px;
+          color: #66615b;
+          font-size: 10px;
           line-height: 1.75;
         }
 
         .price-value {
           display: flex;
           align-items: baseline;
-          gap: 4px;
           margin-top: 20px;
+          gap: 4px;
         }
 
         .price-value small {
-          color: #888;
-          font-size: 12px;
+          color: #777;
         }
 
         .price-value strong {
-          font-size: 54px;
+          font-size: 52px;
           letter-spacing: -.07em;
         }
 
         .price-value span {
           color: #666;
-          font-size: 12px;
+          font-size: 10px;
         }
 
         .price-features {
@@ -2393,9 +2358,9 @@ export default function Landing() {
 
         .price-feature {
           display: flex;
-          gap: 9px;
-          color: #96918a;
-          font-size: 10px;
+          gap: 8px;
+          color: #858078;
+          font-size: 9px;
         }
 
         .price-feature span {
@@ -2403,7 +2368,6 @@ export default function Landing() {
         }
 
         .price-button {
-          display: inline-flex;
           margin-top: 25px;
         }
 
@@ -2411,7 +2375,7 @@ export default function Landing() {
 
         .final-cta {
           position: relative;
-          min-height: 720px;
+          min-height: 650px;
           display: grid;
           place-items: center;
           text-align: center;
@@ -2429,29 +2393,13 @@ export default function Landing() {
           filter: blur(100px);
         }
 
-        .cta-lines {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          background:
-            repeating-radial-gradient(
-              ellipse at center,
-              transparent 0,
-              transparent 85px,
-              rgba(255,255,255,.025) 86px,
-              transparent 87px
-            );
-          mask-image: radial-gradient(
-            ellipse at center,
-            black,
-            transparent 65%
-          );
-        }
-
         .cta-content {
           position: relative;
           z-index: 2;
-          max-width: 850px;
+        }
+
+        .cta-content .section-label {
+          justify-content: center;
         }
 
         .cta-content h2 {
@@ -2468,10 +2416,10 @@ export default function Landing() {
         }
 
         .cta-content p {
-          max-width: 500px;
-          margin: 28px auto;
-          color: #77736d;
-          font-size: 14px;
+          max-width: 520px;
+          margin: 25px auto;
+          color: #77716a;
+          font-size: 12px;
           line-height: 1.75;
         }
 
@@ -2495,51 +2443,57 @@ export default function Landing() {
         }
 
         .footer-copy {
-          color: #4d4a46;
-          font-size: 9px;
+          color: #4a4641;
+          font-size: 8px;
         }
 
         .footer-links {
           display: flex;
           gap: 20px;
-          color: #555;
-          font-size: 9px;
+          color: #55514c;
+          font-size: 8px;
         }
 
-        .footer-links a:hover {
-          color: #aaa;
-        }
+        /* ================= MOBILE ================= */
 
-        /* ================= RESPONSIVE ================= */
+        @media (max-width: 1000px) {
 
-        @media (max-width: 1100px) {
+          .hero-inner {
+            grid-template-columns: 1fr;
+          }
+
           .hero-product {
-            right: -25%;
-            opacity: .75;
+            height: 550px;
           }
 
-          .hero-copy {
-            width: 620px;
+          .tattoo-flow-grid {
+            grid-template-columns:
+              1fr 20px
+              1fr;
           }
 
-          .flow-grid {
-            grid-template-columns: repeat(3, 1fr);
+          .tattoo-step:nth-of-type(3) {
+            grid-column: 1;
           }
 
-          .feature-card:nth-child(n) {
+          .flow-arrow:nth-of-type(2) {
+            display: none;
+          }
+
+          .feature-card,
+          .feature-card:nth-child(1),
+          .feature-card:nth-child(4) {
             grid-column: span 6;
           }
         }
 
         @media (max-width: 800px) {
+
           .container {
             width: min(100% - 28px, 600px);
           }
 
-          .nav-links {
-            display: none;
-          }
-
+          .nav-links,
           .nav-cta {
             display: none;
           }
@@ -2549,26 +2503,15 @@ export default function Landing() {
           }
 
           .hero {
-            min-height: auto;
-            padding-top: 135px;
-            padding-bottom: 80px;
-          }
-
-          .hero-copy {
-            width: 100%;
+            padding-top: 120px;
           }
 
           .hero h1 {
-            font-size: clamp(48px, 15vw, 75px);
-          }
-
-          .hero-subtitle {
-            font-size: 14px;
+            font-size: clamp(48px, 14vw, 75px);
           }
 
           .hero-actions {
             flex-direction: column;
-            align-items: stretch;
           }
 
           .primary-button,
@@ -2577,28 +2520,14 @@ export default function Landing() {
           }
 
           .hero-product {
-            position: relative;
-            top: auto;
-            right: auto;
-            width: 100%;
-            height: 450px;
-            margin-top: 40px;
-            opacity: 1;
+            height: 430px;
+            margin-top: 10px;
             transform: scale(.72);
             transform-origin: top center;
           }
 
-          .dashboard {
-            left: 50%;
-            transform: translateX(-50%);
-          }
-
-          .request-card {
-            right: -10px;
-          }
-
-          .pix-card {
-            left: 0;
+          .dashboard-wrap {
+            transform: scale(.9);
           }
 
           .section {
@@ -2607,51 +2536,43 @@ export default function Landing() {
 
           .before-after {
             grid-template-columns: 1fr;
-            gap: 15px;
           }
 
           .ba-divider {
             transform: rotate(90deg);
-            justify-self: center;
-          }
-
-          .ba-panel {
-            min-height: auto;
           }
 
           .flow-grid {
             grid-template-columns: 1fr 1fr;
           }
 
-          .quote-scene {
-            min-height: auto;
-            display: block;
+          .tattoo-flow-grid {
+            display: grid;
+            grid-template-columns: 1fr;
           }
 
-          .quote-window {
-            margin-top: 40px;
+          .flow-arrow {
+            transform: rotate(90deg);
+            height: 20px;
+          }
+
+          .tattoo-final-bar {
+            flex-direction: column;
+            align-items: flex-start;
           }
 
           .quote-body {
             grid-template-columns: 1fr;
           }
 
-          .quote-left {
-            border-right: 0;
-            border-bottom: 1px solid rgba(255,255,255,.06);
-          }
-
           .quote-photo {
-            height: 280px;
+            min-height: 260px;
           }
 
-          .features-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-          }
-
-          .feature-card:nth-child(n) {
-            grid-column: span 1;
+          .feature-card,
+          .feature-card:nth-child(1),
+          .feature-card:nth-child(4) {
+            grid-column: span 12;
           }
 
           .numbers-grid {
@@ -2659,11 +2580,7 @@ export default function Landing() {
           }
 
           .number:nth-child(2) {
-            border-right: 0;
-          }
-
-          .number:nth-child(-n+2) {
-            border-bottom: 1px solid rgba(255,255,255,.06);
+            border: 0;
           }
 
           .price-grid {
@@ -2675,20 +2592,26 @@ export default function Landing() {
             padding: 30px;
           }
 
-          .final-cta {
-            min-height: 600px;
+          .cta-buttons {
+            flex-direction: column;
+          }
+
+          .footer-inner {
+            flex-direction: column;
+            gap: 15px;
           }
         }
 
         @media (max-width: 500px) {
+
           .hero-product {
-            height: 360px;
-            transform: scale(.52);
-            margin-bottom: -120px;
+            height: 330px;
+            transform: scale(.53);
+            margin-bottom: -100px;
           }
 
-          .dashboard {
-            left: 50%;
+          .dashboard-wrap {
+            transform: scale(.9);
           }
 
           .request-card {
@@ -2703,62 +2626,27 @@ export default function Landing() {
             grid-template-columns: 1fr;
           }
 
-          .quote-details {
-            padding: 20px;
-          }
-
-          .quote-left {
-            padding: 15px;
-          }
-
-          .detail-grid {
+          .numbers-grid {
             grid-template-columns: 1fr 1fr;
           }
 
-          .quote-actions {
-            flex-direction: column;
-          }
-
-          .feature-card {
-            min-height: 330px;
-          }
-
-          .feature-content {
-            margin-top: 50px;
-          }
-
-          .feature-visual,
-          .service-stack,
-          .commission-chart {
-            transform: scale(.8);
-            transform-origin: bottom right;
-          }
-
-          .numbers {
-            padding: 50px 0;
-          }
-
           .number {
-            padding: 15px;
+            padding: 12px;
           }
 
           .number strong {
-            font-size: 35px;
+            font-size: 34px;
           }
 
           .price-value strong {
-            font-size: 43px;
+            font-size: 42px;
           }
 
-          .cta-buttons {
-            flex-direction: column;
-          }
-
-          .footer-inner {
-            flex-direction: column;
-            gap: 15px;
+          .footer-copy {
+            text-align: center;
           }
         }
+
       `}</style>
 
       {/* =====================================================
@@ -2767,6 +2655,7 @@ export default function Landing() {
 
       <header className="f-header">
         <div className="container nav">
+
           <a href="#" className="logo">
             <span className="logo-mark">✦</span>
             FAYOLA
@@ -2801,15 +2690,13 @@ export default function Landing() {
           >
             {menuOpen ? "×" : "☰"}
           </button>
+
         </div>
 
         {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mobile-nav"
+          <div
             style={{
-              padding: "20px 25px",
+              padding: "15px 25px",
               background: "#080808",
               borderBottom:
                 "1px solid rgba(255,255,255,.08)",
@@ -2820,9 +2707,9 @@ export default function Landing() {
               onClick={() => setMenuOpen(false)}
               style={{
                 display: "block",
-                padding: "12px 0",
+                padding: "10px 0",
                 color: "#aaa",
-                fontSize: 13,
+                fontSize: 12,
               }}
             >
               Como funciona
@@ -2833,9 +2720,9 @@ export default function Landing() {
               onClick={() => setMenuOpen(false)}
               style={{
                 display: "block",
-                padding: "12px 0",
+                padding: "10px 0",
                 color: "#aaa",
-                fontSize: 13,
+                fontSize: 12,
               }}
             >
               Recursos
@@ -2846,14 +2733,14 @@ export default function Landing() {
               onClick={() => setMenuOpen(false)}
               style={{
                 display: "block",
-                padding: "12px 0",
+                padding: "10px 0",
                 color: "#aaa",
-                fontSize: 13,
+                fontSize: 12,
               }}
             >
               Preço
             </a>
-          </motion.div>
+          </div>
         )}
       </header>
 
@@ -2862,28 +2749,30 @@ export default function Landing() {
           ===================================================== */}
 
       <section className="hero">
+
         <div className="hero-grid" />
-        <div className="hero-noise" />
 
         <Aura className="aura-one" />
         <Aura className="aura-two" delay={2} />
-        <Aura className="aura-three" delay={4} />
 
         <motion.div
+          className="container hero-inner"
           style={{
             x: smoothX,
             y: smoothY,
           }}
-          className="container hero-inner"
         >
+
           <div className="hero-copy">
+
             <motion.div
               className="eyebrow"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
+              transition={{ delay: .1 }}
             >
               <span className="eyebrow-dot" />
+
               FEITO PARA QUEM VIVE DA TATUAGEM
             </motion.div>
 
@@ -2892,8 +2781,7 @@ export default function Landing() {
               animate={{ opacity: 1, y: 0 }}
               transition={{
                 duration: 1,
-                delay: 0.15,
-                ease: [0.16, 1, 0.3, 1],
+                delay: .15,
               }}
             >
               Enquanto você
@@ -2905,7 +2793,7 @@ export default function Landing() {
 
             <motion.p
               className="hero-subtitle"
-              initial={{ opacity: 0, y: 25 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
                 duration: .8,
@@ -2913,8 +2801,12 @@ export default function Landing() {
               }}
             >
               Você cuida da arte.
-              <strong> O Fayola cuida do atendimento.</strong>
+              <strong>
+                {" "}O Fayola cuida do atendimento.
+              </strong>
+
               <br />
+
               Do primeiro pedido ao horário confirmado,
               tudo organizado em um só lugar.
             </motion.p>
@@ -2928,6 +2820,7 @@ export default function Landing() {
                 delay: .5,
               }}
             >
+
               <MagneticButton
                 href={WHATSAPP_ASSINAR}
                 className="primary-button"
@@ -2942,11 +2835,13 @@ export default function Landing() {
               >
                 Ver como funciona
               </a>
+
             </motion.div>
 
             <div className="hero-note">
               R$ 199,99/mês · sem complicação
             </div>
+
           </div>
 
           <motion.div
@@ -2955,17 +2850,18 @@ export default function Landing() {
               x: useTransform(
                 smoothX,
                 [-20, 20],
-                [18, -18]
+                [15, -15]
               ),
               y: useTransform(
                 smoothY,
                 [-20, 20],
-                [10, -10]
+                [8, -8]
               ),
             }}
           >
             <DashboardMockup />
           </motion.div>
+
         </motion.div>
       </section>
 
@@ -2975,26 +2871,29 @@ export default function Landing() {
 
       <div className="ticker">
         <div className="ticker-track">
-          {[1, 2].map((group) => (
-            <React.Fragment key={group}>
-              <div className="ticker-item">
-                <b>✦</b>
-                PEDIDO DE TATUAGEM
-                <b>✦</b>
-                REFERÊNCIAS
-                <b>✦</b>
-                ORÇAMENTO
-                <b>✦</b>
-                SINAL PIX
-                <b>✦</b>
-                AGENDA
-                <b>✦</b>
-                WHATSAPP
-                <b>✦</b>
-                CLIENTES
-              </div>
-            </React.Fragment>
+
+          {[1, 2].map((item) => (
+            <div
+              className="ticker-item"
+              key={item}
+            >
+              <b>✦</b>
+              PEDIDO DE TATUAGEM
+              <b>✦</b>
+              REFERÊNCIAS
+              <b>✦</b>
+              ORÇAMENTO
+              <b>✦</b>
+              SINAL PIX
+              <b>✦</b>
+              AGENDA
+              <b>✦</b>
+              WHATSAPP
+              <b>✦</b>
+              CLIENTES
+            </div>
           ))}
+
         </div>
       </div>
 
@@ -3003,8 +2902,11 @@ export default function Landing() {
           ===================================================== */}
 
       <section className="section">
+
         <div className="container">
+
           <Reveal>
+
             <div className="section-label">
               O problema
             </div>
@@ -3012,20 +2914,24 @@ export default function Landing() {
             <h2 className="section-title">
               Você não começou a tatuar
               <br />
-              para passar o dia <em>respondendo mensagens.</em>
+              para passar o dia
+              <em> respondendo mensagens.</em>
             </h2>
 
             <p className="section-intro">
               Enquanto você está tatuando, chegam perguntas,
-              referências, pedidos de orçamento, dúvidas sobre
-              tamanho, local do corpo e horários.
+              referências, pedidos de orçamento, dúvidas
+              sobre tamanho, local do corpo e horários.
               E cada conversa pode virar uma oportunidade
               perdida.
             </p>
+
           </Reveal>
 
           <BeforeAfter />
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -3036,8 +2942,11 @@ export default function Landing() {
         className="section"
         id="como-funciona"
       >
+
         <div className="container">
+
           <Reveal>
+
             <div className="section-label">
               Do pedido à sessão
             </div>
@@ -3053,9 +2962,11 @@ export default function Landing() {
               em um fluxo organizado — sem você precisar
               controlar tudo no WhatsApp.
             </p>
+
           </Reveal>
 
           <div className="flow-grid">
+
             <FlowCard
               number="01"
               icon="↗"
@@ -3068,7 +2979,7 @@ export default function Landing() {
               icon="◫"
               title="Referências"
               text="Ele envia imagens para mostrar o que procura."
-              delay=".05"
+              delay={.05}
             />
 
             <FlowCard
@@ -3076,43 +2987,83 @@ export default function Landing() {
               icon="⌁"
               title="Detalhes"
               text="Estilo, tamanho em cm e local do corpo ficam registrados."
-              delay=".1"
+              delay={.1}
             />
 
             <FlowCard
               number="04"
               icon="R$"
               title="Orçamento"
-              text="Você define o valor e envia a proposta."
-              delay=".15"
+              text="Você analisa o projeto e define o valor."
+              delay={.15}
             />
 
             <FlowCard
               number="05"
               icon="✦"
               title="Sinal PIX"
-              text="O cliente confirma o compromisso pagando o sinal."
-              delay=".2"
+              text="O cliente recebe o PIX e confirma o projeto."
+              delay={.2}
             />
 
             <FlowCard
               number="06"
               icon="✓"
-              title="Confirmado"
-              text="O horário entra na sua agenda e o cliente recebe a confirmação."
-              delay=".25"
+              title="Horário"
+              text="Depois do pagamento, o cliente escolhe um horário disponível."
+              delay={.25}
             />
+
           </div>
+
         </div>
+
       </section>
 
       {/* =====================================================
-          QUOTE
+          MESMO LINK
           ===================================================== */}
 
-      <section className="section quote-section">
+      <section className="section">
+
         <div className="container">
+
           <Reveal>
+
+            <div className="section-label">
+              Um único link
+            </div>
+
+            <h2 className="section-title">
+              O pedido começa no link.
+              <br />
+              <em>E termina no horário confirmado.</em>
+            </h2>
+
+            <p className="section-intro">
+              Seu cliente não precisa começar uma conversa
+              nova a cada etapa. O mesmo link acompanha
+              o projeto desde o primeiro pedido até a sessão.
+            </p>
+
+          </Reveal>
+
+          <TattooLinkFlow />
+
+        </div>
+
+      </section>
+
+      {/* =====================================================
+          PROJETO
+          ===================================================== */}
+
+      <section className="section">
+
+        <div className="container">
+
+          <Reveal>
+
             <div className="section-label">
               Feito para projetos reais
             </div>
@@ -3120,17 +3071,21 @@ export default function Landing() {
             <h2 className="section-title">
               Do “quanto fica?”
               <br />
-              até o <em>horário confirmado.</em>
+              até o
+              <em> horário confirmado.</em>
             </h2>
 
             <p className="section-intro">
               Um pedido de tatuagem tem detalhes.
               O Fayola organiza todos eles para você.
             </p>
+
           </Reveal>
 
           <QuoteMockup />
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -3138,14 +3093,16 @@ export default function Landing() {
           ===================================================== */}
 
       <section className="numbers">
+
         <div className="container numbers-grid">
+
           <div className="number">
             <strong>
               <CountUp value={1} />
             </strong>
 
             <span>
-              LUGAR PARA ORGANIZAR
+              LINK PARA CADA PEDIDO
             </span>
           </div>
 
@@ -3155,7 +3112,7 @@ export default function Landing() {
             </strong>
 
             <span>
-              ETAPAS DO ATENDIMENTO
+              ETAPAS ORGANIZADAS
             </span>
           </div>
 
@@ -3165,7 +3122,7 @@ export default function Landing() {
             </strong>
 
             <span>
-              SEU LINK DISPONÍVEL
+              LINK DISPONÍVEL
             </span>
           </div>
 
@@ -3178,7 +3135,9 @@ export default function Landing() {
               FOCO NA SUA ARTE
             </span>
           </div>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -3189,8 +3148,11 @@ export default function Landing() {
         className="section"
         id="recursos"
       >
+
         <div className="container">
+
           <Reveal>
+
             <div className="section-label">
               O Fayola
             </div>
@@ -3202,17 +3164,19 @@ export default function Landing() {
             </h2>
 
             <p className="section-intro">
-              O Fayola reúne as partes do seu negócio que
-              normalmente ficam espalhadas entre WhatsApp,
-              Instagram, agenda e anotações.
+              O Fayola reúne as partes do seu negócio
+              que normalmente ficam espalhadas entre
+              WhatsApp, Instagram, agenda e anotações.
             </p>
+
           </Reveal>
 
           <div className="features-grid">
+
             <FeatureCard
               number="01"
               title="Pedido de tatuagem"
-              description="Receba novos projetos com as informações que realmente importam: referência, estilo, tamanho e local do corpo."
+              description="Receba novos projetos com referência, estilo, tamanho e local do corpo."
             >
               <div className="feature-chat">
                 <b>Novo pedido</b>
@@ -3225,19 +3189,12 @@ export default function Landing() {
               title="Referências"
               description="Organize as imagens enviadas pelo cliente junto com cada projeto."
             >
-              <div className="feature-visual">
-                <div className="feature-ring" />
-
-                <div className="mini-phone">
-                  <div className="phone-screen">
-                    <div className="phone-title">
-                      REFERÊNCIAS
-                    </div>
-
-                    <div className="phone-line" />
-                    <div className="phone-line short" />
-                    <div className="phone-line" />
-                  </div>
+              <div className="mini-phone">
+                <div className="phone-screen">
+                  <small>REFERÊNCIAS</small>
+                  <div className="phone-line" />
+                  <div className="phone-line short" />
+                  <div className="phone-line" />
                 </div>
               </div>
             </FeatureCard>
@@ -3270,19 +3227,13 @@ export default function Landing() {
               title="Agenda do tatuador"
               description="Veja seus horários, clientes e próximos projetos em uma visão simples."
             >
-              <div className="feature-visual">
-                <div className="mini-phone">
-                  <div className="phone-screen">
-                    <div className="phone-title">
-                      AGENDA
-                    </div>
-
-                    <div className="phone-line" />
-                    <div className="phone-line" />
-                    <div className="phone-line short" />
-
-                    <div className="phone-button" />
-                  </div>
+              <div className="mini-phone">
+                <div className="phone-screen">
+                  <small>AGENDA</small>
+                  <div className="phone-line" />
+                  <div className="phone-line" />
+                  <div className="phone-line short" />
+                  <div className="phone-button" />
                 </div>
               </div>
             </FeatureCard>
@@ -3301,7 +3252,7 @@ export default function Landing() {
             <FeatureCard
               number="06"
               title="Equipe e comissões"
-              description="Se o estúdio possui mais tatuadores, cada profissional pode ter seu acesso, seus horários e suas comissões."
+              description="Cada profissional pode ter seu acesso, horários e suas próprias comissões."
             >
               <div className="commission-chart">
                 <div className="bar" />
@@ -3312,8 +3263,11 @@ export default function Landing() {
                 <div className="bar" />
               </div>
             </FeatureCard>
+
           </div>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -3321,46 +3275,53 @@ export default function Landing() {
           ===================================================== */}
 
       <section className="section">
-        <div className="container">
+
+        <div
+          className="container"
+          style={{
+            textAlign: "center",
+          }}
+        >
+
           <Reveal>
+
             <div
+              className="section-label"
               style={{
-                maxWidth: 900,
-                margin: "0 auto",
-                textAlign: "center",
+                justifyContent: "center",
               }}
             >
-              <div className="section-label">
-                A ideia é simples
-              </div>
-
-              <h2
-                className="section-title"
-                style={{
-                  maxWidth: 900,
-                  marginLeft: "auto",
-                  marginRight: "auto",
-                }}
-              >
-                Você cuida da arte.
-                <br />
-                <em>O Fayola cuida do atendimento.</em>
-              </h2>
-
-              <p
-                className="section-intro"
-                style={{
-                  marginLeft: "auto",
-                  marginRight: "auto",
-                }}
-              >
-                Enquanto você está concentrado em fazer
-                uma tatuagem incrível, seus próximos clientes
-                podem continuar avançando no processo.
-              </p>
+              A ideia é simples
             </div>
+
+            <h2
+              className="section-title"
+              style={{
+                marginLeft: "auto",
+                marginRight: "auto",
+              }}
+            >
+              Você cuida da arte.
+              <br />
+              <em>O Fayola cuida do atendimento.</em>
+            </h2>
+
+            <p
+              className="section-intro"
+              style={{
+                marginLeft: "auto",
+                marginRight: "auto",
+              }}
+            >
+              Enquanto você está concentrado em fazer
+              uma tatuagem incrível, seus próximos clientes
+              podem continuar avançando no processo.
+            </p>
+
           </Reveal>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -3368,11 +3329,14 @@ export default function Landing() {
           ===================================================== */}
 
       <section
-        className="section price-section"
+        className="section"
         id="preco"
       >
+
         <div className="container">
+
           <Reveal>
+
             <div className="section-label">
               Simples e direto
             </div>
@@ -3382,12 +3346,17 @@ export default function Landing() {
               <br />
               <em>estúdio crescer.</em>
             </h2>
+
           </Reveal>
 
-          <Reveal delay={0.1}>
+          <Reveal delay={.1}>
+
             <div className="price-card">
+
               <div className="price-grid">
+
                 <div>
+
                   <div className="price-label">
                     FAYOLA PRO
                   </div>
@@ -3416,63 +3385,42 @@ export default function Landing() {
                     Quero começar
                     <span>→</span>
                   </MagneticButton>
+
                 </div>
 
                 <div className="price-features">
-                  <div className="price-feature">
-                    <span>✓</span>
-                    Link público para seus clientes
-                  </div>
 
-                  <div className="price-feature">
-                    <span>✓</span>
-                    Pedidos de tatuagem
-                  </div>
+                  {[
+                    "Link público para seus clientes",
+                    "Pedidos de tatuagem",
+                    "Referências e informações do projeto",
+                    "Tamanho e serviços",
+                    "Agenda",
+                    "Clientes",
+                    "Sinal via PIX",
+                    "Notificações e lembretes",
+                    "Profissionais e comissões",
+                    "Acesso individual para profissionais",
+                  ].map((item) => (
+                    <div
+                      className="price-feature"
+                      key={item}
+                    >
+                      <span>✓</span>
+                      {item}
+                    </div>
+                  ))}
 
-                  <div className="price-feature">
-                    <span>✓</span>
-                    Referências e informações do projeto
-                  </div>
-
-                  <div className="price-feature">
-                    <span>✓</span>
-                    Tamanho e serviços
-                  </div>
-
-                  <div className="price-feature">
-                    <span>✓</span>
-                    Agenda
-                  </div>
-
-                  <div className="price-feature">
-                    <span>✓</span>
-                    Clientes
-                  </div>
-
-                  <div className="price-feature">
-                    <span>✓</span>
-                    Sinal via PIX
-                  </div>
-
-                  <div className="price-feature">
-                    <span>✓</span>
-                    Notificações e lembretes
-                  </div>
-
-                  <div className="price-feature">
-                    <span>✓</span>
-                    Profissionais e comissões
-                  </div>
-
-                  <div className="price-feature">
-                    <span>✓</span>
-                    Acesso individual para profissionais
-                  </div>
                 </div>
+
               </div>
+
             </div>
+
           </Reveal>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -3480,24 +3428,19 @@ export default function Landing() {
           ===================================================== */}
 
       <section className="final-cta">
+
         <div className="cta-aura" />
 
-        <motion.div
-          className="cta-lines"
-          animate={{
-            scale: [1, 1.08, 1],
-            rotate: [0, 2, 0],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
         <div className="container cta-content">
+
           <Reveal>
-            <div className="section-label">
+
+            <div
+              className="section-label"
+              style={{
+                justifyContent: "center",
+              }}
+            >
               Seu próximo projeto começa aqui
             </div>
 
@@ -3510,11 +3453,12 @@ export default function Landing() {
             <p>
               Pare de perder tempo procurando conversas,
               referências e horários. Deixe o atendimento
-              organizado enquanto você faz o que sabe fazer
-              melhor.
+              organizado enquanto você faz o que sabe
+              fazer melhor.
             </p>
 
             <div className="cta-buttons">
+
               <MagneticButton
                 href={WHATSAPP_ASSINAR}
                 className="primary-button"
@@ -3531,9 +3475,13 @@ export default function Landing() {
               >
                 Falar com a Fayola
               </a>
+
             </div>
+
           </Reveal>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -3541,9 +3489,14 @@ export default function Landing() {
           ===================================================== */}
 
       <footer className="footer">
+
         <div className="container footer-inner">
+
           <div className="logo">
-            <span className="logo-mark">✦</span>
+            <span className="logo-mark">
+              ✦
+            </span>
+
             FAYOLA
           </div>
 
@@ -3553,14 +3506,21 @@ export default function Landing() {
           </div>
 
           <div className="footer-links">
-            <a href={WHATSAPP}>
+
+            <a
+              href={WHATSAPP}
+              target="_blank"
+              rel="noreferrer"
+            >
               WhatsApp
             </a>
 
             <a href="#preco">
               Planos
             </a>
+
           </div>
+
         </div>
 
         <div
@@ -3577,7 +3537,9 @@ export default function Landing() {
         >
           © 2026 Fayola. Todos os direitos reservados.
         </div>
+
       </footer>
+
     </div>
   );
 }
