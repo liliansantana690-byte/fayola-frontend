@@ -6,6 +6,7 @@ import Landing from './pages/Landing';
 import LoginProfissional from './pages/LoginProfissional';
 import AtivarContaProfissional from './pages/AtivarContaProfissional';
 import PainelProfissional from './pages/PainelProfissional';
+import PedirTattoo from './pages/PedirTattoo';
 
 function App() {
     const [estabelecimento, setEstabelecimento] = useState(null);
@@ -19,6 +20,10 @@ function App() {
 
     if (path === '/agendar') {
         return <Agendar />;
+    }
+
+    if (path === '/pedido-tattoo' || path.startsWith('/pedido-tattoo/')) {
+        return <PedirTattoo />;
     }
 
     if (path === '/painel-profissional/ativar') {
