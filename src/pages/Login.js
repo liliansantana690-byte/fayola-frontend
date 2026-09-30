@@ -126,7 +126,7 @@ const styles = {
     botao: {
         width: '100%',
         padding: '14px',
-        background: '#c9a96e',
+        background: '#f83b0c',
         color: '#0a0a0a',
         border: 'none',
         borderRadius: '8px',
@@ -140,7 +140,7 @@ const styles = {
     botaoLoading: {
         width: '100%',
         padding: '14px',
-        background: '#8a7045',
+        background: '#f73206',
         color: '#0a0a0a',
         border: 'none',
         borderRadius: '8px',
