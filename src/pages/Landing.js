@@ -3638,7 +3638,7 @@ export default function Landing() {
         </MagneticButton>
         
         <a
-          href="/painel-profissional/login"
+          href="/login"
           className="secondary-button"
         >
           Entrar
