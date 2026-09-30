@@ -3636,7 +3636,14 @@ export default function Landing() {
           Quero usar o Fayola
           <span>→</span>
         </MagneticButton>
-
+        
+        <a
+          href="/painel-profissional"
+          className="secondary-button"
+        >
+          Entrar
+        </a>
+        
         <a
           href={WHATSAPP}
           target="_blank"
