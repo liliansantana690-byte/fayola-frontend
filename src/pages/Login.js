@@ -84,7 +84,7 @@ const styles = {
     },
     logoIcon: {
         fontSize: '28px',
-        color: '#c9a96e',
+        color: '#f95f00',
         marginBottom: '8px'
     },
     logo: {
