@@ -28,7 +28,7 @@ function Login({ onLogin }) {
                 <div style={styles.logoArea}>
                     <div style={styles.logoIcon}>✦</div>
                     <h1 style={styles.logo}>FAYOLA</h1>
-                    <p style={styles.tagline}>Sistema de Agendamento Premium</p>
+                    <p style={styles.tagline}>Sistema Premium</p>
                 </div>
                 <form onSubmit={handleLogin}>
                     <div style={styles.inputGroup}>
