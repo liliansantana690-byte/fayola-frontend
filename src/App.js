@@ -25,7 +25,10 @@ function App() {
     if (path === '/painel-profissional/ativar') {
         return <AtivarContaProfissional />;
     }
-
+    if (path === '/agendar') {
+        return <Agendar />;
+    
+    }
     if (path === '/painel-profissional/login') {
         if (profissional) {
             window.location.href = '/painel-profissional';
