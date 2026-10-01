@@ -18,7 +18,7 @@ function Dashboard({ estabelecimento }) {
 
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
-    const linkAgendamento = `${window.location.origin}/agendar?id=${estabelecimento.estabelecimento_id}`;
+    const linkAgendamento = `${window.location.origin}/pedido-tattoo?id=${estabelecimento.estabelecimento_id}`;
 
     const carregarDados = useCallback(async function() {
         try {
