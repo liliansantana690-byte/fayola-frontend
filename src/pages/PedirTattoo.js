@@ -344,7 +344,7 @@ const styles = {
     textarea: { width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#ffffff', fontSize: '14px', boxSizing: 'border-box', outline: 'none', minHeight: '90px', fontFamily: 'inherit', resize: 'vertical' },
     aviso: { color: '#666666', fontSize: '12px', marginBottom: '16px', lineHeight: '1.5' },
     botao: { width: '100%', padding: '14px', background: '#c9a96e', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer' },
-    botaoLoading: { width: '100%', padding: '14px', background: '#8a7045', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'not-allowed' },
+    botaoLoading: { width: '100%', padding: '14px', background: '#f34d0c', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'not-allowed' },
     botaoSecundario: { width: '100%', padding: '14px', background: 'transparent', color: '#c9a96e', border: '1px solid #c9a96e', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', marginBottom: '12px' },
     erro: { color: '#e05252', fontSize: '13px', marginBottom: '12px', textAlign: 'center' },
     sucessoIcon: { fontSize: '40px', textAlign: 'center', margin: '0 auto 16px' },
@@ -353,7 +353,7 @@ const styles = {
     etapaTitulo: { color: '#ffffff', fontSize: '16px', fontWeight: '600', marginBottom: '16px', textAlign: 'center' },
     orcamentoBox: { background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '10px', padding: '16px', marginBottom: '20px' },
     orcamentoLinha: { color: '#dddddd', fontSize: '14px', margin: '6px 0' },
-    pixTimer: { color: '#c9a96e', fontSize: '18px', fontWeight: '700', textAlign: 'center', marginBottom: '16px' },
+    pixTimer: { color: '#f7650b', fontSize: '18px', fontWeight: '700', textAlign: 'center', marginBottom: '16px' },
     qrImagem: { display: 'block', width: '220px', height: '220px', margin: '0 auto 20px', borderRadius: '8px', background: '#ffffff', padding: '8px' },
     pixEspera: { color: '#666666', fontSize: '12px', textAlign: 'center', marginTop: '8px' }
 };
