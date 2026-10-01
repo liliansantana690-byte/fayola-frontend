@@ -18,10 +18,6 @@ function App() {
 
     const path = window.location.pathname;
 
-    if (path === '/agendar') {
-        return <Agendar />;
-    }
-
     if (path === '/pedido-tattoo' || path.startsWith('/pedido-tattoo/')) {
         return <PedirTattoo />;
     }
