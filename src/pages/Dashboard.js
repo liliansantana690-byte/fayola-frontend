@@ -309,7 +309,7 @@ function Dashboard({ estabelecimento }) {
                                         )}
                                         {p.conta_ativada && (
                                             <button
-                                                onClick={function() { copiarLinkProfissional(p, `${window.location.origin}/agendar?id=${estabelecimento.estabelecimento_id}&profissional=${p.id}`); }}
+                                             onClick={function() { copiarLinkProfissional(p, `${window.location.origin}/pedido-tattoo?id=${estabelecimento.estabelecimento_id}&profissional=${p.id}`); }}
                                                 style={styles.btnLinkProfissional}
                                             >
                                                 {linkProfissionalCopiadoId === p.id ? '✓ Copiado' : '🔗 Link de agendamento'}
