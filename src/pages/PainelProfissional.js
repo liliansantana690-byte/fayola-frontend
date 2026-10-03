@@ -288,7 +288,16 @@ function PainelProfissional({ nome, onLogout }) {
                             value={valorSinal}
                             onChange={function(e) { setValorSinal(e.target.value); }}
                         />
-                        <p style={styles.avisoModal}>O cliente recebe esse valor automaticamente por WhatsApp, com o link pra pagar o sinal.</p>
+                        <label style={styles.label}>Duração estimada da sessão (minutos)</label>
+                        <input
+                            style={styles.input}
+                            type="number"
+                            step="15"
+                            placeholder="Ex: 120"
+                            value={duracaoMinutos}
+                            onChange={function(e) { setDuracaoMinutos(e.target.value); }}
+                        />
+                        <p style={styles.avisoModal}>O cliente recebe esse valor automaticamente por WhatsApp, com o link pra pagar o sinal. A duração evita que outro cliente marque no mesmo horário.</p>o
                         <div style={styles.modalBotoes}>
                             <button style={styles.btnCancelar} onClick={function() { setModalOrcamento(null); }}>Cancelar</button>
                             <button style={styles.btnConfirmar} onClick={enviarOrcamento} disabled={enviandoOrcamento}>
