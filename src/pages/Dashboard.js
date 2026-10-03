@@ -307,12 +307,12 @@ function Dashboard({ estabelecimento }) {
                                                 {linkProfissionalCopiadoId === p.id ? '✓ Copiado' : '🔗 Copiar convite'}
                                             </button>
                                         )}
-                                        {p.conta_ativada && (
+                                                                                {p.conta_ativada && (
                                             <button
-                                             onClick={function() { copiarLinkProfissional(p, `${window.location.origin}/pedido-tattoo?id=${estabelecimento.estabelecimento_id}&profissional=${p.id}`); }}
+                                                onClick={function() { copiarLinkProfissional(p, `${window.location.origin}/painel-profissional/login`); }}
                                                 style={styles.btnLinkProfissional}
                                             >
-                                                {linkProfissionalCopiadoId === p.id ? '✓ Copiado' : '🔗 Link de agendamento'}
+                                                {linkProfissionalCopiadoId === p.id ? '✓ Copiado' : '🔗 Link do painel'}
                                             </button>
                                         )}
                                         <button onClick={function() { excluirProfissional(p.id); }} style={styles.btnExcluir}>Excluir</button>
