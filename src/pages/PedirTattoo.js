@@ -33,6 +33,21 @@ function PedirTattoo() {
     const [pagamento, setPagamento] = useState(null);
     const [segundosRestantes, setSegundosRestantes] = useState(0);
     const [dataHoraEscolhida, setDataHoraEscolhida] = useState('');
+    const [horariosOcupadosDoDia, setHorariosOcupadosDoDia] = useState([]);
+
+    async function verificarEMudarData(valor) {
+        setDataHoraEscolhida(valor);
+        if (!valor || !pedido?.profissional_id) { setHorariosOcupadosDoDia([]); return; }
+        const dataSomente = valor.split('T')[0];
+        try {
+            const r = await api.get('/pedidos-tattoo/horarios-ocupados', {
+                params: { profissional_id: pedido.profissional_id, data: dataSomente }
+            });
+            setHorariosOcupadosDoDia(r.data);
+        } catch (err) {
+            setHorariosOcupadosDoDia([]);
+        }
+    }
     const pollingRef = useRef(null);
     const countdownRef = useRef(null);
 
@@ -308,9 +323,22 @@ function PedirTattoo() {
                                 type="datetime-local"
                                 style={styles.inputField}
                                 value={dataHoraEscolhida}
-                                onChange={function(e) { setDataHoraEscolhida(e.target.value); }}
+                                onChange={function(e) { verificarEMudarData(e.target.value); }}
                             />
                         </div>
+                        {horariosOcupadosDoDia.length > 0 && (
+                            <div style={styles.ocupadosBox}>
+                                <p style={styles.ocupadosTitulo}>Horários já marcados nesse dia (evite escolher em cima deles):</p>
+                                {horariosOcupadosDoDia.map(function(h, i) {
+                                    return (
+                                        <p key={i} style={styles.ocupadosItem}>
+                                            {new Date(h.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} às{' '}
+                                            {new Date(h.fim).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                    );
+                                })}
+                            </div>
+                        )}
                         {erro && <p style={styles.erro}>{erro}</p>}
                         <button style={loading ? styles.botaoLoading : styles.botao} onClick={confirmarHorario} disabled={loading || !dataHoraEscolhida}>
                             {loading ? 'Confirmando...' : 'Confirmar horário'}
@@ -355,7 +383,9 @@ const styles = {
     orcamentoLinha: { color: '#dddddd', fontSize: '14px', margin: '6px 0' },
     pixTimer: { color: '#f7650b', fontSize: '18px', fontWeight: '700', textAlign: 'center', marginBottom: '16px' },
     qrImagem: { display: 'block', width: '220px', height: '220px', margin: '0 auto 20px', borderRadius: '8px', background: '#ffffff', padding: '8px' },
-    pixEspera: { color: '#666666', fontSize: '12px', textAlign: 'center', marginTop: '8px' }
+    pixEspera: { color: '#666666', ocupadosBox: { background: '#2a1a0f', border: '1px solid #5a3a20', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' },
+    ocupadosTitulo: { color: '#e0b080', fontSize: '12px', fontWeight: '600', margin: '0 0 6px' },
+    ocupadosItem: { color: '#e0b080', fontSize: '12px', margin: '2px 0' }, fontSize: '12px', textAlign: 'center', marginTop: '8px' }
 };
 
 export default PedirTattoo;

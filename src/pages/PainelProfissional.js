@@ -13,6 +13,7 @@ function PainelProfissional({ nome, onLogout }) {
     const [modalOrcamento, setModalOrcamento] = useState(null);
     const [valorTattoo, setValorTattoo] = useState('');
     const [valorSinal, setValorSinal] = useState('');
+    sconst [duracaoMinutos, setDuracaoMinutos] = useState('120');
     const [enviandoOrcamento, setEnviandoOrcamento] = useState(false);
 
     const token = localStorage.getItem('token');
@@ -74,13 +75,14 @@ function PainelProfissional({ nome, onLogout }) {
         }
     }
 
-    function abrirModalOrcamento(pedido) {
+        function abrirModalOrcamento(pedido) {
         setModalOrcamento(pedido);
         setValorTattoo('');
         setValorSinal('');
+        setDuracaoMinutos('120');
     }
 
-    async function enviarOrcamento() {
+        async function enviarOrcamento() {
         if (!valorTattoo || !valorSinal) {
             alert('Preencha o valor da tattoo e do sinal.');
             return;
@@ -89,7 +91,11 @@ function PainelProfissional({ nome, onLogout }) {
         try {
             await api.patch(
                 '/pedidos-tattoo/' + modalOrcamento.id + '/orcamento',
-                { valor_tattoo: parseFloat(valorTattoo), valor_sinal: parseFloat(valorSinal) },
+                {
+                    valor_tattoo: parseFloat(valorTattoo),
+                    valor_sinal: parseFloat(valorSinal),
+                    duracao_minutos: parseInt(duracaoMinutos) || 120
+                },
                 { headers }
             );
             setModalOrcamento(null);
