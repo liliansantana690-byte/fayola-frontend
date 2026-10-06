@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Cadastro from './pages/Cadastro';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Agendar from './pages/Agendar';
@@ -53,6 +54,10 @@ function App() {
         return <Login onLogin={setEstabelecimento} />;
     }
 
+        if (path === '/cadastro') {
+        return <Cadastro />;
+    }
+    
     return <Landing />;
 }
 
