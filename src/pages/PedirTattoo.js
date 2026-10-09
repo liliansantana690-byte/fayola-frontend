@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
+import { buscarDia, buscarStatusPedido, confirmarHorarioPedido } from '../services/availabilityApi';
 
 function PedirTattoo() {
     const params = new URLSearchParams(window.location.search);
     const estabelecimentoIdUrl = params.get('id');
     const profissionalIdUrl = params.get('profissional');
 
-    // Se a URL for /pedido-tattoo/123, o "123" é o ID de um pedido já existente (cliente voltando do WhatsApp)
     const partesCaminho = window.location.pathname.split('/').filter(Boolean);
-    const pedidoIdUrl = partesCaminho.length > 1 && partesCaminho[0] === 'pedido-tattoo' ? partesCaminho[1] : null;
+    const tokenUrl = partesCaminho.length > 1 && partesCaminho[0] === 'pedido-tattoo' ? partesCaminho[1] : null;
 
     const [estabelecimento, setEstabelecimento] = useState(null);
     const [profissionais, setProfissionais] = useState([]);
-    const [carregando, setCarregando] = useState(!!pedidoIdUrl);
+    const [carregando, setCarregando] = useState(!!tokenUrl);
     const [pedido, setPedido] = useState(null);
     const [enviado, setEnviado] = useState(false);
     const [erro, setErro] = useState('');
@@ -32,22 +32,9 @@ function PedirTattoo() {
 
     const [pagamento, setPagamento] = useState(null);
     const [segundosRestantes, setSegundosRestantes] = useState(0);
-    const [dataHoraEscolhida, setDataHoraEscolhida] = useState('');
-    const [horariosOcupadosDoDia, setHorariosOcupadosDoDia] = useState([]);
-
-    async function verificarEMudarData(valor) {
-        setDataHoraEscolhida(valor);
-        if (!valor || !pedido?.profissional_id) { setHorariosOcupadosDoDia([]); return; }
-        const dataSomente = valor.split('T')[0];
-        try {
-            const r = await api.get('/pedidos-tattoo/horarios-ocupados', {
-                params: { profissional_id: pedido.profissional_id, data: dataSomente }
-            });
-            setHorariosOcupadosDoDia(r.data);
-        } catch (err) {
-            setHorariosOcupadosDoDia([]);
-        }
-    }
+    const [dataEscolhida, setDataEscolhida] = useState('');
+    const [horaEscolhida, setHoraEscolhida] = useState('');
+    const [diaInfo, setDiaInfo] = useState(null);
     const pollingRef = useRef(null);
     const countdownRef = useRef(null);
 
@@ -59,23 +46,19 @@ function PedirTattoo() {
     }, [estabelecimentoIdUrl]);
 
     useEffect(function() {
-        if (!pedidoIdUrl) return;
-        carregarStatusPedido();
+        if (!tokenUrl) return;
+        carregarPedido();
         return function() {
             if (pollingRef.current) clearInterval(pollingRef.current);
             if (countdownRef.current) clearInterval(countdownRef.current);
         };
-    }, [pedidoIdUrl]);
+    }, [tokenUrl]);
 
-    async function carregarStatusPedido() {
+    async function carregarPedido() {
         try {
-            const r = await api.get('/pedidos-tattoo/' + pedidoIdUrl + '/status');
-            setPedido(r.data);
+            const dados = await buscarStatusPedido(tokenUrl);
+            setPedido(dados);
             setCarregando(false);
-
-            if (r.data.status === 'orcamento_enviado' && r.data.sinal_status !== 'pago' && !pagamento) {
-                // se já existe um PIX pendente, não precisa gerar de novo automaticamente — o cliente clica no botão
-            }
         } catch (err) {
             setErro('Não foi possível carregar este pedido.');
             setCarregando(false);
@@ -111,7 +94,7 @@ function PedirTattoo() {
         setErro('');
         setLoading(true);
         try {
-            const resp = await api.post('/pedidos-tattoo/' + pedidoIdUrl + '/gerar-pix');
+            const resp = await api.post('/pedidos-tattoo/' + tokenUrl + '/gerar-pix');
             setPagamento(resp.data);
             iniciarContagem(resp.data.expira_em);
             iniciarPolling();
@@ -138,9 +121,9 @@ function PedirTattoo() {
         if (pollingRef.current) clearInterval(pollingRef.current);
         pollingRef.current = setInterval(async function() {
             try {
-                const r = await api.get('/pedidos-tattoo/' + pedidoIdUrl + '/status');
-                setPedido(r.data);
-                if (r.data.sinal_status === 'pago') {
+                const dados = await buscarStatusPedido(tokenUrl);
+                setPedido(dados);
+                if (dados.sinal_status === 'pago') {
                     clearInterval(pollingRef.current);
                     clearInterval(countdownRef.current);
                 }
@@ -148,12 +131,55 @@ function PedirTattoo() {
         }, 4000);
     }
 
+    async function escolherData(valor) {
+        setDataEscolhida(valor);
+        setHoraEscolhida('');
+        setDiaInfo(null);
+        if (!valor || !pedido?.profissional_id) return;
+        try {
+            const info = await buscarDia(pedido.profissional_id, valor);
+            setDiaInfo(info);
+        } catch (err) {
+            setErro('Não foi possível carregar a agenda desse dia.');
+        }
+    }
+
+    function horaDisponivel(hora) {
+        if (!diaInfo || !diaInfo.aberto) return false;
+        const inicio = new Date(`${dataEscolhida}T${hora}:00`);
+        const fim = new Date(inicio.getTime() + (pedido?.duracao_minutos || 120) * 60 * 1000);
+        const fimExpediente = new Date(`${dataEscolhida}T${diaInfo.horario.hora_fim}`);
+        if (fim > fimExpediente) return false;
+        return !diaInfo.ocupados.some(function(o) {
+            const oi = new Date(o.inicio);
+            const of = new Date(o.fim);
+            return inicio < of && oi < fim;
+        });
+    }
+
+    function gerarOpcoesDeHora() {
+        if (!diaInfo || !diaInfo.aberto) return [];
+        const opcoes = [];
+        const [hi, mi] = diaInfo.horario.hora_inicio.split(':').map(Number);
+        const [hf, mf] = diaInfo.horario.hora_fim.split(':').map(Number);
+        let minutos = hi * 60 + mi;
+        const fimMinutos = hf * 60 + mf;
+        while (minutos < fimMinutos) {
+            const h = String(Math.floor(minutos / 60)).padStart(2, '0');
+            const m = String(minutos % 60).padStart(2, '0');
+            opcoes.push(`${h}:${m}`);
+            minutos += 30;
+        }
+        return opcoes;
+    }
+
     async function confirmarHorario() {
         setErro('');
         setLoading(true);
         try {
-            const resp = await api.patch('/pedidos-tattoo/' + pedidoIdUrl + '/confirmar-horario', { data_hora: dataHoraEscolhida });
-            setPedido(resp.data);
+            const dataHora = `${dataEscolhida}T${horaEscolhida}:00`;
+            const resp = await confirmarHorarioPedido(tokenUrl, dataHora);
+            setPedido(resp);
         } catch (err) {
             setErro(err.response?.data?.erro || 'Erro ao confirmar horário.');
         }
@@ -171,8 +197,7 @@ function PedirTattoo() {
         return m + ':' + s;
     }
 
-    // ===== TELA: pedido novo (sem ID na URL) =====
-    if (!pedidoIdUrl) {
+    if (!tokenUrl) {
         if (!estabelecimentoIdUrl) {
             return <div style={styles.container}><p style={{ color: '#e05252' }}>Link inválido.</p></div>;
         }
@@ -207,32 +232,32 @@ function PedirTattoo() {
                                 style={styles.textarea}
                                 placeholder="Ex: Uma rosa em blackwork, algo delicado..."
                                 value={form.descricao}
-                                onChange={function(e) { setForm({...form, descricao: e.target.value}); }}
+                                onChange={function(e) { setForm({ ...form, descricao: e.target.value }); }}
                                 required
                             />
                         </div>
                         <div style={styles.inputRow}>
-                            <div style={{...styles.inputGroup, flex: 1}}>
+                            <div style={{ ...styles.inputGroup, flex: 1 }}>
                                 <label style={styles.label}>Estilo</label>
-                                <input style={styles.inputField} placeholder="Blackwork, fineline..." value={form.estilo} onChange={function(e) { setForm({...form, estilo: e.target.value}); }} />
+                                <input style={styles.inputField} placeholder="Blackwork, fineline..." value={form.estilo} onChange={function(e) { setForm({ ...form, estilo: e.target.value }); }} />
                             </div>
-                            <div style={{...styles.inputGroup, flex: 1, marginLeft: '12px'}}>
+                            <div style={{ ...styles.inputGroup, flex: 1, marginLeft: '12px' }}>
                                 <label style={styles.label}>Tamanho aprox.</label>
-                                <input style={styles.inputField} placeholder="10 cm" value={form.tamanho_aproximado} onChange={function(e) { setForm({...form, tamanho_aproximado: e.target.value}); }} />
+                                <input style={styles.inputField} placeholder="10 cm" value={form.tamanho_aproximado} onChange={function(e) { setForm({ ...form, tamanho_aproximado: e.target.value }); }} />
                             </div>
                         </div>
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Local do corpo</label>
-                            <input style={styles.inputField} placeholder="Antebraço, costas..." value={form.local_corpo} onChange={function(e) { setForm({...form, local_corpo: e.target.value}); }} />
+                            <input style={styles.inputField} placeholder="Antebraço, costas..." value={form.local_corpo} onChange={function(e) { setForm({ ...form, local_corpo: e.target.value }); }} />
                         </div>
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Link de referência (opcional)</label>
-                            <input style={styles.inputField} placeholder="Link do Instagram, Pinterest..." value={form.referencia_url} onChange={function(e) { setForm({...form, referencia_url: e.target.value}); }} />
+                            <input style={styles.inputField} placeholder="Link do Instagram, Pinterest..." value={form.referencia_url} onChange={function(e) { setForm({ ...form, referencia_url: e.target.value }); }} />
                         </div>
                         {profissionais.length > 0 && !profissionalIdUrl && (
                             <div style={styles.inputGroup}>
                                 <label style={styles.label}>Prefere algum tatuador específico? (opcional)</label>
-                                <select style={styles.inputField} value={form.profissional_id} onChange={function(e) { setForm({...form, profissional_id: e.target.value}); }}>
+                                <select style={styles.inputField} value={form.profissional_id} onChange={function(e) { setForm({ ...form, profissional_id: e.target.value }); }}>
                                     <option value="">Sem preferência</option>
                                     {profissionais.map(function(p) {
                                         return <option key={p.id} value={p.id}>{p.nome}</option>;
@@ -242,15 +267,15 @@ function PedirTattoo() {
                         )}
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Observações (opcional)</label>
-                            <input style={styles.inputField} placeholder="Alguma outra informação..." value={form.observacoes} onChange={function(e) { setForm({...form, observacoes: e.target.value}); }} />
+                            <input style={styles.inputField} placeholder="Alguma outra informação..." value={form.observacoes} onChange={function(e) { setForm({ ...form, observacoes: e.target.value }); }} />
                         </div>
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Seu nome completo</label>
-                            <input style={styles.inputField} placeholder="Seu nome" value={form.cliente_nome} onChange={function(e) { setForm({...form, cliente_nome: e.target.value}); }} required />
+                            <input style={styles.inputField} placeholder="Seu nome" value={form.cliente_nome} onChange={function(e) { setForm({ ...form, cliente_nome: e.target.value }); }} required />
                         </div>
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Seu WhatsApp</label>
-                            <input style={styles.inputField} placeholder="71999999999" value={form.cliente_whatsapp} onChange={function(e) { setForm({...form, cliente_whatsapp: e.target.value}); }} required />
+                            <input style={styles.inputField} placeholder="71999999999" value={form.cliente_whatsapp} onChange={function(e) { setForm({ ...form, cliente_whatsapp: e.target.value }); }} required />
                         </div>
                         <p style={styles.aviso}>Você vai receber o orçamento e o link de pagamento direto no seu WhatsApp.</p>
                         {erro && <p style={styles.erro}>{erro}</p>}
@@ -263,7 +288,6 @@ function PedirTattoo() {
         );
     }
 
-    // ===== TELA: acompanhamento de um pedido existente (via link do WhatsApp) =====
     if (carregando) {
         return <div style={styles.container}><p style={{ color: '#666' }}>Carregando...</p></div>;
     }
@@ -317,30 +341,60 @@ function PedirTattoo() {
                 {pedido?.sinal_status === 'pago' && pedido?.status !== 'convertido_agendamento' && (
                     <div>
                         <h2 style={styles.sucessoTitulo}>Sinal confirmado! ✓</h2>
-                        <p style={styles.sucessoTexto}>Agora escolhe o melhor dia e horário pra sua sessão:</p>
+                        <p style={styles.sucessoTexto}>Agora escolhe o dia e o horário da sua sessão:</p>
+
                         <div style={styles.inputGroup}>
+                            <label style={styles.label}>Dia</label>
                             <input
-                                type="datetime-local"
+                                type="date"
                                 style={styles.inputField}
-                                value={dataHoraEscolhida}
-                                onChange={function(e) { verificarEMudarData(e.target.value); }}
+                                value={dataEscolhida}
+                                min={new Date().toISOString().split('T')[0]}
+                                onChange={function(e) { escolherData(e.target.value); }}
                             />
                         </div>
-                        {horariosOcupadosDoDia.length > 0 && (
+
+                        {dataEscolhida && diaInfo && !diaInfo.aberto && (
                             <div style={styles.ocupadosBox}>
-                                <p style={styles.ocupadosTitulo}>Horários já marcados nesse dia (evite escolher em cima deles):</p>
-                                {horariosOcupadosDoDia.map(function(h, i) {
-                                    return (
-                                        <p key={i} style={styles.ocupadosItem}>
-                                            {new Date(h.inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} às{' '}
-                                            {new Date(h.fim).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
-                                    );
-                                })}
+                                <p style={styles.ocupadosTitulo}>Não é possível agendar nesse dia.</p>
+                                <p style={styles.ocupadosItem}>{diaInfo.motivo}</p>
                             </div>
                         )}
+
+                        {dataEscolhida && diaInfo?.aberto && (
+                            <div style={styles.inputGroup}>
+                                <label style={styles.label}>Horário</label>
+                                <div style={styles.horaGrid}>
+                                    {gerarOpcoesDeHora().map(function(hora) {
+                                        const livre = horaDisponivel(hora);
+                                        const selecionada = horaEscolhida === hora;
+                                        return (
+                                            <button
+                                                key={hora}
+                                                type="button"
+                                                disabled={!livre}
+                                                onClick={function() { setHoraEscolhida(hora); }}
+                                                style={
+                                                    !livre ? styles.horaOcupada
+                                                    : selecionada ? styles.horaSelecionada
+                                                    : styles.horaLivre
+                                                }
+                                            >
+                                                {hora}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <p style={styles.legendaHora}>Horários riscados já estão ocupados ou não cabem na duração da sessão.</p>
+                            </div>
+                        )}
+
                         {erro && <p style={styles.erro}>{erro}</p>}
-                        <button style={loading ? styles.botaoLoading : styles.botao} onClick={confirmarHorario} disabled={loading || !dataHoraEscolhida}>
+                        <button
+                            style={loading ? styles.botaoLoading : styles.botao}
+                            onClick={confirmarHorario}
+                            disabled={loading || !horaEscolhida}
+                        >
                             {loading ? 'Confirmando...' : 'Confirmar horário'}
                         </button>
                     </div>
@@ -372,7 +426,7 @@ const styles = {
     textarea: { width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#ffffff', fontSize: '14px', boxSizing: 'border-box', outline: 'none', minHeight: '90px', fontFamily: 'inherit', resize: 'vertical' },
     aviso: { color: '#666666', fontSize: '12px', marginBottom: '16px', lineHeight: '1.5' },
     botao: { width: '100%', padding: '14px', background: '#c9a96e', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer' },
-    botaoLoading: { width: '100%', padding: '14px', background: '#f34d0c', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'not-allowed' },
+    botaoLoading: { width: '100%', padding: '14px', background: '#8a7045', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'not-allowed' },
     botaoSecundario: { width: '100%', padding: '14px', background: 'transparent', color: '#c9a96e', border: '1px solid #c9a96e', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', marginBottom: '12px' },
     erro: { color: '#e05252', fontSize: '13px', marginBottom: '12px', textAlign: 'center' },
     sucessoIcon: { fontSize: '40px', textAlign: 'center', margin: '0 auto 16px' },
@@ -381,11 +435,17 @@ const styles = {
     etapaTitulo: { color: '#ffffff', fontSize: '16px', fontWeight: '600', marginBottom: '16px', textAlign: 'center' },
     orcamentoBox: { background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '10px', padding: '16px', marginBottom: '20px' },
     orcamentoLinha: { color: '#dddddd', fontSize: '14px', margin: '6px 0' },
-    pixTimer: { color: '#f7650b', fontSize: '18px', fontWeight: '700', textAlign: 'center', marginBottom: '16px' },
+    pixTimer: { color: '#c9a96e', fontSize: '18px', fontWeight: '700', textAlign: 'center', marginBottom: '16px' },
     qrImagem: { display: 'block', width: '220px', height: '220px', margin: '0 auto 20px', borderRadius: '8px', background: '#ffffff', padding: '8px' },
-    pixEspera: { color: '#666666', ocupadosBox: { background: '#2a1a0f', border: '1px solid #5a3a20', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' },
+    pixEspera: { color: '#666666', fontSize: '12px', textAlign: 'center', marginTop: '8px' },
+    ocupadosBox: { background: '#2a1a0f', border: '1px solid #5a3a20', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' },
     ocupadosTitulo: { color: '#e0b080', fontSize: '12px', fontWeight: '600', margin: '0 0 6px' },
-    ocupadosItem: { color: '#e0b080', fontSize: '12px', margin: '2px 0' }, fontSize: '12px', textAlign: 'center', marginTop: '8px' }
+    ocupadosItem: { color: '#e0b080', fontSize: '12px', margin: '2px 0' },
+    horaGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' },
+    horaLivre: { padding: '10px 0', background: '#0a0a0a', border: '1px solid #c9a96e', color: '#c9a96e', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' },
+    horaSelecionada: { padding: '10px 0', background: '#c9a96e', border: '1px solid #c9a96e', color: '#0a0a0a', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' },
+    horaOcupada: { padding: '10px 0', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#444444', borderRadius: '8px', fontSize: '13px', textDecoration: 'line-through', cursor: 'not-allowed' },
+    legendaHora: { color: '#666666', fontSize: '11px', marginTop: '8px' }
 };
 
 export default PedirTattoo;
