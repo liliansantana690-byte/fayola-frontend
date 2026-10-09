@@ -230,6 +230,16 @@ function Dashboard({ estabelecimento }) {
         carregarDados();
     }
 
+    async function excluirPedidoTattoo(id) {
+        if (!window.confirm('Excluir este pedido? Essa ação não pode ser desfeita.')) return;
+        try {
+            await api.delete('/pedidos-tattoo/' + id, { headers });
+            carregarDados();
+        } catch (err) {
+            alert(err.response?.data?.erro || 'Erro ao excluir pedido.');
+        }
+    }
+
     async function conectarMercadoPago() {
         setConectandoMp(true);
 
@@ -756,9 +766,7 @@ function Dashboard({ estabelecimento }) {
                                     </motion.div>
                                 );
                             })}
-                    
                     </motion.div>
-                    
                     )}
 
                     {aba === 'agendamentos' && (
