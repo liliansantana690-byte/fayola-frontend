@@ -8,14 +8,26 @@ import LoginProfissional from './pages/LoginProfissional';
 import AtivarContaProfissional from './pages/AtivarContaProfissional';
 import PainelProfissional from './pages/PainelProfissional';
 import PedirTattoo from './pages/PedirTattoo';
+import api from './services/api';
 
 function App() {
     const [estabelecimento, setEstabelecimento] = useState(null);
     const [profissional, setProfissional] = useState(
-        localStorage.getItem('token') && localStorage.getItem('profissional_id')
+        localStorage.getItem('profissional_id')
             ? { nome: localStorage.getItem('nome') }
             : null
     );
+
+    async function sairProfissional() {
+        try {
+            await api.post('/profissionais/logout');
+        } catch (err) {
+            // mesmo se falhar, limpa o estado local abaixo
+        }
+        localStorage.removeItem('profissional_id');
+        localStorage.removeItem('nome');
+        setProfissional(null);
+    }
 
     const path = window.location.pathname;
 
@@ -26,10 +38,11 @@ function App() {
     if (path === '/painel-profissional/ativar') {
         return <AtivarContaProfissional />;
     }
+
     if (path === '/agendar') {
         return <Agendar />;
-    
     }
+
     if (path === '/painel-profissional/login') {
         if (profissional) {
             window.location.href = '/painel-profissional';
@@ -43,7 +56,7 @@ function App() {
             window.location.href = '/painel-profissional/login';
             return null;
         }
-        return <PainelProfissional nome={profissional.nome} onLogout={function() { setProfissional(null); }} />;
+        return <PainelProfissional nome={profissional.nome} onLogout={sairProfissional} />;
     }
 
     if (estabelecimento) {
@@ -54,10 +67,10 @@ function App() {
         return <Login onLogin={setEstabelecimento} />;
     }
 
-        if (path === '/cadastro') {
+    if (path === '/cadastro') {
         return <Cadastro />;
     }
-    
+
     return <Landing />;
 }
 
