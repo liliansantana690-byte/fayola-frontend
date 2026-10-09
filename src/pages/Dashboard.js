@@ -149,6 +149,7 @@ function Dashboard({ estabelecimento }) {
     const [linkCopiado, setLinkCopiado] = useState(false);
     const [linkProfissionalCopiadoId, setLinkProfissionalCopiadoId] = useState(null);
     const [conviteRecemCriado, setConviteRecemCriado] = useState(null);
+    const [pedidosTattoo, setPedidosTattoo] = useState([]);
 
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
@@ -162,6 +163,7 @@ function Dashboard({ estabelecimento }) {
             const p = await api.get('/profissionais', { headers });
             const c = await api.get('/profissionais/comissoes', { headers });
             const mp = await api.get('/mercadopago/status', { headers });
+            const pt = await api.get('/pedidos-tattoo', { headers });
 
             setAgendamentos(a.data);
             setTodosAgendamentos(todos.data);
@@ -169,6 +171,8 @@ function Dashboard({ estabelecimento }) {
             setProfissionais(p.data);
             setComissoes(c.data);
             setMpConectado(mp.data.conectado);
+            setPedidosTattoo(pt.data);
+
         } catch (err) {
             console.error(err);
         }
@@ -270,9 +274,13 @@ function Dashboard({ estabelecimento }) {
             minute: '2-digit'
         });
     }
+    
+    const pedidosPagos = pedidosTattoo.filter(function(p) { return p.sinal_status === 'pago'; });
+    const totalSinaisRecebidos = pedidosPagos.reduce(function(acc, p) { return acc + parseFloat(p.valor_sinal || 0); }, 0);
 
     const itensNav = [
         { id: 'hoje', icon: 'calendar', label: 'Agenda' },
+        { id: 'tattoo', icon: 'sparkle', label: 'Tattoo' },
         { id: 'agendamentos', icon: 'clipboard', label: 'Agendamentos' },
         { id: 'servicos', icon: 'sparkle', label: 'Serviços' },
         { id: 'profissionais', icon: 'users', label: 'Equipe' },
@@ -642,6 +650,102 @@ function Dashboard({ estabelecimento }) {
                                 })}
                             </div>
                         </motion.div>
+                    )}
+
+                                        {aba === 'tattoo' && (
+                        <motion.div
+                            key="tattoo"
+                            variants={paginaAnimacao}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                        >
+                            <div style={styles.pageHeader}>
+                                <div>
+                                    <p style={styles.sectionEyebrow}>TATTOO</p>
+                                    <h2 style={styles.pageTitle}>Pedidos de tattoo</h2>
+                                    <p style={styles.pageSubtitle}>
+                                        Sinais recebidos e sessões agendadas.
+                                    </p>
+                                </div>
+
+                                <div style={styles.headerGlowLine} />
+                            </div>
+
+                            <div style={styles.statsRow}>
+                                <motion.div variants={cardAnimacao} initial="initial" animate="animate" whileHover={{ y: -4 }} style={styles.statCard}>
+                                    <div style={styles.statTop}>
+                                        <span style={styles.statSmall}>01</span>
+                                        <Icon name="wallet" size={18} />
+                                    </div>
+                                    <p style={styles.statNum}>R$ {totalSinaisRecebidos.toFixed(2)}</p>
+                                    <p style={styles.statLabel}>Sinais recebidos</p>
+                                </motion.div>
+
+                                <motion.div variants={cardAnimacao} initial="initial" animate="animate" transition={{ delay: 0.08 }} whileHover={{ y: -4 }} style={styles.statCard}>
+                                    <div style={styles.statTop}>
+                                        <span style={styles.statSmall}>02</span>
+                                        <Icon name="check" size={18} />
+                                    </div>
+                                    <p style={styles.statNum}>{pedidosPagos.length}</p>
+                                    <p style={styles.statLabel}>Sinais pagos</p>
+                                </motion.div>
+
+                                <motion.div variants={cardAnimacao} initial="initial" animate="animate" transition={{ delay: 0.16 }} whileHover={{ y: -4 }} style={styles.statCard}>
+                                    <div style={styles.statTop}>
+                                        <span style={styles.statSmall}>03</span>
+                                        <Icon name="clipboard" size={18} />
+                                    </div>
+                                    <p style={styles.statNum}>{pedidosTattoo.filter(function(p) { return p.status === 'aguardando_orcamento'; }).length}</p>
+                                    <p style={styles.statLabel}>Aguardando orçamento</p>
+                                </motion.div>
+                            </div>
+
+                            {pedidosTattoo.length === 0 && (
+                                <div style={styles.vazio}>
+                                    <div style={styles.emptyIcon}>
+                                        <Icon name="sparkle" size={30} />
+                                    </div>
+                                    <p style={styles.vazioTexto}>Nenhum pedido de tattoo ainda</p>
+                                </div>
+                            )}
+
+                            {pedidosTattoo.map(function(p, index) {
+                                return (
+                                    <motion.div
+                                        key={p.id}
+                                        initial={{ opacity: 0, y: 15 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        whileHover={{ y: -3, borderColor: 'rgba(201,79,36,0.35)' }}
+                                        style={styles.agendamentoCard}
+                                    >
+                                        <div style={p.sinal_status === 'pago' ? styles.horaBadge : styles.horaBadgeCancelado}>
+                                            {p.data_hora ? formatarHora(p.data_hora) : '--:--'}
+                                        </div>
+
+                                        <div style={styles.agendamentoInfo}>
+                                            <p style={styles.clienteNome}>{p.cliente_nome}</p>
+                                            <p style={styles.agendamentoDetalhe}>
+                                                {p.profissional || 'Sem tatuador definido'} · {p.descricao}
+                                            </p>
+                                            <p style={styles.agendamentoDetalhe}>
+                                                Tattoo: R$ {parseFloat(p.valor_tattoo || 0).toFixed(2)} · Sinal: R$ {parseFloat(p.valor_sinal || 0).toFixed(2)}
+                                            </p>
+                                            <p style={styles.agendamentoDetalhe}>
+                                                {p.cliente_whatsapp}{p.data_hora ? ` · ${formatarData(p.data_hora)}` : ''}
+                                            </p>
+                                        </div>
+
+                                        <p style={p.sinal_status === 'pago' ? styles.statusAtivo : styles.statusPendente}>
+                                            {p.sinal_status === 'pago' ? '✓ Sinal pago' : 'Sinal pendente'}
+                                        </p>
+                                    </motion.div>
+                                );
+                            })}
+                    
+                    </motion.div>
+                    
                     )}
 
                     {aba === 'agendamentos' && (
