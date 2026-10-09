@@ -10,14 +10,14 @@ function Login({ onLogin }) {
     async function handleLogin(e) {
         e.preventDefault();
         setLoading(true);
-        setErro('');
         try {
             const res = await api.post('/auth/login', { email, senha });
+            localStorage.setItem('token', res.data.token);
             localStorage.setItem('estabelecimento_id', res.data.estabelecimento_id);
             localStorage.setItem('nome', res.data.nome);
             onLogin(res.data);
         } catch (err) {
-            setErro(err.response?.data?.erro || 'Email ou senha incorretos');
+            setErro('Email ou senha incorretos');
         }
         setLoading(false);
     }
