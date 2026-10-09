@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
+import './dashboard-responsive.css';
 
 function Icon({ name, size = 18 }) {
     const common = {
@@ -336,7 +337,7 @@ function Dashboard({ estabelecimento }) {
     };
 
     return (
-        <div style={styles.container}>
+        <div className="fy-root" style={styles.container}>
             <div style={styles.backgroundGlowOne} />
             <div style={styles.backgroundGlowTwo} />
             <div style={styles.gridBackground} />
@@ -348,7 +349,7 @@ function Dashboard({ estabelecimento }) {
                     duration: 0.55,
                     ease: [0.22, 1, 0.36, 1]
                 }}
-                style={styles.sidebar}
+                className="fy-aside" style={styles.sidebar}
             >
                 <div style={styles.logoArea}>
                     <motion.div
@@ -428,7 +429,7 @@ function Dashboard({ estabelecimento }) {
                 </div>
             </motion.aside>
 
-            <main style={styles.main}>
+            <main className="fy-main" style={styles.main}>
                 <div style={styles.topBar}>
                     <div>
                         <p style={styles.topEyebrow}>FAYOLA / PAINEL</p>
@@ -515,7 +516,7 @@ function Dashboard({ estabelecimento }) {
                                 </motion.div>
                             )}
 
-                            <div style={styles.statsRow}>
+                            <div className="fy-stats" style={styles.statsRow}>
                                 <motion.div
                                     variants={cardAnimacao}
                                     initial="initial"
@@ -683,7 +684,7 @@ function Dashboard({ estabelecimento }) {
                                 <div style={styles.headerGlowLine} />
                             </div>
 
-                            <div style={styles.statsRow}>
+                            <div className="fy-stats" style={styles.statsRow}>
                                 <motion.div variants={cardAnimacao} initial="initial" animate="animate" whileHover={{ y: -4 }} style={styles.statCard}>
                                     <div style={styles.statTop}>
                                         <span style={styles.statSmall}>01</span>
@@ -1295,7 +1296,7 @@ function Dashboard({ estabelecimento }) {
                                 <div style={styles.headerGlowLine} />
                             </div>
 
-                            <div style={styles.statsRow}>
+                            <div className="fy-stats" style={styles.statsRow}>
                                 <motion.div
                                     variants={cardAnimacao}
                                     initial="initial"

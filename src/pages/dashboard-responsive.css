@@ -1,0 +1,82 @@
+/* Responsivo do painel do estabelecimento (celular). Cores e animações não mudam. */
+@media (max-width: 768px) {
+    .fy-root {
+        flex-direction: column !important;
+        overflow-x: hidden !important;
+    }
+
+    .fy-aside {
+        width: 100% !important;
+        min-height: auto !important;
+        flex-direction: column !important;
+        padding: 12px 0 0 !important;
+    }
+
+    .fy-aside > div:first-child {
+        padding: 0 16px 12px !important;
+        border-bottom: none !important;
+        text-align: left !important;
+    }
+
+    .fy-aside > div:first-child > div:first-child {
+        display: none !important;
+    }
+
+    .fy-aside > div:first-child p {
+        display: none !important;
+    }
+
+    .fy-aside > div:last-child {
+        display: none !important;
+    }
+
+    .fy-aside nav {
+        display: flex !important;
+        overflow-x: auto !important;
+        gap: 6px !important;
+        padding: 8px 12px 12px !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .fy-aside nav > p {
+        display: none !important;
+    }
+
+    .fy-aside nav button {
+        width: auto !important;
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        margin-bottom: 0 !important;
+        padding: 10px 14px !important;
+    }
+
+    .fy-main {
+        width: 100% !important;
+        min-height: auto !important;
+        padding: 16px 14px 60px !important;
+        box-sizing: border-box !important;
+    }
+
+    .fy-main > div:first-child {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        margin-bottom: 24px !important;
+        padding-bottom: 14px !important;
+    }
+
+    .fy-main h2 {
+        font-size: 22px !important;
+    }
+
+    .fy-stats {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        margin-bottom: 20px !important;
+    }
+
+    .fy-stats > * {
+        min-height: auto !important;
+        padding: 16px !important;
+    }
+}
