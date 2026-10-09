@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
+import ConfigurarDisponibilidade from './ConfigurarDisponibilidade';
 
 function PainelProfissional({ nome, onLogout }) {
     const [aba, setAba] = useState('agenda');
@@ -18,6 +19,7 @@ function PainelProfissional({ nome, onLogout }) {
     const [enviandoOrcamento, setEnviandoOrcamento] = useState(false);
 
     const token = localStorage.getItem('token');
+    const profissionalId = localStorage.getItem('profissional_id');
     const headers = { Authorization: `Bearer ${token}` };
 
     const carregarDados = useCallback(async function() {
@@ -301,6 +303,21 @@ function PainelProfissional({ nome, onLogout }) {
                                 {pedidosAguardando.length}
                             </motion.span>
                         )}
+                    </motion.button>
+
+                    <motion.button
+                        style={
+                            aba === 'disponibilidade'
+                                ? styles.abaBotaoAtiva
+                                : styles.abaBotao
+                        }
+                        onClick={function() {
+                            setAba('disponibilidade');
+                        }}
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.97 }}
+                    >
+                        Disponibilidade
                     </motion.button>
                 </motion.div>
 
@@ -690,6 +707,18 @@ function PainelProfissional({ nome, onLogout }) {
                             })}
                         </motion.div>
                     )}
+
+                    {aba === 'disponibilidade' && (
+                        <motion.div
+                            key="disponibilidade"
+                            initial={{ opacity: 0, x: 15 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -15 }}
+                            transition={{ duration: 0.35 }}
+                        >
+                            <ConfigurarDisponibilidade profissionalId={profissionalId} />
+                        </motion.div>
+                    )}
                 </AnimatePresence>
 
                 <AnimatePresence>
@@ -1037,7 +1066,8 @@ const styles = {
         display: 'flex',
         gap: '8px',
         marginBottom: '26px',
-        borderBottom: '1px solid #202020'
+        borderBottom: '1px solid #202020',
+        flexWrap: 'wrap'
     },
 
     abaBotao: {
