@@ -644,6 +644,7 @@ function Dashboard({ estabelecimento }) {
                                                 style={styles.btnCancelar}
                                             >
                                                 Cancelar
+                                                
                                             </button>
                                         </motion.div>
                                     );
@@ -740,6 +741,18 @@ function Dashboard({ estabelecimento }) {
                                         <p style={p.sinal_status === 'pago' ? styles.statusAtivo : styles.statusPendente}>
                                             {p.sinal_status === 'pago' ? '✓ Sinal pago' : 'Sinal pendente'}
                                         </p>
+                                             {p.sinal_status !== 'pago' && (
+                                            <button
+                                                onClick={function() {
+                                                    excluirPedidoTattoo(p.id);
+                                                }}
+                                                style={styles.btnExcluir}
+                                            >
+                                                <Icon name="trash" size={13} />
+                                                Excluir
+                                            </button>
+                                        )}
+
                                     </motion.div>
                                 );
                             })}
