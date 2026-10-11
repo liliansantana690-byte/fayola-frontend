@@ -714,6 +714,11 @@ function PainelProfissional({ nome, onLogout }) {
                                         >
                                             Copiar mensagem do orçamento
                                         </motion.button>
+
+                                        <p style={styles.detalhe}>
+                                            WhatsApp do cliente: {p.cliente_whatsapp}
+                                        
+                                        </p>
                                     </motion.div>
                                 );
                             })}
