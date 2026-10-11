@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import ConfigurarDisponibilidade from './ConfigurarDisponibilidade';
+import { gerarTextoOrcamento, copiarTexto } from '../utils/mensagemOrcamento';
 
 function PainelProfissional({ nome, onLogout }) {
     const [aba, setAba] = useState('agenda');
@@ -702,6 +703,17 @@ function PainelProfissional({ nome, onLogout }) {
                                                 ? '✓ Sinal pago'
                                                 : labelStatus(p.status)}
                                         </p>
+
+                                        <motion.button
+                                            style={styles.btnConcluir}
+                                            onClick={function() {
+                                                copiarTexto(gerarTextoOrcamento(p));
+                                            }}
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.97 }}
+                                        >
+                                            Copiar mensagem do orçamento
+                                        </motion.button>
                                     </motion.div>
                                 );
                             })}
