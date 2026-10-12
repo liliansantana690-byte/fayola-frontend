@@ -3645,14 +3645,12 @@ export default function Landing() {
         </a>
         
         <a
-          href={WHATSAPP}
-          target="_blank"
-          rel="noreferrer"
-          className="secondary-button"
-        >
-          Falar com a Fayola
-        </a>
-
+            href="/cadastro"
+            className="nav-cta"
+          >
+            Cadastrar
+        
+          </a>
       </div>
 
     </Reveal>
@@ -3664,6 +3662,13 @@ export default function Landing() {
 {/* =====================================================
     FOOTER
     ===================================================== */}
+
+<div style={{ textAlign: "center", margin: "40px 0" }}>
+  <a href="/cadastro" className="primary-button">
+    Cadastrar
+    <span>→</span>
+  </a>
+</div>
 
 <footer className="footer">
 
