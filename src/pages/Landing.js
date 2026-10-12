@@ -2822,7 +2822,7 @@ export default function Landing() {
             >
 
               <MagneticButton
-                href={WHATSAPP_ASSINAR}
+              href="/cadastro"
                 className="primary-button"
               >
                 Quero usar o Fayola
