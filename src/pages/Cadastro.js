@@ -33,6 +33,7 @@ function Cadastro() {
     }
 
     if (sucesso) {
+        const linkCheckout = process.env.REACT_APP_CHECKOUT_URL;
         return (
             <div style={styles.container}>
                 <div style={styles.card}>
@@ -41,8 +42,18 @@ function Cadastro() {
                         <h1 style={styles.logo}>FAYOLA</h1>
                     </div>
                     <h2 style={styles.sucessoTitulo}>Conta criada!</h2>
-                    <p style={styles.sucessoTexto}>Seu estúdio "{sucesso.nome}" já está pronto. Agora é só entrar com o e-mail e senha que você acabou de criar.</p>
-                    <a href="/login" style={styles.botao}>Ir para o login</a>
+                    <p style={styles.sucessoTexto}>
+                        Falta só pagar a assinatura para liberar seu acesso. Use o mesmo e-mail que você cadastrou ({sucesso.email}) no checkout.
+                    </p>
+                    {linkCheckout && (
+                        <a href={linkCheckout} target="_blank" rel="noreferrer" style={styles.botao}>
+                            Pagar assinatura
+                        </a>
+                    )}
+                    <p style={styles.sucessoTexto}>
+                        Depois de pagar, volte aqui e entre com seu e-mail e senha. O acesso libera automaticamente após a confirmação do pagamento.
+                    </p>
+                    <a href="/login" style={styles.linkCentral}>Já paguei, ir para o login</a>
                 </div>
             </div>
         );
@@ -108,7 +119,8 @@ const styles = {
     footer: { color: '#666666', fontSize: '12px', textAlign: 'center', marginTop: '24px' },
     link: { color: '#f95f00', textDecoration: 'underline' },
     sucessoTitulo: { color: '#fff', fontSize: '18px', textAlign: 'center', margin: '0 0 12px' },
-    sucessoTexto: { color: '#888', fontSize: '13px', textAlign: 'center', lineHeight: '1.6', margin: '0 0 24px' }
+    sucessoTexto: { color: '#888', fontSize: '13px', textAlign: 'center', lineHeight: '1.6', margin: '0 0 24px' },
+    linkCentral: { display: 'block', textAlign: 'center', color: '#f95f00', fontSize: '13px', marginTop: '20px', textDecoration: 'underline' }
 };
 
 export default Cadastro;
