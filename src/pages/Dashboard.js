@@ -1391,6 +1391,19 @@ function Dashboard({ estabelecimento }) {
                             animate="animate"
                             exit="exit"
                         >
+                            <div style={styles.mpConectadoCard}>
+                                <p style={styles.mpConectadoTitulo}>Como conectar o Mercado Pago</p>
+                                <p style={styles.mpConectadoTexto}>
+                                    Antes de conectar, confira se a sua conta do Mercado Pago está verificada (documento e dados bancários). Sem isso, o Mercado Pago não libera o recebimento dos seus sinais.
+                                </p>
+                                <p style={styles.mpConectadoTexto}>
+                                    1. Clique em "Conectar Mercado Pago" abaixo.<br />
+                                    2. Entre com a sua conta do Mercado Pago (a mesma que você usa para receber).<br />
+                                    3. Clique em "Autorizar" na tela do Mercado Pago.<br />
+                                    4. Você volta para cá e a tela mostra "Mercado Pago conectado".
+                                </p>
+                            </div>
+                            
                             <div style={styles.pageHeader}>
                                 <div>
                                     <p style={styles.sectionEyebrow}>PAGAMENTOS</p>
