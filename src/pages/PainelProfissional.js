@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import ConfigurarDisponibilidade from './ConfigurarDisponibilidade';
 import { gerarTextoOrcamento, copiarTexto } from '../utils/mensagemOrcamento';
+import { PERGUNTAS_ANAMNESE } from '../utils/anamneseTattoo';
 
 function PainelProfissional({ nome, onLogout }) {
     const [aba, setAba] = useState('agenda');
@@ -607,6 +608,24 @@ function PainelProfissional({ nome, onLogout }) {
                                         <p style={styles.detalhe}>
                                             WhatsApp: {p.cliente_whatsapp}
                                         </p>
+
+                                        {p.anamnese_respostas && (
+                                            <section style={styles.anamneseCard} aria-label="Ficha de saúde do cliente">
+                                                <h4 style={styles.anamneseTitulo}>Ficha de saúde · informação confidencial</h4>
+                                                <p style={styles.anamneseAviso}>Acessível apenas ao tatuador responsável. Considere estas respostas antes de enviar o orçamento.</p>
+                                                {PERGUNTAS_ANAMNESE.map(function(pergunta) {
+                                                    const item = p.anamnese_respostas[pergunta.id];
+                                                    if (!item) return null;
+                                                    return (
+                                                        <p key={pergunta.id} style={styles.anamneseResposta}>
+                                                            <strong>{pergunta.texto}</strong><br />
+                                                            {item.resposta === 'sim' ? 'Sim' : 'Não'}
+                                                            {item.detalhe ? ` · ${item.detalhe}` : ''}
+                                                        </p>
+                                                    );
+                                                })}
+                                            </section>
+                                        )}
 
                                         <motion.button
                                             style={styles.btnConcluir}
@@ -1305,6 +1324,16 @@ const styles = {
         margin: '3px 0',
         lineHeight: 1.45
     },
+    anamneseCard: {
+        background: 'rgba(255, 106, 61, 0.06)',
+        border: '1px solid rgba(255, 106, 61, 0.24)',
+        borderRadius: '12px',
+        padding: '14px',
+        margin: '14px 0 18px'
+    },
+    anamneseTitulo: { color: '#ffb08f', fontSize: '14px', margin: '0 0 6px' },
+    anamneseAviso: { color: '#aaa', fontSize: '12px', lineHeight: '1.5', margin: '0 0 12px' },
+    anamneseResposta: { color: '#ddd', fontSize: '12px', lineHeight: '1.5', margin: '0 0 9px' },
 
     btnConcluir: {
         background: 'transparent',

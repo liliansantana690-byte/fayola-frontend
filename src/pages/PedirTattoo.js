@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { buscarDia, buscarStatusPedido, confirmarHorarioPedido } from '../services/availabilityApi';
+import { PERGUNTAS_ANAMNESE, TEXTO_CONSENTIMENTO_ANAMNESE, VERSAO_CONSENTIMENTO_ANAMNESE } from '../utils/anamneseTattoo';
 
 function PedirTattoo() {
     const params = new URLSearchParams(window.location.search);
@@ -12,9 +13,13 @@ function PedirTattoo() {
 
     const [estabelecimento, setEstabelecimento] = useState(null);
     const [profissionais, setProfissionais] = useState([]);
+    const [profissionaisCarregados, setProfissionaisCarregados] = useState(false);
     const [carregando, setCarregando] = useState(!!tokenUrl);
     const [pedido, setPedido] = useState(null);
     const [enviado, setEnviado] = useState(false);
+    const [etapaPedido, setEtapaPedido] = useState(false);
+    const [consentimentoAnamnese, setConsentimentoAnamnese] = useState(false);
+    const [respostasAnamnese, setRespostasAnamnese] = useState({});
     const [erro, setErro] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -41,9 +46,18 @@ function PedirTattoo() {
     useEffect(function() {
         if (estabelecimentoIdUrl) {
             api.get('/auth/estabelecimento/' + estabelecimentoIdUrl).then(function(r) { setEstabelecimento(r.data); });
-            api.get('/profissionais/' + estabelecimentoIdUrl).then(function(r) { setProfissionais(r.data); });
+            api.get('/profissionais/' + estabelecimentoIdUrl).then(function(r) {
+                setProfissionais(r.data);
+                setProfissionaisCarregados(true);
+                if (!profissionalIdUrl && r.data.length === 1) {
+                    setForm(function(atual) { return { ...atual, profissional_id: String(r.data[0].id) }; });
+                }
+            }).catch(function() {
+                setProfissionais([]);
+                setProfissionaisCarregados(true);
+            });
         }
-    }, [estabelecimentoIdUrl]);
+    }, [estabelecimentoIdUrl, profissionalIdUrl]);
 
     useEffect(function() {
         if (!tokenUrl) return;
@@ -80,7 +94,10 @@ function PedirTattoo() {
                 tamanho_aproximado: form.tamanho_aproximado,
                 local_corpo: form.local_corpo,
                 referencia_url: form.referencia_url,
-                observacoes: form.observacoes
+                observacoes: form.observacoes,
+                respostas_anamnese: respostasAnamnese,
+                consentimento_anamnese: consentimentoAnamnese,
+                versao_consentimento_anamnese: VERSAO_CONSENTIMENTO_ANAMNESE
             });
             setPedido(resp.data);
             setEnviado(true);
@@ -88,6 +105,23 @@ function PedirTattoo() {
             setErro(err.response?.data?.erro || 'Erro ao enviar pedido. Tente novamente.');
         }
         setLoading(false);
+    }
+
+    function avancarParaPedido(e) {
+        e.preventDefault();
+        setErro('');
+        const faltando = PERGUNTAS_ANAMNESE.some(function(pergunta) {
+            return !['sim', 'nao'].includes(respostasAnamnese[pergunta.id]?.resposta);
+        });
+        if (faltando) {
+            setErro('Responda sim ou não para todas as perguntas para continuar.');
+            return;
+        }
+        if (!consentimentoAnamnese) {
+            setErro('É necessário marcar o consentimento para continuar.');
+            return;
+        }
+        setEtapaPedido(true);
     }
 
     async function gerarPix() {
@@ -225,6 +259,66 @@ function PedirTattoo() {
                         <h1 style={styles.logo}>{estabelecimento ? estabelecimento.nome.toUpperCase() : 'CARREGANDO...'}</h1>
                         <p style={styles.tagline}>Peça sua tattoo</p>
                     </div>
+                    {!etapaPedido ? (
+                    <form onSubmit={avancarParaPedido}>
+                        <h2 style={styles.etapaTitulo}>Ficha de saúde</h2>
+                        <p style={styles.aviso}>Responda às perguntas antes de enviar seu pedido de tattoo. Essas informações de saúde serão mostradas ao tatuador responsável pelo pedido.</p>
+                        {PERGUNTAS_ANAMNESE.map(function(pergunta, index) {
+                            const resposta = respostasAnamnese[pergunta.id]?.resposta || '';
+                            return (
+                                <fieldset key={pergunta.id} style={styles.perguntaFicha}>
+                                    <legend style={styles.label}>{index + 1}. {pergunta.texto}</legend>
+                                    <div style={styles.respostasFicha}>
+                                        {['sim', 'nao'].map(function(opcao) {
+                                            return (
+                                                <label key={opcao} style={styles.opcaoFicha}>
+                                                    <input
+                                                        type="radio"
+                                                        name={pergunta.id}
+                                                        value={opcao}
+                                                        checked={resposta === opcao}
+                                                        onChange={function() {
+                                                            setRespostasAnamnese(function(atual) {
+                                                                return { ...atual, [pergunta.id]: { ...atual[pergunta.id], resposta: opcao } };
+                                                            });
+                                                        }}
+                                                    />
+                                                    {opcao === 'sim' ? 'Sim' : 'Não'}
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                    {resposta === 'sim' && (
+                                        <input
+                                            style={styles.inputField}
+                                            placeholder="Se quiser, conte um pouco mais (opcional)"
+                                            maxLength={1000}
+                                            value={respostasAnamnese[pergunta.id]?.detalhe || ''}
+                                            onChange={function(e) {
+                                                const detalhe = e.target.value;
+                                                setRespostasAnamnese(function(atual) {
+                                                    return { ...atual, [pergunta.id]: { ...atual[pergunta.id], detalhe } };
+                                                });
+                                            }}
+                                        />
+                                    )}
+                                </fieldset>
+                            );
+                        })}
+                        <label style={styles.consentimentoFicha}>
+                            <input
+                                type="checkbox"
+                                checked={consentimentoAnamnese}
+                                onChange={function(e) { setConsentimentoAnamnese(e.target.checked); }}
+                            />
+                            <span>{TEXTO_CONSENTIMENTO_ANAMNESE}</span>
+                        </label>
+                        {erro && <p style={styles.erro}>{erro}</p>}
+                        <button type="submit" style={styles.botao}>Continuar para o pedido</button>
+                    </form>
+                    ) : (
+                    <>
+                    <button type="button" style={styles.botaoSecundario} onClick={function() { setEtapaPedido(false); setErro(''); }}>← Voltar à ficha de saúde</button>
                     <form onSubmit={enviarPedido}>
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Descreva a tattoo que você quer</label>
@@ -256,9 +350,9 @@ function PedirTattoo() {
                         </div>
                         {profissionais.length > 0 && !profissionalIdUrl && (
                             <div style={styles.inputGroup}>
-                                <label style={styles.label}>Prefere algum tatuador específico? (opcional)</label>
-                                <select style={styles.inputField} value={form.profissional_id} onChange={function(e) { setForm({ ...form, profissional_id: e.target.value }); }}>
-                                    <option value="">Sem preferência</option>
+                                <label style={styles.label}>Selecione o tatuador responsável pelo pedido</label>
+                                <select style={styles.inputField} value={form.profissional_id} onChange={function(e) { setForm({ ...form, profissional_id: e.target.value }); }} required>
+                                    <option value="" disabled>Selecione um tatuador</option>
                                     {profissionais.map(function(p) {
                                         return <option key={p.id} value={p.id}>{p.nome}</option>;
                                     })}
@@ -277,12 +371,17 @@ function PedirTattoo() {
                             <label style={styles.label}>Seu WhatsApp</label>
                             <input style={styles.inputField} placeholder="71999999999" value={form.cliente_whatsapp} onChange={function(e) { setForm({ ...form, cliente_whatsapp: e.target.value }); }} required />
                         </div>
+                        {profissionaisCarregados && profissionais.length === 0 && (
+                            <p style={styles.erro}>Este estúdio ainda não tem um tatuador cadastrado para receber o pedido. Avise o estúdio para configurar o acesso do tatuador.</p>
+                        )}
                         <p style={styles.aviso}>Você vai receber o orçamento e o link de pagamento direto no seu WhatsApp.</p>
                         {erro && <p style={styles.erro}>{erro}</p>}
-                        <button type="submit" style={loading ? styles.botaoLoading : styles.botao} disabled={loading}>
+                        <button type="submit" style={loading || !profissionaisCarregados || profissionais.length === 0 ? styles.botaoLoading : styles.botao} disabled={loading || !profissionaisCarregados || profissionais.length === 0}>
                             {loading ? 'Enviando...' : 'Enviar pedido'}
                         </button>
                     </form>
+                    </>
+                    )}
                 </div>
             </div>
         );
@@ -420,6 +519,10 @@ const styles = {
     logo: { color: '#ffffff', fontSize: '20px', fontWeight: '700', letterSpacing: '3px', margin: '0 0 4px' },
     tagline: { color: '#888888', fontSize: '12px', letterSpacing: '2px', textTransform: 'uppercase', margin: 0 },
     inputGroup: { marginBottom: '16px' },
+    perguntaFicha: { border: '1px solid #2a2a2a', borderRadius: '8px', padding: '12px', margin: '0 0 12px', minWidth: 0 },
+    respostasFicha: { display: 'flex', gap: '20px', margin: '8px 0 4px' },
+    opcaoFicha: { display: 'flex', alignItems: 'center', gap: '7px', color: '#ddd', fontSize: '14px' },
+    consentimentoFicha: { display: 'flex', alignItems: 'flex-start', gap: '10px', color: '#ddd', fontSize: '13px', lineHeight: '1.5', margin: '18px 0' },
     inputRow: { display: 'flex' },
     label: { display: 'block', color: '#888888', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '6px' },
     inputField: { width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#ffffff', fontSize: '14px', boxSizing: 'border-box', outline: 'none' },
