@@ -12,9 +12,6 @@ function Login({ onLogin }) {
         setLoading(true);
         try {
             const res = await api.post('/auth/login', { email, senha });
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('estabelecimento_id', res.data.estabelecimento_id);
-            localStorage.setItem('nome', res.data.nome);
             onLogin(res.data);
         } catch (err) {
             setErro('Email ou senha incorretos');

@@ -13,9 +13,6 @@ function LoginProfissional({ onLogin }) {
         setErro('');
         try {
             const res = await api.post('/profissionais/login', { whatsapp, senha });
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('profissional_id', res.data.profissional_id);
-            localStorage.setItem('nome', res.data.nome);
             onLogin(res.data);
         } catch (err) {
             setErro(err.response?.data?.erro || 'WhatsApp ou senha incorretos');

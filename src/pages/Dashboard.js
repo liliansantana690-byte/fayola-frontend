@@ -127,7 +127,7 @@ function Icon({ name, size = 18 }) {
     return icons[name] || icons.sparkle;
 }
 
-function Dashboard({ estabelecimento }) {
+function Dashboard({ estabelecimento, onLogout }) {
     const [agendamentos, setAgendamentos] = useState([]);
     const [todosAgendamentos, setTodosAgendamentos] = useState([]);
     const [servicos, setServicos] = useState([]);
@@ -152,19 +152,17 @@ function Dashboard({ estabelecimento }) {
     const [conviteRecemCriado, setConviteRecemCriado] = useState(null);
     const [pedidosTattoo, setPedidosTattoo] = useState([]);
 
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     const linkAgendamento = `${window.location.origin}/pedido-tattoo?id=${estabelecimento.estabelecimento_id}`;
 
     const carregarDados = useCallback(async function() {
         try {
-            const a = await api.get('/agendamentos/hoje', { headers });
-            const todos = await api.get('/agendamentos/todos', { headers });
+            const a = await api.get('/agendamentos/hoje');
+            const todos = await api.get('/agendamentos/todos');
             const s = await api.get('/servicos/' + estabelecimento.estabelecimento_id);
-            const p = await api.get('/profissionais', { headers });
-            const c = await api.get('/profissionais/comissoes', { headers });
-            const mp = await api.get('/mercadopago/status', { headers });
-            const pt = await api.get('/pedidos-tattoo', { headers });
+            const p = await api.get('/profissionais');
+            const c = await api.get('/profissionais/comissoes');
+            const mp = await api.get('/mercadopago/status');
+            const pt = await api.get('/pedidos-tattoo');
 
             setAgendamentos(a.data);
             setTodosAgendamentos(todos.data);
@@ -177,7 +175,7 @@ function Dashboard({ estabelecimento }) {
         } catch (err) {
             console.error(err);
         }
-    }, [estabelecimento.estabelecimento_id, token]);
+    }, [estabelecimento.estabelecimento_id]);
 
     useEffect(function() {
         carregarDados();
@@ -185,7 +183,7 @@ function Dashboard({ estabelecimento }) {
 
     async function criarServico(e) {
         e.preventDefault();
-        await api.post('/servicos', novoServico, { headers });
+        await api.post('/servicos', novoServico);
         setNovoServico({
             nome: '',
             duracao_minutos: 60,
@@ -197,14 +195,14 @@ function Dashboard({ estabelecimento }) {
 
     async function excluirServico(id) {
         if (!window.confirm('Excluir este serviço?')) return;
-        await api.delete('/servicos/' + id, { headers });
+        await api.delete('/servicos/' + id);
         carregarDados();
     }
 
     async function criarProfissional(e) {
         e.preventDefault();
 
-        const resp = await api.post('/profissionais', novoProfissional, { headers });
+        const resp = await api.post('/profissionais', novoProfissional);
 
         setNovoProfissional({
             nome: '',
@@ -222,19 +220,19 @@ function Dashboard({ estabelecimento }) {
 
     async function excluirProfissional(id) {
         if (!window.confirm('Excluir este profissional?')) return;
-        await api.delete('/profissionais/' + id, { headers });
+        await api.delete('/profissionais/' + id);
         carregarDados();
     }
 
     async function cancelar(id) {
-        await api.patch('/agendamentos/' + id + '/cancelar', {}, { headers });
+        await api.patch('/agendamentos/' + id + '/cancelar', {});
         carregarDados();
     }
 
     async function excluirPedidoTattoo(id) {
         if (!window.confirm('Excluir este pedido? Essa ação não pode ser desfeita.')) return;
         try {
-            await api.delete('/pedidos-tattoo/' + id, { headers });
+            await api.delete('/pedidos-tattoo/' + id);
             carregarDados();
         } catch (err) {
             alert(err.response?.data?.erro || 'Erro ao excluir pedido.');
@@ -245,7 +243,7 @@ function Dashboard({ estabelecimento }) {
         setConectandoMp(true);
 
         try {
-            const resp = await api.get('/mercadopago/conectar', { headers });
+            const resp = await api.get('/mercadopago/conectar');
             window.location.href = resp.data.url;
         } catch (err) {
             alert('Erro ao gerar conexão com o Mercado Pago. Tente novamente.');
@@ -426,6 +424,9 @@ function Dashboard({ estabelecimento }) {
                             Painel de Gestão
                         </p>
                     </div>
+                    <button type="button" style={styles.logoutButton} onClick={onLogout} aria-label="Sair da conta" title="Sair">
+                        <Icon name="logout" size={17} />
+                    </button>
                 </div>
             </motion.aside>
 
@@ -1824,6 +1825,14 @@ const styles = {
         margin: '4px 0 0',
         textTransform: 'uppercase',
         letterSpacing: '1.1px'
+    },
+    logoutButton: {
+        background: 'transparent',
+        border: '1px solid #333',
+        color: '#888',
+        borderRadius: '8px',
+        padding: '8px',
+        cursor: 'pointer'
     },
 
     main: {

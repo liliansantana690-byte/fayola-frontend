@@ -1,10 +1,5 @@
 import api from './api';
 
-function authHeaders() {
-    const token = localStorage.getItem('token');
-    return { headers: { Authorization: `Bearer ${token}` } };
-}
-
 // ===== Público (cliente) =====
 
 export async function buscarDia(profissionalId, dataYMD) {
@@ -32,7 +27,7 @@ export async function buscarHorariosSemanais(profissionalId) {
 }
 
 export async function salvarHorariosSemanais(horarios) {
-    const r = await api.put('/disponibilidade/horarios', { horarios }, authHeaders());
+    const r = await api.put('/disponibilidade/horarios', { horarios });
     return r.data;
 }
 
@@ -42,11 +37,11 @@ export async function listarBloqueios(profissionalId) {
 }
 
 export async function bloquearDia(data, motivo) {
-    const r = await api.post('/disponibilidade/bloqueios', { data, motivo }, authHeaders());
+    const r = await api.post('/disponibilidade/bloqueios', { data, motivo });
     return r.data;
 }
 
 export async function desbloquearDia(id) {
-    const r = await api.delete(`/disponibilidade/bloqueios/${id}`, authHeaders());
+    const r = await api.delete(`/disponibilidade/bloqueios/${id}`);
     return r.data;
 }

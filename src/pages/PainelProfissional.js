@@ -20,15 +20,11 @@ function PainelProfissional({ nome, onLogout }) {
     const [duracaoMinutos, setDuracaoMinutos] = useState('120');
     const [enviandoOrcamento, setEnviandoOrcamento] = useState(false);
 
-    const token = localStorage.getItem('token');
-    const profissionalId = localStorage.getItem('profissional_id');
-    const headers = { Authorization: `Bearer ${token}` };
-
     const carregarDados = useCallback(async function() {
         try {
-            const a = await api.get('/profissionais/minha-agenda', { headers });
-            const c = await api.get('/profissionais/minha-comissao', { headers });
-            const p = await api.get('/pedidos-tattoo/meus-pedidos', { headers });
+            const a = await api.get('/profissionais/minha-agenda');
+            const c = await api.get('/profissionais/minha-comissao');
+            const p = await api.get('/pedidos-tattoo/meus-pedidos');
 
             setAgenda(a.data);
             setComissao(c.data);
@@ -36,7 +32,7 @@ function PainelProfissional({ nome, onLogout }) {
         } catch (err) {
             console.error(err);
         }
-    }, [token]);
+    }, []);
 
     useEffect(function() {
         carregarDados();
@@ -93,9 +89,6 @@ function PainelProfissional({ nome, onLogout }) {
                 '/profissionais/agendamentos/' + modalAberto.id + '/concluir',
                 {
                     valor_pago_total: parseFloat(valorRecebido)
-                },
-                {
-                    headers
                 }
             );
 
@@ -128,9 +121,6 @@ function PainelProfissional({ nome, onLogout }) {
                     valor_tattoo: parseFloat(valorTattoo),
                     valor_sinal: parseFloat(valorSinal),
                     duracao_minutos: parseInt(duracaoMinutos) || 120
-                },
-                {
-                    headers
                 }
             );
 
