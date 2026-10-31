@@ -16,8 +16,9 @@ function App() {
     const [carregandoSessao, setCarregandoSessao] = useState(true);
 
     async function encerrarSessao() {
+        const tipoSessao = window.location.pathname.startsWith('/painel-profissional') ? 'profissional' : 'estabelecimento';
         try {
-            await api.post('/auth/logout');
+            await api.post('/auth/logout', null, { params: { tipo: tipoSessao } });
         } catch (err) {}
         setEstabelecimento(null);
         setProfissional(null);
@@ -32,7 +33,8 @@ function App() {
         localStorage.removeItem('estabelecimento_id');
         localStorage.removeItem('profissional_id');
         localStorage.removeItem('nome');
-        api.get('/auth/sessao')
+        const tipoSessao = window.location.pathname.startsWith('/painel-profissional') ? 'profissional' : 'estabelecimento';
+        api.get('/auth/sessao', { params: { tipo: tipoSessao } })
             .then(function(res) {
                 if (!ativo) return;
                 if (res.data.tipo === 'estabelecimento') {
