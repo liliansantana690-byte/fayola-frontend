@@ -165,25 +165,47 @@ function PedirTattoo() {
         }, 4000);
     }
 
-    async function escolherData(valor) {
+    useEffect(function() {
+        if (!dataEscolhida || !pedido?.profissional_id || pedido.sinal_status !== 'pago' || pedido.status === 'convertido_agendamento') return;
+        let ativo = true;
+        let primeiraConsulta = true;
+        async function consultarDisponibilidade() {
+            try {
+                const info = await buscarDia(pedido.profissional_id, dataEscolhida);
+                if (!ativo) return;
+                setDiaInfo(info);
+                if (horaEscolhida && !horaDisponivel(horaEscolhida, info, dataEscolhida)) {
+                    setHoraEscolhida('');
+                    setErro('Esse horário acabou de ser reservado. Escolha outro horário disponível.');
+                }
+            } catch (err) {
+                if (ativo && primeiraConsulta) setErro('Não foi possível carregar a agenda desse dia.');
+            } finally {
+                primeiraConsulta = false;
+            }
+        }
+        consultarDisponibilidade();
+        const intervalo = setInterval(function() {
+            if (document.visibilityState === 'visible') consultarDisponibilidade();
+        }, 10000);
+        return function() { ativo = false; clearInterval(intervalo); };
+    }, [dataEscolhida, pedido?.profissional_id, pedido?.sinal_status, pedido?.status, horaEscolhida]);
+
+    function escolherData(valor) {
         setDataEscolhida(valor);
         setHoraEscolhida('');
         setDiaInfo(null);
-        if (!valor || !pedido?.profissional_id) return;
-        try {
-            const info = await buscarDia(pedido.profissional_id, valor);
-            setDiaInfo(info);
-        } catch (err) {
-            setErro('Não foi possível carregar a agenda desse dia.');
-        }
+        setErro('');
     }
 
-    function horaDisponivel(hora) {
-        if (!diaInfo || !diaInfo.aberto) return false;
+    function horaDisponivel(hora, infoAtual, dataAtual) {
+        const info = infoAtual || diaInfo;
+        const data = dataAtual || dataEscolhida;
+        if (!info || !info.aberto) return false;
         const duracao = pedido?.duracao_minutos || 120;
         const inicioMinutos = hora.split(':').map(Number).reduce((h, m) => h * 60 + m, 0);
         const fimMinutos = inicioMinutos + duracao;
-        const intervalos = diaInfo.horarios && diaInfo.horarios.length ? diaInfo.horarios : [diaInfo.horario];
+        const intervalos = info.horarios && info.horarios.length ? info.horarios : [info.horario];
         const dentroDoExpediente = intervalos.some(function(intervalo) {
             const [ih, im] = intervalo.hora_inicio.slice(0, 5).split(':').map(Number);
             const [fh, fm] = intervalo.hora_fim.slice(0, 5).split(':').map(Number);
@@ -191,10 +213,10 @@ function PedirTattoo() {
             return inicioMinutos >= inicioIntervalo && fimMinutos <= fh * 60 + fm && (inicioMinutos - inicioIntervalo) % 30 === 0;
         });
         if (!dentroDoExpediente) return false;
-        const inicio = dataEscolhida + 'T' + hora;
+        const inicio = data + 'T' + hora;
         if (new Date(inicio) <= new Date()) return false;
-        const fim = dataEscolhida + 'T' + String(Math.floor(fimMinutos / 60)).padStart(2, '0') + ':' + String(fimMinutos % 60).padStart(2, '0');
-        return !(diaInfo.ocupados || []).some(function(o) { return inicio < o.fim && o.inicio < fim; });
+        const fim = data + 'T' + String(Math.floor(fimMinutos / 60)).padStart(2, '0') + ':' + String(fimMinutos % 60).padStart(2, '0');
+        return !(info.ocupados || []).some(function(o) { return inicio < o.fim && o.inicio < fim; });
     }
 
     function gerarOpcoesDeHora() {
@@ -223,6 +245,10 @@ function PedirTattoo() {
             setPedido(resp);
         } catch (err) {
             setErro(err.response?.data?.erro || 'Erro ao confirmar horário.');
+            if (err.response?.status === 409) {
+                setHoraEscolhida('');
+                try { setDiaInfo(await buscarDia(pedido.profissional_id, dataEscolhida)); } catch (_) {}
+            }
         }
         setLoading(false);
     }
@@ -499,7 +525,7 @@ function PedirTattoo() {
                         <button
                             style={loading ? styles.botaoLoading : styles.botao}
                             onClick={confirmarHorario}
-                            disabled={loading || !horaEscolhida}
+                            disabled={loading || !horaEscolhida || !horaDisponivel(horaEscolhida)}
                         >
                             {loading ? 'Confirmando...' : 'Confirmar horário'}
                         </button>

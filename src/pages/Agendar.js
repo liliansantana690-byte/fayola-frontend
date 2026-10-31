@@ -78,26 +78,44 @@ function Agendar() {
     }, [profissionalIdUrl, profissionais]);
 
     useEffect(function() {
-        if (!form.profissional_id || !dataSelecionada) {
+        if (!form.profissional_id || !dataSelecionada || etapa === 4) {
             setDisponibilidadeDia(null);
             setErroDisponibilidade('');
             return;
         }
         let ativo = true;
-        setCarregandoDisponibilidade(true);
-        setErroDisponibilidade('');
-        buscarDia(form.profissional_id, dataSelecionada).then(function(dia) {
-            if (ativo) setDisponibilidadeDia(dia);
-        }).catch(function() {
-            if (ativo) {
-                setDisponibilidadeDia(null);
-                setErroDisponibilidade('Não foi possível carregar os horários. Tente novamente.');
+        let primeiraConsulta = true;
+        async function consultarDisponibilidade() {
+            if (primeiraConsulta) setCarregandoDisponibilidade(true);
+            try {
+                const dia = await buscarDia(form.profissional_id, dataSelecionada);
+                if (!ativo) return;
+                setDisponibilidadeDia(dia);
+                setErroDisponibilidade('');
+                if (form.data_hora && form.data_hora.startsWith(dataSelecionada + 'T')) {
+                    const horasLivres = gerarHorariosDisponiveis(dia, servicoSelecionado?.duracao_minutos || 60, dataSelecionada);
+                    if (!horasLivres.includes(form.data_hora.slice(11, 16))) {
+                        setForm(function(f) { return { ...f, data_hora: '' }; });
+                        setErro('Esse horário acabou de ser reservado. Escolha outro horário disponível.');
+                        setEtapa(2);
+                    }
+                }
+            } catch (err) {
+                if (ativo && primeiraConsulta) {
+                    setDisponibilidadeDia(null);
+                    setErroDisponibilidade('Não foi possível carregar os horários. Tente novamente.');
+                }
+            } finally {
+                if (ativo && primeiraConsulta) setCarregandoDisponibilidade(false);
+                primeiraConsulta = false;
             }
-        }).finally(function() {
-            if (ativo) setCarregandoDisponibilidade(false);
-        });
-        return function() { ativo = false; };
-    }, [form.profissional_id, dataSelecionada, atualizarDisponibilidade]);
+        }
+        consultarDisponibilidade();
+        const intervalo = setInterval(function() {
+            if (document.visibilityState === 'visible') consultarDisponibilidade();
+        }, 10000);
+        return function() { ativo = false; clearInterval(intervalo); };
+    }, [form.profissional_id, form.data_hora, dataSelecionada, atualizarDisponibilidade, etapa, servicoSelecionado?.duracao_minutos]);
 
     useEffect(function() {
         return function() {
