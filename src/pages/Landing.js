@@ -2773,7 +2773,7 @@ export default function Landing() {
             >
               <span className="eyebrow-dot" />
 
-              FEITO PARA QUEM VIVE DA TATUAGEM
+              FAYOLA PARA TATUADORES E ESTÚDIOS
             </motion.div>
 
             <motion.h1
@@ -2784,11 +2784,11 @@ export default function Landing() {
                 delay: .15,
               }}
             >
-              Enquanto você
+              Menos tempo
+              <em> organizando.</em>
               <br />
-              <em>tatua,</em> o Fayola
-              <br />
-              atende.
+              Mais tempo
+              <em> tatuando.</em>
             </motion.h1>
 
             <motion.p
@@ -2800,15 +2800,8 @@ export default function Landing() {
                 delay: .35,
               }}
             >
-              Você cuida da arte.
-              <strong>
-                {" "}O Fayola cuida do atendimento.
-              </strong>
-
-              <br />
-
-              Do primeiro pedido ao horário confirmado,
-              tudo organizado em um só lugar.
+              Enquanto você cria, o Fayola organiza seus pedidos,
+              orçamentos e agenda.
             </motion.p>
 
             <motion.div
@@ -2839,7 +2832,7 @@ export default function Landing() {
             </motion.div>
 
             <div className="hero-note">
-              R$ 199,99/mês · sem complicação
+              R$ 79,99/mês · todos os recursos incluídos
             </div>
 
           </div>
@@ -3350,43 +3343,20 @@ export default function Landing() {
     </Reveal>
 
     <Reveal delay={.1}>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-          gap: 18,
-          alignItems: "stretch",
-        }}
-      >
-
-        {/* =====================================================
-            FAYOLA SOLO
-            ===================================================== */}
-
+      <div style={{ maxWidth: 960, margin: "0 auto" }}>
         <div className="price-card">
-
           <div className="price-grid">
-
             <div>
-
-              <div className="price-label">
-                FAYOLA SOLO
-              </div>
-
-              <h3>
-                Para você.
-              </h3>
-
+              <div className="price-label">PLANO COMPLETO FAYOLA</div>
+              <h3>Todos os recursos. Um só plano.</h3>
               <p className="price-description">
-                Para tatuador independente que quer
-                organizar o atendimento e parar de
-                perder tempo com mensagens e horários.
+                Para tatuadores independentes e estúdios que querem organizar
+                pedidos, equipe, agenda e pagamentos em um só lugar.
               </p>
 
               <div className="price-value">
                 <small>R$</small>
-                <strong>79,90</strong>
+                <strong>79,99</strong>
                 <span>/mês</span>
               </div>
 
@@ -3397,196 +3367,30 @@ export default function Landing() {
                 Quero começar
                 <span>→</span>
               </MagneticButton>
-
             </div>
 
             <div className="price-features">
-
               {[
                 "Link público para seus clientes",
-                "Pedidos de tatuagem",
-                "Referências e informações do projeto",
-                "Tamanho e serviços",
-                "Agenda",
-                "Clientes",
-                "Sinal via PIX",
+                "Pedidos de tatuagem com referências e detalhes do projeto",
+                "Orçamentos e cadastro de serviços por tamanho e preço",
+                "Agenda geral e agenda por profissional",
+                "Cadastro de clientes e histórico",
+                "Sinal via Pix",
                 "Notificações e lembretes",
-              ].map((item) => (
-                <div
-                  className="price-feature"
-                  key={item}
-                >
-                  <span>✓</span>
-                  {item}
-                </div>
-              ))}
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* =====================================================
-            FAYOLA STUDIO
-            ===================================================== */}
-
-        <div
-          className="price-card"
-          style={{
-            borderColor: "rgba(255,106,61,.30)",
-          }}
-        >
-
-          <div className="price-grid">
-
-            <div>
-
-              <div className="price-label">
-                FAYOLA STUDIO
-              </div>
-
-              <h3>
-                Para sua equipe.
-              </h3>
-
-              <p className="price-description">
-                Para estúdios com equipe que precisam
-                organizar profissionais, agenda,
-                clientes e comissões.
-              </p>
-
-              <div className="price-value">
-                <small>R$</small>
-                <strong>149,90</strong>
-                <span>/mês</span>
-              </div>
-
-              <MagneticButton
-                href={WHATSAPP_ASSINAR}
-                className="primary-button price-button"
-              >
-                Quero começar
-                <span>→</span>
-              </MagneticButton>
-
-            </div>
-
-            <div className="price-features">
-
-              {[
-                "Tudo do Fayola Solo",
+                "Gestão da equipe e acesso individual para profissionais",
                 "Profissionais e comissões",
-                "Acesso individual para profissionais",
-                "Agenda por profissional",
-                "Gestão da equipe",
-                "Clientes e histórico",
-                "Sinal via PIX",
-                "Notificações e lembretes",
+                "Ficha de saúde e consentimento nos pedidos",
               ].map((item) => (
-                <div
-                  className="price-feature"
-                  key={item}
-                >
+                <div className="price-feature" key={item}>
                   <span>✓</span>
                   {item}
                 </div>
               ))}
-
             </div>
-
           </div>
-
         </div>
-
-
-        {/* =====================================================
-            FAYOLA PRO
-            ===================================================== */}
-
-        <div
-          className="price-card"
-          style={{
-            borderColor: "rgba(255,106,61,.55)",
-            boxShadow:
-              "0 0 70px rgba(255,106,61,.10)",
-          }}
-        >
-
-          <div className="price-grid">
-
-            <div>
-
-              <div
-                className="price-label"
-                style={{
-                  color: "#ff6a3d",
-                }}
-              >
-                FAYOLA PRO
-              </div>
-
-              <h3>
-                Tudo organizado.
-              </h3>
-
-              <p className="price-description">
-                Para tatuadores e estúdios que querem
-                profissionalizar o atendimento sem
-                transformar o próprio trabalho em
-                burocracia.
-              </p>
-
-              <div className="price-value">
-                <small>R$</small>
-                <strong>199,99</strong>
-                <span>/mês</span>
-              </div>
-
-              <MagneticButton
-                href={WHATSAPP_ASSINAR}
-                className="primary-button price-button"
-              >
-                Quero começar
-                <span>→</span>
-              </MagneticButton>
-
-            </div>
-
-            <div className="price-features">
-
-              {[
-                "Tudo do Fayola Studio",
-                "Link público para seus clientes",
-                "Pedidos de tatuagem",
-                "Referências e informações do projeto",
-                "Tamanho e serviços",
-                "Orçamentos",
-                "Agenda",
-                "Clientes",
-                "Sinal via PIX",
-                "Notificações e lembretes",
-                "Profissionais e comissões",
-                "Acesso individual para profissionais",
-              ].map((item) => (
-                <div
-                  className="price-feature"
-                  key={item}
-                >
-                  <span>✓</span>
-                  {item}
-                </div>
-              ))}
-
-            </div>
-
-          </div>
-
-        </div>
-
       </div>
-
     </Reveal>
 
   </div>
@@ -3698,7 +3502,7 @@ export default function Landing() {
       </a>
 
       <a href="#preco">
-        Planos
+        Plano
       </a>
 
     </div>
