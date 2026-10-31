@@ -1,5 +1,35 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
+import { buscarDia } from '../services/availabilityApi';
+
+function dataHojeLocal() {
+    const agora = new Date();
+    return agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0') + '-' + String(agora.getDate()).padStart(2, '0');
+}
+
+function gerarHorariosDisponiveis(dia, duracaoMinutos, data) {
+    const intervalos = dia.horarios && dia.horarios.length ? dia.horarios : (dia.horario ? [dia.horario] : []);
+    const ocupados = dia.ocupados || [];
+    const duracao = Math.max(1, Number(duracaoMinutos) || 60);
+    const agora = new Date();
+    const resultado = [];
+    intervalos.forEach(function(intervalo) {
+        const [inicioHora, inicioMinuto] = String(intervalo.hora_inicio).slice(0, 5).split(':').map(Number);
+        const [fimHora, fimMinuto] = String(intervalo.hora_fim).slice(0, 5).split(':').map(Number);
+        const inicio = inicioHora * 60 + inicioMinuto;
+        const fim = fimHora * 60 + fimMinuto;
+        for (let minuto = inicio; minuto + duracao <= fim; minuto += 30) {
+            const hora = String(Math.floor(minuto / 60)).padStart(2, '0') + ':' + String(minuto % 60).padStart(2, '0');
+            const candidato = data + 'T' + hora;
+            if (new Date(candidato) <= agora) continue;
+            const finalMinuto = minuto + duracao;
+            const fimCandidato = data + 'T' + String(Math.floor(finalMinuto / 60)).padStart(2, '0') + ':' + String(finalMinuto % 60).padStart(2, '0');
+            const conflita = ocupados.some(function(item) { return candidato < item.fim && item.inicio < fimCandidato; });
+            if (!conflita && !resultado.includes(hora)) resultado.push(hora);
+        }
+    });
+    return resultado.sort();
+}
 
 function Agendar() {
     const params = new URLSearchParams(window.location.search);
@@ -24,6 +54,11 @@ function Agendar() {
     const [agendamentoId, setAgendamentoId] = useState(null);
     const [statusPagamento, setStatusPagamento] = useState('aguardando');
     const [segundosRestantes, setSegundosRestantes] = useState(0);
+    const [dataSelecionada, setDataSelecionada] = useState('');
+    const [disponibilidadeDia, setDisponibilidadeDia] = useState(null);
+    const [carregandoDisponibilidade, setCarregandoDisponibilidade] = useState(false);
+    const [erroDisponibilidade, setErroDisponibilidade] = useState('');
+    const [atualizarDisponibilidade, setAtualizarDisponibilidade] = useState(0);
     const [copiado, setCopiado] = useState(false);
     const pollingRef = useRef(null);
     const countdownRef = useRef(null);
@@ -41,6 +76,28 @@ function Agendar() {
             setForm(function(f) { return { ...f, profissional_id: profissionalIdUrl }; });
         }
     }, [profissionalIdUrl, profissionais]);
+
+    useEffect(function() {
+        if (!form.profissional_id || !dataSelecionada) {
+            setDisponibilidadeDia(null);
+            setErroDisponibilidade('');
+            return;
+        }
+        let ativo = true;
+        setCarregandoDisponibilidade(true);
+        setErroDisponibilidade('');
+        buscarDia(form.profissional_id, dataSelecionada).then(function(dia) {
+            if (ativo) setDisponibilidadeDia(dia);
+        }).catch(function() {
+            if (ativo) {
+                setDisponibilidadeDia(null);
+                setErroDisponibilidade('Não foi possível carregar os horários. Tente novamente.');
+            }
+        }).finally(function() {
+            if (ativo) setCarregandoDisponibilidade(false);
+        });
+        return function() { ativo = false; };
+    }, [form.profissional_id, dataSelecionada, atualizarDisponibilidade]);
 
     useEffect(function() {
         return function() {
@@ -72,7 +129,13 @@ function Agendar() {
             iniciarContagem(pagamentoResp.expira_em);
             iniciarPolling(agendamento.id);
         } catch (err) {
-            setErro('Erro ao agendar. Tente novamente.');
+            const mensagem = err.response?.data?.erro || 'Erro ao agendar. Tente novamente.';
+            setErro(mensagem);
+            if (err.response?.status === 409) {
+                setForm(function(f) { return { ...f, data_hora: '' }; });
+                setAtualizarDisponibilidade(function(n) { return n + 1; });
+                setEtapa(2);
+            }
         }
         setLoading(false);
     }
@@ -230,7 +293,7 @@ function Agendar() {
                                                 <div
                                                     key={p.id}
                                                     style={form.profissional_id == p.id ? styles.itemSelecionado : styles.itemSelecao}
-                                                    onClick={function() { setForm({...form, profissional_id: p.id}); }}
+                                                    onClick={function() { setForm(function(f) { return { ...f, profissional_id: p.id, data_hora: '' }; }); }}
                                                 >
                                                     <p style={styles.itemNome}>{p.nome}</p>
                                                     <p style={styles.itemDetalhe}>{p.especialidade}</p>
@@ -239,19 +302,24 @@ function Agendar() {
                                         })}
                                     </div>
                                 )}
-
                                 <div style={styles.inputGroup}>
-                                    <label style={styles.label}>Data e Horário</label>
-                                    <input
-                                        style={styles.inputField}
-                                        type="datetime-local"
-                                        value={form.data_hora}
-                                        onChange={function(e) { setForm({...form, data_hora: e.target.value}); }}
-                                    />
+                                    <label style={styles.label}>Data</label>
+                                    <input style={styles.inputField} type="date" min={dataHojeLocal()} value={dataSelecionada} disabled={!form.profissional_id} onChange={function(e) { setDataSelecionada(e.target.value); setForm(function(f) { return { ...f, data_hora: '' }; }); }} />
                                 </div>
+                                {dataSelecionada && (
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>Horários disponíveis</label>
+                                        {carregandoDisponibilidade && <p style={styles.itemDetalhe}>Consultando horários...</p>}
+                                        {!carregandoDisponibilidade && erroDisponibilidade && <p style={styles.erroDisponibilidade}>{erroDisponibilidade}</p>}
+                                        {!carregandoDisponibilidade && disponibilidadeDia && !disponibilidadeDia.aberto && <p style={styles.itemDetalhe}>{disponibilidadeDia.motivo || 'Sem atendimento nesta data.'}</p>}
+                                        {!carregandoDisponibilidade && disponibilidadeDia?.aberto && gerarHorariosDisponiveis(disponibilidadeDia, servicoSelecionado?.duracao_minutos || 60, dataSelecionada).length === 0 && <p style={styles.itemDetalhe}>Não há horários livres nesta data. Escolha outra.</p>}
+                                        {!carregandoDisponibilidade && disponibilidadeDia?.aberto && <div style={styles.gradeHorarios}>{gerarHorariosDisponiveis(disponibilidadeDia, servicoSelecionado?.duracao_minutos || 60, dataSelecionada).map(function(hora) { const selecionado = form.data_hora === dataSelecionada + 'T' + hora; return <button key={hora} type="button" style={selecionado ? styles.horarioSelecionado : styles.horarioBotao} onClick={function() { setForm(function(f) { return { ...f, data_hora: dataSelecionada + 'T' + hora }; }); }}>{hora}</button>; })}</div>}
+                                    </div>
+                                )}
+                                {erro && <p style={styles.erroDisponibilidade}>{erro}</p>}
                                 <div style={styles.btnRow}>
                                     <button type="button" style={styles.botaoSecundario} onClick={function() { setEtapa(1); }}>← Voltar</button>
-                                    <button type="button" style={styles.botao} onClick={function() { if (form.profissional_id && form.data_hora) setEtapa(3); }}>Continuar →</button>
+                                    <button type="button" style={styles.botao} disabled={!form.profissional_id || !form.data_hora} onClick={function() { setErro(''); setEtapa(3); }}>Continuar →</button>
                                 </div>
                             </div>
                         )}
@@ -340,6 +408,10 @@ const styles = {
     inputGroup: { marginBottom: '16px' },
     label: { display: 'block', color: '#888888', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '6px' },
     inputField: { width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#ffffff', fontSize: '14px', boxSizing: 'border-box', outline: 'none' },
+    gradeHorarios: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '8px' },
+    horarioBotao: { padding: '11px 6px', borderRadius: '8px', border: '1px solid #3a3a3a', background: '#0a0a0a', color: '#ddd', cursor: 'pointer' },
+    horarioSelecionado: { padding: '11px 6px', borderRadius: '8px', border: '1px solid #c9a96e', background: '#1f1a0f', color: '#c9a96e', fontWeight: '700', cursor: 'pointer' },
+    erroDisponibilidade: { color: '#e05252', fontSize: '13px' },
     botao: { flex: 1, padding: '14px', background: '#c9a96e', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer' },
     botaoLoading: { flex: 1, padding: '14px', background: '#8a7045', color: '#0a0a0a', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'not-allowed' },
     botaoSecundario: { width: '100%', padding: '14px 20px', background: 'transparent', color: '#c9a96e', border: '1px solid #c9a96e', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', marginBottom: '12px' },

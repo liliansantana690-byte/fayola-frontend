@@ -180,31 +180,38 @@ function PedirTattoo() {
 
     function horaDisponivel(hora) {
         if (!diaInfo || !diaInfo.aberto) return false;
-        const inicio = new Date(`${dataEscolhida}T${hora}:00`);
-        const fim = new Date(inicio.getTime() + (pedido?.duracao_minutos || 120) * 60 * 1000);
-        const fimExpediente = new Date(`${dataEscolhida}T${diaInfo.horario.hora_fim}`);
-        if (fim > fimExpediente) return false;
-        return !diaInfo.ocupados.some(function(o) {
-            const oi = new Date(o.inicio);
-            const of = new Date(o.fim);
-            return inicio < of && oi < fim;
+        const duracao = pedido?.duracao_minutos || 120;
+        const inicioMinutos = hora.split(':').map(Number).reduce((h, m) => h * 60 + m, 0);
+        const fimMinutos = inicioMinutos + duracao;
+        const intervalos = diaInfo.horarios && diaInfo.horarios.length ? diaInfo.horarios : [diaInfo.horario];
+        const dentroDoExpediente = intervalos.some(function(intervalo) {
+            const [ih, im] = intervalo.hora_inicio.slice(0, 5).split(':').map(Number);
+            const [fh, fm] = intervalo.hora_fim.slice(0, 5).split(':').map(Number);
+            const inicioIntervalo = ih * 60 + im;
+            return inicioMinutos >= inicioIntervalo && fimMinutos <= fh * 60 + fm && (inicioMinutos - inicioIntervalo) % 30 === 0;
         });
+        if (!dentroDoExpediente) return false;
+        const inicio = dataEscolhida + 'T' + hora;
+        if (new Date(inicio) <= new Date()) return false;
+        const fim = dataEscolhida + 'T' + String(Math.floor(fimMinutos / 60)).padStart(2, '0') + ':' + String(fimMinutos % 60).padStart(2, '0');
+        return !(diaInfo.ocupados || []).some(function(o) { return inicio < o.fim && o.inicio < fim; });
     }
 
     function gerarOpcoesDeHora() {
         if (!diaInfo || !diaInfo.aberto) return [];
+        const intervalos = diaInfo.horarios && diaInfo.horarios.length ? diaInfo.horarios : [diaInfo.horario];
         const opcoes = [];
-        const [hi, mi] = diaInfo.horario.hora_inicio.split(':').map(Number);
-        const [hf, mf] = diaInfo.horario.hora_fim.split(':').map(Number);
-        let minutos = hi * 60 + mi;
-        const fimMinutos = hf * 60 + mf;
-        while (minutos < fimMinutos) {
-            const h = String(Math.floor(minutos / 60)).padStart(2, '0');
-            const m = String(minutos % 60).padStart(2, '0');
-            opcoes.push(`${h}:${m}`);
-            minutos += 30;
-        }
-        return opcoes;
+        intervalos.forEach(function(intervalo) {
+            const [hi, mi] = intervalo.hora_inicio.slice(0, 5).split(':').map(Number);
+            const [hf, mf] = intervalo.hora_fim.slice(0, 5).split(':').map(Number);
+            const inicio = hi * 60 + mi;
+            const fim = hf * 60 + mf;
+            for (let minutos = inicio; minutos < fim; minutos += 30) {
+                const opcao = String(Math.floor(minutos / 60)).padStart(2, '0') + ':' + String(minutos % 60).padStart(2, '0');
+                if (!opcoes.includes(opcao)) opcoes.push(opcao);
+            }
+        });
+        return opcoes.sort();
     }
 
     async function confirmarHorario() {
@@ -448,7 +455,7 @@ function PedirTattoo() {
                                 type="date"
                                 style={styles.inputField}
                                 value={dataEscolhida}
-                                min={new Date().toISOString().split('T')[0]}
+                                min={new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0')}
                                 onChange={function(e) { escolherData(e.target.value); }}
                             />
                         </div>
