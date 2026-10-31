@@ -62,6 +62,7 @@ function Agendar() {
     const [copiado, setCopiado] = useState(false);
     const pollingRef = useRef(null);
     const countdownRef = useRef(null);
+    const agendamentoEnviandoRef = useRef(false);
 
     useEffect(function() {
         if (!estabelecimentoId) return;
@@ -126,7 +127,8 @@ function Agendar() {
 
     async function handleAgendar(e) {
         e.preventDefault();
-        if (loading) return;
+        if (agendamentoEnviandoRef.current) return;
+        agendamentoEnviandoRef.current = true;
         setErro('');
         setLoading(true);
         try {
@@ -154,8 +156,10 @@ function Agendar() {
                 setAtualizarDisponibilidade(function(n) { return n + 1; });
                 setEtapa(2);
             }
+        } finally {
+            setLoading(false);
+            agendamentoEnviandoRef.current = false;
         }
-        setLoading(false);
     }
 
     function iniciarContagem(expiraEm) {

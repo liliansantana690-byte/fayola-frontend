@@ -3,6 +3,12 @@ import api from '../services/api';
 import { buscarDia, buscarStatusPedido, confirmarHorarioPedido } from '../services/availabilityApi';
 import { PERGUNTAS_ANAMNESE, TEXTO_CONSENTIMENTO_ANAMNESE, VERSAO_CONSENTIMENTO_ANAMNESE } from '../utils/anamneseTattoo';
 
+function novaChaveIdempotencia() {
+    const bytes = new Uint8Array(24);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 function PedirTattoo() {
     const params = new URLSearchParams(window.location.search);
     const estabelecimentoIdUrl = params.get('id');
@@ -42,6 +48,10 @@ function PedirTattoo() {
     const [diaInfo, setDiaInfo] = useState(null);
     const pollingRef = useRef(null);
     const countdownRef = useRef(null);
+    const chaveEnvioRef = useRef(null);
+    const enviandoPedidoRef = useRef(false);
+    const gerandoPixRef = useRef(false);
+    const confirmandoHorarioRef = useRef(false);
 
     useEffect(function() {
         if (estabelecimentoIdUrl) {
@@ -81,9 +91,18 @@ function PedirTattoo() {
 
     async function enviarPedido(e) {
         e.preventDefault();
+        if (enviandoPedidoRef.current) return;
+        enviandoPedidoRef.current = true;
         setErro('');
         setLoading(true);
+        const storageKey = 'fayola:pedido-tattoo:' + estabelecimentoIdUrl;
         try {
+            let chave = chaveEnvioRef.current || sessionStorage.getItem(storageKey);
+            if (!chave) {
+                chave = novaChaveIdempotencia();
+                sessionStorage.setItem(storageKey, chave);
+            }
+            chaveEnvioRef.current = chave;
             const resp = await api.post('/pedidos-tattoo', {
                 estabelecimento_id: parseInt(estabelecimentoIdUrl),
                 profissional_id: form.profissional_id ? parseInt(form.profissional_id) : null,
@@ -98,13 +117,17 @@ function PedirTattoo() {
                 respostas_anamnese: respostasAnamnese,
                 consentimento_anamnese: consentimentoAnamnese,
                 versao_consentimento_anamnese: VERSAO_CONSENTIMENTO_ANAMNESE
-            });
+            }, { headers: { 'Idempotency-Key': chave } });
+            sessionStorage.removeItem(storageKey);
+            chaveEnvioRef.current = null;
             setPedido(resp.data);
             setEnviado(true);
         } catch (err) {
             setErro(err.response?.data?.erro || 'Erro ao enviar pedido. Tente novamente.');
+        } finally {
+            setLoading(false);
+            enviandoPedidoRef.current = false;
         }
-        setLoading(false);
     }
 
     function avancarParaPedido(e) {
@@ -125,6 +148,8 @@ function PedirTattoo() {
     }
 
     async function gerarPix() {
+        if (gerandoPixRef.current) return;
+        gerandoPixRef.current = true;
         setErro('');
         setLoading(true);
         try {
@@ -134,8 +159,10 @@ function PedirTattoo() {
             iniciarPolling();
         } catch (err) {
             setErro(err.response?.data?.erro || 'Erro ao gerar PIX.');
+        } finally {
+            setLoading(false);
+            gerandoPixRef.current = false;
         }
-        setLoading(false);
     }
 
     function iniciarContagem(expiraEm) {
@@ -237,6 +264,8 @@ function PedirTattoo() {
     }
 
     async function confirmarHorario() {
+        if (confirmandoHorarioRef.current) return;
+        confirmandoHorarioRef.current = true;
         setErro('');
         setLoading(true);
         try {
@@ -251,6 +280,7 @@ function PedirTattoo() {
             }
         }
         setLoading(false);
+        confirmandoHorarioRef.current = false;
     }
 
     function copiarCodigoPix() {
