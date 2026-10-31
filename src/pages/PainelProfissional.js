@@ -5,7 +5,7 @@ import ConfigurarDisponibilidade from './ConfigurarDisponibilidade';
 import { gerarTextoOrcamento, copiarTexto } from '../utils/mensagemOrcamento';
 import { PERGUNTAS_ANAMNESE } from '../utils/anamneseTattoo';
 
-function PainelProfissional({ nome, onLogout }) {
+function PainelProfissional({ profissionalId, nome, onLogout }) {
     const [aba, setAba] = useState('agenda');
     const [agenda, setAgenda] = useState([]);
     const [comissao, setComissao] = useState({ total: 0, atendimentos: 0 });

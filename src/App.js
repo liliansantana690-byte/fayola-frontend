@@ -83,7 +83,7 @@ function App() {
             window.location.href = '/painel-profissional/login';
             return null;
         }
-        return <PainelProfissional nome={profissional.nome} onLogout={encerrarSessao} />;
+        return <PainelProfissional profissionalId={profissional.profissional_id} nome={profissional.nome} onLogout={encerrarSessao} />;
     }
 
     if (estabelecimento) {
