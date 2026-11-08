@@ -566,7 +566,7 @@ function PedirTattoo() {
                     <div style={{ textAlign: 'center' }}>
                         <div style={styles.sucessoIcon}>✓</div>
                         <h2 style={styles.sucessoTitulo}>Tudo certo!</h2>
-                        <p style={styles.sucessoTexto}>Sua sessão está confirmada para {new Date(pedido.data_hora).toLocaleString('pt-BR')}.</p>
+                        <p style={styles.sucessoTexto}>Sua sessão está confirmada para {new Date(pedido.data_hora).toLocaleString('pt-BR', { timeZone: 'UTC' })}.</p>
                     </div>
                 )}
             </div>
