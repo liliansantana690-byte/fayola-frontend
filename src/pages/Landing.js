@@ -2459,7 +2459,7 @@ export default function Landing() {
         @media (max-width: 1000px) {
 
           .hero-inner {
-            grid-template-columns: 1fr;
+           grid-template-columns: minmax(0, 1fr);
           }
 
           .hero-product {
