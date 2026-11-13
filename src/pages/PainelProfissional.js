@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import ConfigurarDisponibilidade from './ConfigurarDisponibilidade';
-import { gerarTextoOrcamento, copiarTexto } from '../utils/mensagemOrcamento';
+import { gerarTextoOrcamento, copiarTexto, linkWhatsapp } from '../utils/mensagemOrcamento';
 import { PERGUNTAS_ANAMNESE } from '../utils/anamneseTattoo';
 
 function PainelProfissional({ profissionalId, nome, onLogout }) {
@@ -724,10 +724,15 @@ function PainelProfissional({ profissionalId, nome, onLogout }) {
                                             Copiar mensagem do orçamento
                                         </motion.button>
 
-                                        <p style={styles.detalhe}>
-                                            WhatsApp do cliente: {p.cliente_whatsapp}
-                                        
-                                        </p>
+                                        <a
+                                            href={linkWhatsapp(p.cliente_whatsapp)}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            style={{ ...styles.btnConcluir, display: 'inline-block', textDecoration: 'none', textAlign: 'center', marginTop: 10 }}
+                                        >
+                                           Abrir WhatsApp do cliente ({p.cliente_whatsapp})
+                                    </a>
+
                                     </motion.div>
                                 );
                             })}

@@ -16,6 +16,14 @@ export function gerarTextoOrcamento(pedido) {
     );
 }
 
+// Link que abre a conversa direto no WhatsApp com o número do cliente
+export function linkWhatsapp(numero) {
+    let digitos = String(numero || '').replace(/\D/g, '').replace(/^0+/, '');
+    if (!digitos) return '#';
+    if (!digitos.startsWith('55')) digitos = '55' + digitos;
+    return `https://wa.me/${digitos}`;
+}
+
 export async function copiarTexto(texto) {
     try {
         await navigator.clipboard.writeText(texto);
