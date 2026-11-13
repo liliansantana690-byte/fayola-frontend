@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
+import OnboardingCard from '../components/OnboardingCard';
 import './dashboard-responsive.css';
 
 function Icon({ name, size = 18 }) {
@@ -467,6 +468,13 @@ function Dashboard({ estabelecimento, onLogout }) {
                             animate="animate"
                             exit="exit"
                         >
+                                                        <OnboardingCard
+                                temServicos={servicos.length > 0}
+                                mpConectado={mpConectado}
+                                linkPedido={linkAgendamento}
+                                onIrPara={setAba}
+                            />
+                            
                             <div style={styles.pageHeader}>
                                 <div>
                                     <p style={styles.sectionEyebrow}>VISÃO GERAL</p>
