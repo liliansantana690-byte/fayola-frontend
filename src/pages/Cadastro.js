@@ -33,7 +33,7 @@ function Cadastro() {
     }
 
     if (sucesso) {
-        const linkCheckout = process.env.REACT_APP_CHECKOUT_URL || 'https://pay.kiwify.com.br/5e6ZkkT';
+        const linkCheckout = process.env.REACT_APP_CHECKOUT_URL || 'https://pay.kiwify.com.br/uylBik4';
         return (
             <div style={styles.container}>
                 <div style={styles.card}>
