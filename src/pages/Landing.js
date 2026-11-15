@@ -2832,7 +2832,7 @@ export default function Landing() {
             </motion.div>
 
             <div className="hero-note">
-              R$ 79,99/mês · todos os recursos incluídos
+              R$ 29,99/mês · promoção de Black Friday
             </div>
 
           </div>
@@ -3356,7 +3356,7 @@ export default function Landing() {
 
               <div className="price-value">
                 <small>R$</small>
-                <strong>79,99</strong>
+                <strong>29,99</strong>
                 <span>/mês</span>
               </div>
 
