@@ -292,7 +292,6 @@ function Dashboard({ estabelecimento, onLogout }) {
         { id: 'hoje', icon: 'calendar', label: 'Agenda' },
         { id: 'tattoo', icon: 'sparkle', label: 'Tattoo' },
         { id: 'agendamentos', icon: 'clipboard', label: 'Agendamentos' },
-        { id: 'servicos', icon: 'sparkle', label: 'Serviços' },
         { id: 'profissionais', icon: 'users', label: 'Equipe' },
         { id: 'comissoes', icon: 'wallet', label: 'Comissões' },
         { id: 'pagamentos', icon: 'card', label: 'Pagamentos' },
