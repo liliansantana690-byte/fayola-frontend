@@ -467,11 +467,13 @@ function Dashboard({ estabelecimento, onLogout }) {
                             animate="animate"
                             exit="exit"
                         >
-                                                        <OnboardingCard
-                                temServicos={servicos.length > 0}
+                            <OnboardingCard
                                 mpConectado={mpConectado}
+                                temProfissional={profissionais.length > 0}
+                                temPedidos={pedidosTattoo.length > 0}
                                 linkPedido={linkAgendamento}
                                 onIrPara={setAba}
+                            
                             />
                             
                             <div style={styles.pageHeader}>

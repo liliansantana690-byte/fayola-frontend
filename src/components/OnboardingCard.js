@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const CHAVE_LINK = 'fayola_onboarding_link_copiado';
 
-function OnboardingCard({ temServicos, mpConectado, linkPedido, onIrPara }) {
+function OnboardingCard({ mpConectado, temProfissional, temPedidos, linkPedido, onIrPara }) {
     const [linkCopiado, setLinkCopiado] = useState(
         () => localStorage.getItem(CHAVE_LINK) === '1'
     );
@@ -19,18 +19,25 @@ function OnboardingCard({ temServicos, mpConectado, linkPedido, onIrPara }) {
 
     const passos = [
         {
-            titulo: 'Cadastre seus serviços',
-            texto: 'Tatuagem pequena, média e grande, com o preço e o tempo de cada uma. É isso que o cliente vê ao pedir.',
-            feito: temServicos,
-            botao: 'Ir para Serviços',
-            acao: () => onIrPara('servicos'),
-        },
-        {
             titulo: 'Conecte o Mercado Pago',
             texto: 'É aqui que o sinal do cliente cai, direto na sua conta. Confira antes se sua conta tem chave Pix e está verificada.',
             feito: mpConectado,
             botao: 'Conectar Mercado Pago',
             acao: () => onIrPara('pagamentos'),
+        },
+        {
+            titulo: 'Cadastre você e sua equipe',
+            texto: 'Cada tatuador tem o próprio acesso. É no painel dele que chegam os pedidos e onde ele envia o orçamento.',
+            feito: temProfissional,
+            botao: 'Ir para Equipe',
+            acao: () => onIrPara('profissionais'),
+        },
+        {
+            titulo: 'Acompanhe os pedidos',
+            texto: 'Os pedidos aparecem na aba Tattoo, com a ideia, o tamanho, a referência e o WhatsApp do cliente para você conversar.',
+            feito: temPedidos,
+            botao: 'Ver pedidos',
+            acao: () => onIrPara('tattoo'),
         },
         {
             titulo: 'Compartilhe seu link',
@@ -71,10 +78,6 @@ function OnboardingCard({ temServicos, mpConectado, linkPedido, onIrPara }) {
                     )}
                 </div>
             ))}
-
-            <p style={estilos.rodape}>
-                Equipe: se você trabalha com outros tatuadores, cadastre cada um na aba Equipe (opcional).
-            </p>
         </div>
     );
 }
@@ -90,7 +93,6 @@ const estilos = {
     check: { width: 26, height: 26, borderRadius: '50%', background: '#2d7a4f', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 13, flexShrink: 0 },
     texto: { color: '#888', fontSize: 13, lineHeight: 1.6, margin: '4px 0 0' },
     botao: { marginTop: 10, marginLeft: 38, padding: '9px 14px', borderRadius: 8, border: 'none', background: '#df6632', color: '#111', fontWeight: 700, fontSize: 12, cursor: 'pointer' },
-    rodape: { color: '#666', fontSize: 12, marginTop: 10, lineHeight: 1.5 },
 };
 
 export default OnboardingCard;
